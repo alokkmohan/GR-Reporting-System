@@ -1,0 +1,7 @@
+node_modules/
+*.log
+.claude/
+src/client/logo_b64.txt
+UN0284179.jpg.webp
+arunachala-giri-1.webp
+arunachala-hill-experience-activity.jpg.imgw.1280.1280.jpeg

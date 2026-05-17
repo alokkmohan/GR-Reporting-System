@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GR Reporting System Educate Girls</title>
+  <style><?!= include('client/style'); ?>
+  .login-left {
+    background-image: url('<?!= include("client/eglogo") ?>');
+    background-size: cover;
+    background-position: center;
+  }
+  </style>
+</head>
+<body>
+<div class="login-page">
+
+  <div class="login-top-bar">
+    <span class="org-name">Educate Girls GR Reporting Portal</span>
+    <span>Field Reporting System</span>
+  </div>
+
+  <div class="login-body">
+
+    <!-- Left panel: image with red overlay + branding -->
+    <div class="login-left">
+      <div class="login-left-overlay"></div>
+      <div class="login-left-content">
+        <div class="eg-logo-wrap"><img src="<?!= include('client/eglogo') ?>" alt="Educate Girls"></div>
+        <h1>GR Reporting System</h1>
+        <p>Stakeholder Meeting Records<br>State and District Teams</p>
+        <div class="dept-badge">Educate Girls</div>
+        <div class="login-left-features">
+          <div class="login-left-feature">
+            <div class="login-left-feature-text">
+              <div class="ft">Secure Login</div>
+              <div class="fs">Email OTP verification</div>
+            </div>
+          </div>
+          <div class="login-left-feature">
+            <div class="login-left-feature-text">
+              <div class="ft">Meeting Records</div>
+              <div class="fs">Plan, track and report</div>
+            </div>
+          </div>
+          <div class="login-left-feature">
+            <div class="login-left-feature-text">
+              <div class="ft">Role Based Access</div>
+              <div class="fs">Field, District and State</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right panel: login form -->
+    <div class="login-right">
+      <div class="login-box">
+        <h2>Sign In</h2>
+        <div class="login-sub">Enter your official email to receive OTP</div>
+
+        <div id="alertBox"></div>
+
+        <div id="stepEmail">
+          <div class="form-group">
+            <label class="form-label">Email Address <span class="required">*</span></label>
+            <input type="email" id="emailInput" class="form-control" placeholder="you@educategirls.ngo" autocomplete="email">
+            <div style="font-size:12px; color:var(--muted); margin-top:4px;">Only @educategirls.ngo email allowed</div>
+          </div>
+          <button class="btn btn-primary" id="sendOtpBtn" onclick="requestOTP()">Send OTP</button>
+          <div class="divider"></div>
+          <p class="text-center text-muted">New user? <a href="#" onclick="goToSignup()" style="color:var(--primary); font-weight:600;">Create Account</a></p>
+        </div>
+
+        <div id="stepOTP" class="hidden">
+          <div class="alert alert-info" id="otpSentMsg"></div>
+          <div class="form-group">
+            <label class="form-label">Enter OTP <span class="required">*</span></label>
+            <input type="number" id="otpInput" class="form-control otp-input" placeholder="------" maxlength="6">
+          </div>
+          <button class="btn btn-primary" id="verifyOtpBtn" onclick="verifyOTP()">Verify and Login</button>
+          <button class="btn btn-outline mt-8" onclick="backToEmail()">Change Email</button>
+          <p class="text-center text-muted mt-8" id="resendTimer"></p>
+        </div>
+
+        <div id="loadingSpinner" class="hidden"><div class="spinner"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="login-footer">
+    This portal is for authorized Educate Girls team members only. All data is confidential.
+  </div>
+
+</div>
+
+<script>
+  var APP_URL = '<?= appUrl ?>';
+  var currentEmail = '';
+  var resendTimer;
+
+  function showAlert(msg, type) { document.getElementById('alertBox').innerHTML = '<div class="alert alert-' + type + '">' + msg + '</div>'; }
+  function clearAlert() { document.getElementById('alertBox').innerHTML = ''; }
+  function setLoading(on) { document.getElementById('loadingSpinner').classList.toggle('hidden', !on); }
+  function goToSignup() { window.location.href = APP_URL + '?page=register'; }
+
+  function requestOTP() {
+    clearAlert();
+    currentEmail = document.getElementById('emailInput').value.trim().toLowerCase();
+    if (!currentEmail) { showAlert('Please enter your email.', 'error'); return; }
+    if (!currentEmail.endsWith('@educategirls.ngo')) { showAlert('Only @educategirls.ngo email addresses are allowed.', 'error'); return; }
+    document.getElementById('sendOtpBtn').disabled = true;
+    setLoading(true);
+    fetch(APP_URL, { method: 'POST', body: JSON.stringify({ action: 'sendOTP', email: currentEmail, source: 'signin' }) })
+      .then(function(r) { return r.json(); }).then(function(res) {
+        setLoading(false); document.getElementById('sendOtpBtn').disabled = false;
+        if (res.success) {
+          document.getElementById('stepEmail').classList.add('hidden');
+          document.getElementById('stepOTP').classList.remove('hidden');
+          document.getElementById('otpSentMsg').textContent = 'OTP sent to ' + currentEmail + '. Valid for 5 minutes.';
+          startTimer(120);
+        } else { showAlert(res.message || 'Failed to send OTP.', 'error'); }
+      }).catch(function() { setLoading(false); document.getElementById('sendOtpBtn').disabled = false; showAlert('Network error. Please try again.', 'error'); });
+  }
+
+  function verifyOTP() {
+    clearAlert();
+    var otp = document.getElementById('otpInput').value.trim();
+    if (!otp || otp.length < 6) { showAlert('Please enter the 6-digit OTP.', 'error'); return; }
+    document.getElementById('verifyOtpBtn').disabled = true;
+    setLoading(true);
+    fetch(APP_URL, { method: 'POST', body: JSON.stringify({ action: 'verifyOTP', email: currentEmail, otp: otp }) })
+      .then(function(r) { return r.json(); }).then(function(res) {
+        setLoading(false);
+        if (res.success) {
+          clearInterval(resendTimer);
+          if (res.status === 'unregistered') window.location.href = APP_URL + '?page=register&token=' + res.token + '&email=' + encodeURIComponent(currentEmail);
+          else if (res.status === 'pending') window.location.href = APP_URL + '?page=pending&token=' + res.token;
+          else window.location.href = APP_URL + '?page=planner&token=' + res.token;
+        } else { document.getElementById('verifyOtpBtn').disabled = false; showAlert(res.message || 'Incorrect OTP.', 'error'); }
+      }).catch(function() { setLoading(false); document.getElementById('verifyOtpBtn').disabled = false; showAlert('Network error.', 'error'); });
+  }
+
+  function backToEmail() {
+    document.getElementById('stepOTP').classList.add('hidden');
+    document.getElementById('stepEmail').classList.remove('hidden');
+    clearAlert(); clearInterval(resendTimer);
+  }
+
+  function startTimer(sec) {
+    var el = document.getElementById('resendTimer');
+    resendTimer = setInterval(function() {
+      sec--;
+      if (sec <= 0) { clearInterval(resendTimer); el.textContent = ''; return; }
+      el.textContent = 'Resend OTP in ' + sec + 's';
+    }, 1000);
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter') return;
+    if (!document.getElementById('stepOTP').classList.contains('hidden')) verifyOTP();
+    else requestOTP();
+  });
+</script>
+</body>
+</html>

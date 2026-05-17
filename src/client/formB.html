@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Meeting Not Conducted GR Reporting</title>
+  <style><?!= include('client/style'); ?></style>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="#" onclick="goBack()">Back</a>
+    <span class="logo">Not Conducted</span>
+    <span></span>
+  </nav>
+  <div class="container">
+    <div id="successScreen" class="hidden">
+      <div class="card success-screen">
+        <div class="success-icon">Saved</div>
+        <div class="card-title">Record Saved!</div>
+        <p class="text-muted mt-8">Entry has been recorded.</p>
+        <div class="success-id" id="submissionIdBox"></div>
+        <button class="btn btn-primary mt-16" onclick="goBack()">Back to Planner</button>
+        <button class="btn btn-outline mt-8" onclick="location.reload()">Submit Another</button>
+      </div>
+    </div>
+    <div id="formContainer">
+      <div id="alertBox"></div>
+      <div id="planInfoCard" class="hidden"><div class="alert alert-warning" id="planInfoText"></div></div>
+      <div class="card" style="border-left:4px solid var(--warning);background:#fffbeb;margin-bottom:12px;">
+        <div style="font-size:14px;color:#92400e;">Note: Use this form when a planned meeting could <strong>not</strong> be conducted.</div>
+      </div>
+      <div class="card">
+        <div class="section-header">Identification</div>
+        <div class="form-group"><label class="form-label">Date <span class="required">*</span></label><input type="date" id="date" class="form-control" onchange="updateMonth()"></div>
+        <div class="form-group"><label class="form-label">Reporting Month</label><input type="text" id="reporting_month" class="form-control" readonly></div>
+        <div class="form-group">
+          <label class="form-label">Unit <span class="required">*</span></label>
+          <select id="unit" class="form-control"><option value="">-- Select Unit --</option><option>TST</option><option>TAU</option><option>District Unit</option><option>State Unit</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">District</label><input type="text" id="district" class="form-control" readonly></div>
+        <div class="form-group"><label class="form-label">Block / Cluster</label><input type="text" id="block_cluster" class="form-control" placeholder="Optional"></div>
+
+        <div class="section-header" style="margin-top:8px;">Meeting Details</div>
+        <div class="form-group"><label class="form-label">Staff Name <span class="required">*</span></label><input type="text" id="staff_name" class="form-control" placeholder="Full name"></div>
+        <div class="form-group">
+          <label class="form-label">Level of Meeting <span class="required">*</span></label>
+          <select id="level_of_meeting" class="form-control"><option value="">-- Select --</option><option>State</option><option>District</option><option>Block</option><option>Cluster</option><option>School</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Any Other Participants</label><input type="text" id="other_participants" class="form-control" placeholder="Optional"></div>
+        <div class="form-group"><label class="form-label">Stakeholder Name <span class="required">*</span></label><input type="text" id="stakeholder_name" class="form-control" placeholder="Person who was to be met"></div>
+
+        <div class="section-header" style="margin-top:8px;">Follow-up</div>
+        <div class="form-group"><label class="form-label">Next Planned Date <span class="required">*</span></label><input type="date" id="followup_date" class="form-control"></div>
+        <div class="form-group">
+          <label class="form-label">Reason for Not Conducting <span class="required">*</span></label>
+          <select id="reason_not_conducted" class="form-control"><option value="">-- Select Reason --</option><option>Not Available</option><option>Refused</option><option>Travel Issue</option><option>Other</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Remark</label><input type="text" id="remark" class="form-control" placeholder="Optional note"></div>
+        <button class="btn btn-primary" id="submitBtn" onclick="submitForm()">Submit Record</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var APP_URL = '<?= appUrl ?>';
+    var token = new URLSearchParams(window.location.search).get('token') || '<?= token ?>';
+    var session = null;
+    try { session = JSON.parse('<?= session ?>'); } catch(e) {}
+    if (!session || session.status !== 'active') window.location.href = APP_URL;
+
+    var planId = new URLSearchParams(window.location.search).get('plan_id') || '';
+    var planData = null;
+    try { planData = JSON.parse(sessionStorage.getItem('activePlan') || 'null'); } catch(e) {}
+
+    if (planData && planData.plan_id === planId) {
+      document.getElementById('planInfoCard').classList.remove('hidden');
+      document.getElementById('planInfoText').textContent = 'Planned meeting with ' + planData.stakeholder_name + ' on ' + planData.meeting_date + ' - marking as not conducted.';
+      document.getElementById('stakeholder_name').value = planData.stakeholder_name || '';
+      document.getElementById('level_of_meeting').value = planData.level_of_meeting || '';
+      document.getElementById('block_cluster').value = planData.block_cluster || '';
+      if (planData.meeting_date) { document.getElementById('date').value = planData.meeting_date.toString().substring(0,10); updateMonth(); }
+    }
+
+    fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'getMyMeetings', token: token }) })
+      .then(function(r) { return r.json(); }).then(function(res) { if (res.success && res.data && res.data[0]) document.getElementById('district').value = res.data[0].district || ''; });
+
+    if (!document.getElementById('date').value) { document.getElementById('date').value = new Date().toISOString().split('T')[0]; updateMonth(); }
+
+    function updateMonth() {
+      var d = document.getElementById('date').value; if (!d) return;
+      var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      document.getElementById('reporting_month').value = months[new Date(d).getMonth()] + ' ' + new Date(d).getFullYear();
+    }
+    function showAlert(msg) { document.getElementById('alertBox').innerHTML = '<div class="alert alert-error">' + msg + '</div>'; window.scrollTo(0,0); }
+    function submitForm() {
+      var date = document.getElementById('date').value, unit = document.getElementById('unit').value;
+      var staff = document.getElementById('staff_name').value.trim(), level = document.getElementById('level_of_meeting').value;
+      var stakeholder = document.getElementById('stakeholder_name').value.trim();
+      var followup = document.getElementById('followup_date').value, reason = document.getElementById('reason_not_conducted').value;
+      if (!date || !unit || !staff || !level || !stakeholder || !followup || !reason) { showAlert('Please fill all required fields.'); return; }
+      document.getElementById('submitBtn').disabled = true; document.getElementById('submitBtn').textContent = 'Submitting...';
+      fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'submitMeeting', token: token, plan_id: planId, formData: {
+        meeting_conducted:'NO', date: date, unit: unit, district: document.getElementById('district').value,
+        block_cluster: document.getElementById('block_cluster').value, staff_name: staff, level_of_meeting: level,
+        other_participants: document.getElementById('other_participants').value, stakeholder_name: stakeholder,
+        followup_date: followup, reason_not_conducted: reason, remark: document.getElementById('remark').value
+      }})})
+      .then(function(r) { return r.json(); }).then(function(res) {
+        if (res.success) { sessionStorage.removeItem('activePlan'); document.getElementById('formContainer').classList.add('hidden'); document.getElementById('successScreen').classList.remove('hidden'); document.getElementById('submissionIdBox').textContent = 'ID: ' + res.submission_id; window.scrollTo(0,0); }
+        else { showAlert(res.message || 'Submission failed.'); document.getElementById('submitBtn').disabled = false; document.getElementById('submitBtn').textContent = 'Submit Record'; }
+      }).catch(function() { showAlert('Network error.'); document.getElementById('submitBtn').disabled = false; document.getElementById('submitBtn').textContent = 'Submit Record'; });
+    }
+    function goBack() { window.location.href = APP_URL + '?page=planner&token=' + token; }
+  </script>
+</body>
+</html>
