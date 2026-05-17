@@ -49,6 +49,25 @@
     .rel-Neutral { background:#dbeafe; color:#1e3a5f; }
     .rel-Cold { background:#f1f5f9; color:#64748b; }
     .rel-Not.Reachable,.rel-not-reachable { background:#fef2f2; color:var(--danger); }
+
+    .tl-tabs{display:flex;gap:6px;margin-bottom:16px;}
+    .tl-tab{flex:1;padding:8px;border:1.5px solid var(--border);border-radius:8px;background:#fff;font-size:13px;cursor:pointer;text-align:center;font-weight:600;}
+    .tl-tab.active{background:#1a2a4a;color:#fff;border-color:#1a2a4a;}
+
+    /* Action Items tab */
+    .ai-tab-table{width:100%;border-collapse:collapse;font-size:13px;background:#fff;border-radius:var(--radius);box-shadow:0 1px 6px rgba(0,0,0,0.07);overflow:hidden;}
+    .ai-tab-table th{background:#f9fafb;padding:9px 10px;text-align:left;font-weight:700;border-bottom:2px solid var(--border);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;white-space:nowrap;}
+    .ai-tab-table td{padding:9px 10px;border-bottom:1px solid #f3f4f6;vertical-align:middle;font-size:12px;}
+    .ai-tab-table tr:last-child td{border-bottom:none;}
+
+    /* Summary tab */
+    .sum-card{background:#fff;border-radius:var(--radius);box-shadow:0 1px 6px rgba(0,0,0,0.07);padding:18px 16px;margin-bottom:12px;}
+    .sum-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:13px;}
+    .sum-row:last-child{border-bottom:none;}
+    .sum-label{color:var(--muted);font-weight:600;font-size:12px;}
+    .sum-val{font-weight:800;color:#1a1a2e;}
+    .progress-bar-wrap{background:#f1f5f9;border-radius:8px;height:10px;overflow:hidden;margin-top:10px;}
+    .progress-bar-fill{height:100%;background:#27ae60;border-radius:8px;transition:width 0.4s;}
   </style>
 </head>
 <body>
@@ -64,7 +83,28 @@
     <div id="loadingState" style="padding:40px;text-align:center;"><div class="spinner" style="margin:0 auto;"></div><p class="text-muted mt-8">Loading timeline...</p></div>
     <div id="mainContent" style="display:none;">
       <div class="tl-header" id="tlHeader"></div>
-      <div class="timeline" id="timelineContainer"></div>
+
+      <!-- Tabs -->
+      <div class="tl-tabs">
+        <button class="tl-tab active" id="tTabTimeline" onclick="switchTlTab('timeline')">&#128336; Timeline</button>
+        <button class="tl-tab" id="tTabActions" onclick="switchTlTab('actions')">&#128203; Action Items</button>
+        <button class="tl-tab" id="tTabSummary" onclick="switchTlTab('summary')">&#128200; Summary</button>
+      </div>
+
+      <!-- Tab: Timeline -->
+      <div id="tabTimeline">
+        <div class="timeline" id="timelineContainer"></div>
+      </div>
+
+      <!-- Tab: Action Items -->
+      <div id="tabActions" style="display:none;">
+        <div id="actionsTabContent"></div>
+      </div>
+
+      <!-- Tab: Summary -->
+      <div id="tabSummary" style="display:none;">
+        <div id="summaryTabContent"></div>
+      </div>
     </div>
     <div id="errorState" class="hidden">
       <div class="empty-state">
@@ -94,11 +134,95 @@
             document.getElementById('errorState').classList.remove('hidden'); return;
           }
           renderTimeline(res.data);
+          renderActionItemsTab(res.data);
+          renderSummaryTab(res.data);
           document.getElementById('mainContent').style.display = '';
         }).catch(function() {
           document.getElementById('loadingState').style.display = 'none';
           document.getElementById('errorState').classList.remove('hidden');
         });
+    }
+
+    function switchTlTab(tab) {
+      ['timeline','actions','summary'].forEach(function(t) {
+        document.getElementById('tabTimeline').style.display = t === 'timeline' ? '' : 'none';
+        document.getElementById('tabActions').style.display = t === 'actions' ? '' : 'none';
+        document.getElementById('tabSummary').style.display = t === 'summary' ? '' : 'none';
+      });
+      // Set correct display for clicked tab
+      document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1)).style.display = '';
+      ['tTabTimeline','tTabActions','tTabSummary'].forEach(function(id) {
+        document.getElementById(id).classList.remove('active');
+      });
+      var map = { timeline: 'tTabTimeline', actions: 'tTabActions', summary: 'tTabSummary' };
+      document.getElementById(map[tab]).classList.add('active');
+    }
+
+    function renderActionItemsTab(data) {
+      var today = new Date(); today.setHours(0,0,0,0);
+      var rows = '';
+      var rowNum = 0;
+      data.forEach(function(item) {
+        if (!item.meeting || item.meeting.meeting_conducted !== 'YES') return;
+        var items = [];
+        try { items = JSON.parse(item.meeting.action_items || '[]'); } catch(e) {}
+        items.forEach(function(ai) {
+          if (!ai.action) return;
+          rowNum++;
+          var due = ai.due_date ? new Date(ai.due_date) : null;
+          if (due) due.setHours(0,0,0,0);
+          var isOverdue = due && due < today;
+          var dueStr = ai.due_date ? fmtDate(ai.due_date) : '—';
+          rows += '<tr>'
+            + '<td>' + rowNum + '</td>'
+            + '<td style="' + (isOverdue ? 'color:#e74c3c;font-weight:700;' : '') + '">' + esc(ai.action) + '</td>'
+            + '<td>' + esc(ai.owner || '—') + '</td>'
+            + '<td style="' + (isOverdue ? 'color:#e74c3c;font-weight:700;' : '') + '">' + dueStr + (isOverdue ? ' &#9888;' : '') + '</td>'
+            + '<td style="font-size:11px;color:var(--muted);">' + esc(item.plan.stakeholder_name || '') + '</td>'
+            + '</tr>';
+        });
+      });
+      if (!rows) {
+        document.getElementById('actionsTabContent').innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted);">No action items recorded in this chain.</div>';
+        return;
+      }
+      document.getElementById('actionsTabContent').innerHTML = '<div style="overflow-x:auto;">'
+        + '<table class="ai-tab-table">'
+        + '<thead><tr><th>#</th><th>Action</th><th>Owner</th><th>Due Date</th><th>Meeting</th></tr></thead>'
+        + '<tbody>' + rows + '</tbody>'
+        + '</table></div>';
+    }
+
+    function renderSummaryTab(data) {
+      var today = new Date(); today.setHours(0,0,0,0);
+      var totalCount = data.length;
+      var conductedCount = 0, notConductedCount = 0, plannedCount = 0;
+      var dates = [];
+      data.forEach(function(item) {
+        if (item.plan.meeting_date) dates.push(new Date(item.plan.meeting_date));
+        if (item.plan.status === 'conducted') conductedCount++;
+        else if (item.plan.status === 'not_conducted') notConductedCount++;
+        else plannedCount++;
+      });
+      dates.sort(function(a,b) { return a-b; });
+      var firstDate = dates.length ? fmtDate(dates[0].toISOString().split('T')[0]) : '—';
+      var latestDate = dates.length ? fmtDate(dates[dates.length-1].toISOString().split('T')[0]) : '—';
+      var first = data[0].plan;
+      var pct = totalCount > 0 ? Math.round((conductedCount / totalCount) * 100) : 0;
+
+      document.getElementById('summaryTabContent').innerHTML = '<div class="sum-card">'
+        + '<div class="sum-row"><span class="sum-label">Total Meetings in Chain</span><span class="sum-val">' + totalCount + '</span></div>'
+        + '<div class="sum-row"><span class="sum-label">Conducted</span><span class="sum-val" style="color:#27ae60;">' + conductedCount + '</span></div>'
+        + '<div class="sum-row"><span class="sum-label">Not Conducted</span><span class="sum-val" style="color:#e67e22;">' + notConductedCount + '</span></div>'
+        + '<div class="sum-row"><span class="sum-label">Still Planned</span><span class="sum-val" style="color:#3498db;">' + plannedCount + '</span></div>'
+        + '<div class="sum-row"><span class="sum-label">First Meeting Date</span><span class="sum-val">' + firstDate + '</span></div>'
+        + '<div class="sum-row"><span class="sum-label">Latest Activity</span><span class="sum-val">' + latestDate + '</span></div>'
+        + '<div class="sum-row"><span class="sum-label">Stakeholder</span><span class="sum-val">' + esc(first.stakeholder_name || '—') + '</span></div>'
+        + '<div style="margin-top:10px;">'
+        + '<div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:4px;"><span>Progress</span><span>' + pct + '% conducted</span></div>'
+        + '<div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:' + pct + '%;"></div></div>'
+        + '</div>'
+        + '</div>';
     }
 
     function renderTimeline(data) {

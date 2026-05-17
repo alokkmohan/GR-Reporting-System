@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Meeting Gantt GR Reporting System</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .gantt-page-header { background: linear-gradient(135deg,#1a2a4a 0%,#2c3e6b 100%); color:#fff; border-radius: var(--radius); padding:16px; margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+    .gantt-page-title { font-size:18px; font-weight:800; }
+    .gantt-date-range { font-size:12px; opacity:0.8; margin-top:3px; }
+
+    .gantt-legend { display:flex; flex-wrap:wrap; gap:8px 16px; margin-bottom:14px; }
+    .gantt-legend-item { display:flex; align-items:center; gap:6px; font-size:12px; font-weight:700; color:#374151; }
+    .gantt-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+    .gantt-dot.conducted  { background:#27ae60; }
+    .gantt-dot.not-done   { background:#e67e22; }
+    .gantt-dot.upcoming   { background:#fff; border:2.5px solid #3498db; }
+    .gantt-dot.overdue    { background:#e74c3c; }
+
+    .gantt-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; background:#fff; border-radius: var(--radius); box-shadow: var(--shadow); }
+    .gantt-inner { min-width:600px; }
+
+    .gantt-header-row { display:flex; border-bottom:2px solid var(--border); }
+    .gantt-label-col { width:130px; min-width:130px; flex-shrink:0; background:#f9fafb; border-right:1px solid var(--border); padding:8px 10px; font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.4px; }
+    .gantt-weeks-row { flex:1; display:flex; }
+    .gantt-week-col { flex:1; min-width:44px; text-align:center; padding:6px 2px; font-size:10px; font-weight:700; color:var(--muted); border-right:1px solid #f3f4f6; background:#f9fafb; }
+    .gantt-week-col.is-today-week { background:#eff6ff; color:#1e3a5f; }
+
+    .gantt-body { }
+    .gantt-row { display:flex; border-bottom:1px solid #f3f4f6; min-height:52px; align-items:center; }
+    .gantt-row:hover { background:#fafafa; }
+    .gantt-row-label { width:130px; min-width:130px; flex-shrink:0; padding:8px 10px; border-right:1px solid var(--border); }
+    .gantt-row-name { font-size:12px; font-weight:700; color:#1a1a2e; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .gantt-row-purpose { font-size:10px; color:var(--muted); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .gantt-row-track { flex:1; position:relative; height:52px; }
+
+    .gantt-empty { text-align:center; padding:40px 16px; color:var(--muted); font-size:13px; }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <button class="hamburger-btn" onclick="toggleSidebar()">&#9776;</button>
+    <span class="logo">Meeting Gantt</span>
+    <span class="nav-user" id="navUser"></span>
+  </nav>
+  <div class="app-layout">
+    <div id="sidebarMount"></div>
+    <div class="main-content">
+
+      <div class="gantt-page-header">
+        <div>
+          <div class="gantt-page-title">&#128200; Meeting Gantt</div>
+          <div class="gantt-date-range" id="ganttDateRange">Loading...</div>
+        </div>
+        <a href="planner.html" class="btn btn-outline" style="background:rgba(255,255,255,0.15);color:#fff;border-color:rgba(255,255,255,0.4);font-size:13px;">&#8592; Back to Planner</a>
+      </div>
+
+      <!-- Legend -->
+      <div class="gantt-legend">
+        <div class="gantt-legend-item"><div class="gantt-dot conducted"></div>Conducted</div>
+        <div class="gantt-legend-item"><div class="gantt-dot not-done"></div>Not Done</div>
+        <div class="gantt-legend-item"><div class="gantt-dot upcoming"></div>Upcoming</div>
+        <div class="gantt-legend-item"><div class="gantt-dot overdue"></div>Overdue</div>
+      </div>
+
+      <div id="ganttSpinner" style="text-align:center;padding:30px;"><div class="spinner" style="margin:0 auto;"></div><p class="text-muted mt-8">Loading Gantt...</p></div>
+      <div id="ganttWrap" class="gantt-wrap" style="display:none;">
+        <div class="gantt-inner" id="ganttInner"></div>
+      </div>
+      <div id="ganttEmpty" class="gantt-empty hidden">No meeting chains found. <a href="planner.html" style="color:var(--primary);">Plan meetings</a> first.</div>
+
+    </div>
+  </div>
+  <script src="common.js"></script>
+  <script>
+    var session = requireAuth();
+    renderSidebar('planner');
+
+    // Date range: 45 days before today to 60 days after (weekly grid)
+    var today = new Date(); today.setHours(0,0,0,0);
+    var rangeStart = new Date(today); rangeStart.setDate(rangeStart.getDate() - 45);
+    // Snap to Monday of that week
+    var dow = rangeStart.getDay(); // 0=Sun
+    rangeStart.setDate(rangeStart.getDate() - ((dow + 6) % 7)); // go back to Monday
+    var rangeEnd = new Date(today); rangeEnd.setDate(rangeEnd.getDate() + 60);
+
+    function addDays(d, n) { var r = new Date(d); r.setDate(r.getDate() + n); return r; }
+    function isoDate(d) { return d.toISOString().split('T')[0]; }
+    function shortDate(d) { return d.toLocaleDateString('en-IN', { day:'numeric', month:'short' }); }
+
+    // Build weeks array
+    var weeks = [];
+    var cur = new Date(rangeStart);
+    while (cur <= rangeEnd) {
+      weeks.push(new Date(cur));
+      cur.setDate(cur.getDate() + 7);
+    }
+
+    document.getElementById('ganttDateRange').textContent = shortDate(rangeStart) + ' — ' + shortDate(rangeEnd);
+
+    fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'getPlannedMeetings', token: grToken() }) })
+      .then(function(r) { return r.json(); }).then(function(res) {
+        document.getElementById('ganttSpinner').style.display = 'none';
+        if (!res.success || !res.data || !res.data.length) {
+          document.getElementById('ganttEmpty').classList.remove('hidden');
+          return;
+        }
+
+        var meetings = res.data;
+
+        // Group by chain_id; fall back to plan_id if no chain_id
+        var chains = {};
+        meetings.forEach(function(m) {
+          var cid = m.chain_id || m.plan_id;
+          if (!chains[cid]) chains[cid] = [];
+          chains[cid].push(m);
+        });
+
+        // Sort each chain by meeting_date, then sort chains by earliest date
+        var chainList = Object.keys(chains).map(function(cid) {
+          var arr = chains[cid].slice().sort(function(a,b) { return new Date(a.meeting_date||0) - new Date(b.meeting_date||0); });
+          return { cid: cid, meetings: arr, earliest: new Date(arr[0].meeting_date||today) };
+        });
+        chainList.sort(function(a,b) { return a.earliest - b.earliest; });
+
+        // Build header
+        var headerWeeks = '';
+        weeks.forEach(function(wk) {
+          var isNow = wk <= today && addDays(wk, 6) >= today;
+          headerWeeks += '<div class="gantt-week-col' + (isNow ? ' is-today-week' : '') + '">' + shortDate(wk) + '</div>';
+        });
+
+        var headerHtml = '<div class="gantt-header-row">'
+          + '<div class="gantt-label-col">Stakeholder</div>'
+          + '<div class="gantt-weeks-row">' + headerWeeks + '</div>'
+          + '</div>';
+
+        // Determine dot color/style for a meeting
+        function dotStyle(m) {
+          var mDate = m.meeting_date ? new Date(m.meeting_date) : null;
+          if (mDate) mDate.setHours(0,0,0,0);
+          if (m.status === 'conducted') return { fill:'#27ae60', stroke:'none' };
+          if (m.status === 'not_conducted') return { fill:'#e67e22', stroke:'none' };
+          if (mDate && mDate < today) return { fill:'#e74c3c', stroke:'none' }; // overdue planned
+          return { fill:'#fff', stroke:'#3498db' }; // upcoming
+        }
+
+        // Position of a date within the gantt as fraction
+        var totalMs = rangeEnd - rangeStart;
+        var totalWeeks = weeks.length;
+
+        function weekIndexForDate(d) {
+          // Find which week slot this date falls in
+          for (var i = 0; i < weeks.length; i++) {
+            var wEnd = addDays(weeks[i], 6);
+            if (d >= weeks[i] && d <= wEnd) return i;
+          }
+          if (d < weeks[0]) return -1;
+          return weeks.length; // after range
+        }
+
+        // Build rows
+        var bodyHtml = '';
+        chainList.forEach(function(chain) {
+          var label = chain.meetings[0];
+          var rowName = (label.stakeholder_name || '—').substring(0, 20);
+          var rowPurpose = (label.meeting_purpose || '').substring(0, 22);
+
+          // Build SVG track
+          var svgW = totalWeeks * 44; // approximate, will flex
+          var svgH = 52;
+          var cy = svgH / 2;
+
+          // Draw connecting line between dots
+          var dotsInRange = [];
+          chain.meetings.forEach(function(m) {
+            var d = m.meeting_date ? new Date(m.meeting_date) : null;
+            if (!d) return;
+            d.setHours(0,0,0,0);
+            var wi = weekIndexForDate(d);
+            if (wi < 0 || wi >= weeks.length) return;
+            // x position: center of week column
+            var x = (wi + 0.5) * (100 / totalWeeks);
+            dotsInRange.push({ x: x, m: m });
+          });
+          dotsInRange.sort(function(a,b) { return a.x - b.x; });
+
+          var svg = '<svg width="100%" height="' + svgH + '" viewBox="0 0 100 ' + svgH + '" preserveAspectRatio="none" style="position:absolute;top:0;left:0;">';
+
+          // Connecting line
+          if (dotsInRange.length > 1) {
+            var pts = dotsInRange.map(function(d) { return d.x + ',' + cy; }).join(' ');
+            svg += '<polyline points="' + pts + '" fill="none" stroke="#cbd5e1" stroke-width="1.5" vector-effect="non-scaling-stroke"/>';
+          }
+
+          // Today line (use % in viewBox space)
+          var todayWi = weekIndexForDate(today);
+          if (todayWi >= 0 && todayWi < weeks.length) {
+            // Find exact fraction
+            var todayPct = (today - rangeStart) / (rangeEnd - rangeStart) * 100;
+            svg += '<line x1="' + todayPct + '" y1="2" x2="' + todayPct + '" y2="' + (svgH-2) + '" stroke="#3498db" stroke-width="1" stroke-dasharray="3 2" vector-effect="non-scaling-stroke" opacity="0.5"/>';
+          }
+
+          svg += '</svg>';
+
+          // Dots (rendered as HTML over the SVG)
+          var dotsHtml = '';
+          dotsInRange.forEach(function(dp) {
+            var ds = dotStyle(dp.m);
+            var borderStyle = ds.stroke !== 'none' ? 'border:2.5px solid ' + ds.stroke + ';' : '';
+            var tooltip = esc(dp.m.stakeholder_name || '') + ' — ' + fmtDate(dp.m.meeting_date);
+            dotsHtml += '<div title="' + tooltip + '" style="position:absolute;left:calc(' + dp.x + '% - 7px);top:50%;transform:translateY(-50%);width:14px;height:14px;border-radius:50%;background:' + ds.fill + ';' + borderStyle + 'box-shadow:0 1px 4px rgba(0,0,0,0.18);cursor:default;"></div>';
+          });
+
+          // Week column dividers (visual)
+          var dividers = '';
+          for (var wi2 = 0; wi2 < weeks.length; wi2++) {
+            var isNow2 = weeks[wi2] <= today && addDays(weeks[wi2], 6) >= today;
+            dividers += '<div style="flex:1;min-width:44px;border-right:1px solid #f3f4f6;height:100%;' + (isNow2 ? 'background:#f0f7ff;' : '') + '"></div>';
+          }
+
+          bodyHtml += '<div class="gantt-row">'
+            + '<div class="gantt-row-label">'
+            + '<div class="gantt-row-name">' + esc(rowName) + '</div>'
+            + '<div class="gantt-row-purpose">' + esc(rowPurpose) + '</div>'
+            + '</div>'
+            + '<div class="gantt-row-track">'
+            + '<div style="display:flex;height:100%;position:absolute;top:0;left:0;right:0;">' + dividers + '</div>'
+            + svg
+            + dotsHtml
+            + '</div>'
+            + '</div>';
+        });
+
+        document.getElementById('ganttInner').innerHTML = headerHtml + '<div class="gantt-body">' + bodyHtml + '</div>';
+        document.getElementById('ganttWrap').style.display = '';
+      }).catch(function() {
+        document.getElementById('ganttSpinner').style.display = 'none';
+        document.getElementById('ganttEmpty').classList.remove('hidden');
+        document.getElementById('ganttEmpty').textContent = 'Network error loading Gantt. Please refresh.';
+      });
+  </script>
+</body>
+</html>

@@ -18,18 +18,24 @@
     .welcome-date { font-size: 11px; opacity: 0.78; margin-bottom: 4px; }
     .welcome-chip { display: inline-block; background: rgba(255,255,255,0.22); border: 1px solid rgba(255,255,255,0.38); border-radius: 12px; padding: 2px 10px; font-size: 11px; font-weight: 700; }
 
-    /* 4 stat boxes */
-    .dash-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
-    .dash-box { background: #fff; border-radius: var(--radius); padding: 14px 10px 12px; box-shadow: var(--shadow); text-align: center; border-top: 3px solid var(--primary); }
-    .dash-box.green  { border-top-color: var(--success); }
-    .dash-box.orange { border-top-color: var(--warning); }
-    .dash-box.red    { border-top-color: var(--danger); }
-    .dash-icon  { font-size: 18px; margin-bottom: 4px; }
-    .dash-num   { font-size: 28px; font-weight: 800; color: var(--primary); line-height: 1; }
-    .dash-box.green  .dash-num { color: var(--success); }
-    .dash-box.orange .dash-num { color: var(--warning); }
-    .dash-box.red    .dash-num { color: var(--danger); }
-    .dash-label { font-size: 10px; font-weight: 600; color: var(--muted); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.3px; }
+    /* Donut stat card */
+    .stat-combo-card { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow); padding: 14px 14px 12px; margin-bottom: 16px; display: flex; align-items: center; gap: 16px; }
+    .stat-donut-wrap { flex-shrink: 0; }
+    .stat-pills-wrap { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .stat-pill { background: #f9fafb; border-radius: 10px; padding: 10px 8px; text-align: center; border-left: 3px solid var(--primary); }
+    .stat-pill.green  { border-left-color: #27ae60; }
+    .stat-pill.blue   { border-left-color: #3498db; }
+    .stat-pill.red    { border-left-color: #e74c3c; }
+    .stat-pill.gray   { border-left-color: #95a5a6; }
+    .stat-pill-num  { font-size: 24px; font-weight: 800; color: var(--primary); line-height: 1; }
+    .stat-pill.green  .stat-pill-num { color: #27ae60; }
+    .stat-pill.blue   .stat-pill-num { color: #3498db; }
+    .stat-pill.red    .stat-pill-num { color: #e74c3c; }
+    .stat-pill.gray   .stat-pill-num { color: #95a5a6; }
+    .stat-pill-label { font-size: 10px; font-weight: 700; color: var(--muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.3px; }
+    .donut-legend { display: flex; flex-wrap: wrap; gap: 6px 12px; margin-top: 10px; }
+    .donut-legend-item { font-size: 11px; font-weight: 600; color: #374151; display: flex; align-items: center; gap: 4px; }
+    .donut-legend-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
 
     /* Table */
     .section-card { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; margin-bottom: 14px; }
@@ -78,27 +84,34 @@
         </div>
       </div>
 
-      <!-- 4 stat boxes -->
-      <div class="dash-grid">
-        <div class="dash-box">
-          <div class="dash-icon" style="color:var(--primary);">&#128197;</div>
-          <div class="dash-num" id="sTotal">—</div>
-          <div class="dash-label">Total Planned</div>
+      <!-- Donut + stat pills combined card -->
+      <div class="stat-combo-card">
+        <div class="stat-donut-wrap">
+          <div id="donutSvg">
+            <svg width="110" height="110" viewBox="0 0 110 110">
+              <circle cx="55" cy="55" r="40" fill="none" stroke="#f1f5f9" stroke-width="14"/>
+              <text x="55" y="61" text-anchor="middle" font-size="20" font-weight="800" fill="#1a1a2e">—</text>
+            </svg>
+          </div>
+          <div class="donut-legend" id="donutLegend"></div>
         </div>
-        <div class="dash-box green">
-          <div class="dash-icon" style="color:var(--success);">&#10003;</div>
-          <div class="dash-num" id="sConducted">—</div>
-          <div class="dash-label">Conducted</div>
-        </div>
-        <div class="dash-box orange">
-          <div class="dash-icon" style="color:var(--warning);">&#9201;</div>
-          <div class="dash-num" id="sUpcoming">—</div>
-          <div class="dash-label">Upcoming</div>
-        </div>
-        <div class="dash-box red">
-          <div class="dash-icon" style="color:var(--danger);">&#9888;</div>
-          <div class="dash-num" id="sOverdue">—</div>
-          <div class="dash-label">Overdue</div>
+        <div class="stat-pills-wrap">
+          <div class="stat-pill">
+            <div class="stat-pill-num" id="sTotal">—</div>
+            <div class="stat-pill-label">Total</div>
+          </div>
+          <div class="stat-pill green">
+            <div class="stat-pill-num" id="sConducted">—</div>
+            <div class="stat-pill-label">Conducted</div>
+          </div>
+          <div class="stat-pill blue">
+            <div class="stat-pill-num" id="sUpcoming">—</div>
+            <div class="stat-pill-label">Upcoming</div>
+          </div>
+          <div class="stat-pill red">
+            <div class="stat-pill-num" id="sOverdue">—</div>
+            <div class="stat-pill-label">Overdue</div>
+          </div>
         </div>
       </div>
 
@@ -176,11 +189,11 @@
         var meetings = res.data || [];
         var today = new Date(); today.setHours(0, 0, 0, 0);
 
-        var total = 0, conducted = 0, upcoming = 0, overdue = 0;
+        var total = 0, conducted = 0, upcoming = 0, overdue = 0, notDone = 0;
         meetings.forEach(function(m) {
           total++;
           if (m.status === 'conducted') { conducted++; return; }
-          if (m.status === 'not_conducted') return;
+          if (m.status === 'not_conducted') { notDone++; return; }
           var d = m.meeting_date ? new Date(m.meeting_date) : null;
           if (d) d.setHours(0, 0, 0, 0);
           if (d && d < today) overdue++; else upcoming++;
@@ -189,6 +202,37 @@
         document.getElementById('sConducted').textContent = conducted;
         document.getElementById('sUpcoming').textContent = upcoming;
         document.getElementById('sOverdue').textContent = overdue;
+
+        // Build donut chart
+        function buildDonut(segs, tot) {
+          var cx=55,cy=55,r=40,sw=14,circ=2*Math.PI*r;
+          var svg='<svg width="110" height="110" viewBox="0 0 110 110">';
+          svg+='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="#f1f5f9" stroke-width="'+sw+'"/>';
+          var angle=-90;
+          segs.forEach(function(s){
+            if(!s.v)return;
+            var pct=s.v/tot,dash=pct*circ;
+            svg+='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="'+s.c+'" stroke-width="'+sw+'" stroke-dasharray="'+dash.toFixed(1)+' '+circ.toFixed(1)+'" transform="rotate('+angle+' '+cx+' '+cy+')" stroke-linecap="butt"/>';
+            angle+=pct*360;
+          });
+          svg+='<text x="'+cx+'" y="'+(cy+6)+'" text-anchor="middle" font-size="20" font-weight="800" fill="#1a1a2e">'+tot+'</text>';
+          svg+='</svg>';
+          return svg;
+        }
+        var donutSegs = [
+          {v: conducted, c: '#27ae60', label: 'Conducted'},
+          {v: upcoming,  c: '#3498db', label: 'Upcoming'},
+          {v: overdue,   c: '#e74c3c', label: 'Overdue'},
+          {v: notDone,   c: '#95a5a6', label: 'Not Done'}
+        ];
+        if (total > 0) document.getElementById('donutSvg').innerHTML = buildDonut(donutSegs, total);
+        // Legend
+        var legendHtml = '';
+        donutSegs.forEach(function(s) {
+          if (!s.v) return;
+          legendHtml += '<div class="donut-legend-item"><div class="donut-legend-dot" style="background:'+s.c+';"></div>'+s.label+': '+s.v+'</div>';
+        });
+        document.getElementById('donutLegend').innerHTML = legendHtml;
 
         // Filter: only upcoming and overdue (not already conducted / not_conducted)
         var grpOverdue = [], grpUpcoming = [];

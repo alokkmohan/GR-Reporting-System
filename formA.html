@@ -314,6 +314,15 @@
       if (planData.meeting_date) document.getElementById('meet_date').value = planData.meeting_date.toString().substring(0,10);
       // Pre-fill follow-up stakeholder with planned person
       document.getElementById('followup_stakeholder_name').value = planData.stakeholder_name || '';
+      // Pre-populate key_points from agenda_items if present
+      if (planData.agenda_items) {
+        try {
+          var ag = JSON.parse(planData.agenda_items);
+          if (ag && ag.length) {
+            document.getElementById('key_points').value = ag.map(function(a, i) { return (i+1) + '. ' + a; }).join('\n');
+          }
+        } catch(e) {}
+      }
     } else {
       document.getElementById('plannedPersonLabel').textContent = 'No plan linked — fill stakeholder manually';
     }

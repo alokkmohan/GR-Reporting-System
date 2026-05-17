@@ -91,7 +91,8 @@
           <button class="view-tab" id="tabMonth" onclick="switchView('month')">Calendar</button>
           <button class="view-tab" id="tabList" onclick="switchView('list')">All</button>
         </div>
-        <button class="btn btn-primary btn-sm" onclick="openPlanModal()" style="margin-left:10px;white-space:nowrap;">+ Plan</button>
+        <a href="gantt.html" class="btn btn-outline btn-sm" style="margin-left:6px;white-space:nowrap;">&#128200; Gantt</a>
+        <button class="btn btn-primary btn-sm" onclick="openPlanModal()" style="margin-left:6px;white-space:nowrap;">+ Plan</button>
       </div>
 
       <!-- Upcoming view -->
@@ -214,7 +215,14 @@
           <div class="form-group" style="margin-bottom:4px;"><label class="form-label">Notes / Key Points</label><textarea id="plan_notes" class="form-control" rows="3" placeholder="Kya discuss karna hai, kya leke jaana hai..."></textarea></div>
         </div>
 
-        <!-- Section 4: Reference Document -->
+        <!-- Section 4: Agenda Items -->
+        <div class="plan-section">
+          <div class="plan-section-title">&#128203; Agenda — Kya Discuss Karna Hai</div>
+          <div id="agendaList"></div>
+          <button type="button" onclick="addAgenda()" style="background:none;border:1.5px dashed var(--border);border-radius:8px;padding:8px;width:100%;text-align:center;font-size:12px;font-weight:700;color:var(--primary);cursor:pointer;margin-top:4px;">+ Add Topic</button>
+        </div>
+
+        <!-- Section 5: Reference Document -->
         <div class="plan-section" style="margin-bottom:16px;">
           <div class="plan-section-title">&#128196; Reference Document (optional)</div>
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
@@ -246,6 +254,33 @@
   <script>
     var session = requireAuth();
     renderSidebar('planner');
+
+    // Agenda items
+    var agendaItems = [];
+    function addAgenda() { agendaItems.push(''); renderAgenda(); }
+    function removeAgenda(idx) { agendaItems.splice(idx, 1); renderAgenda(); }
+    function renderAgenda() {
+      var html = '';
+      agendaItems.forEach(function(v, i) {
+        html += '<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">'
+          + '<span style="font-size:12px;font-weight:700;color:var(--muted);min-width:16px;">' + (i+1) + '.</span>'
+          + '<input type="text" class="form-control" id="ag_' + i + '" placeholder="Topic to discuss..." style="flex:1;" value="">'
+          + '<button type="button" onclick="removeAgenda(' + i + ')" style="background:none;border:none;color:#d1d5db;cursor:pointer;font-size:16px;">&#128465;</button>'
+          + '</div>';
+      });
+      if (!agendaItems.length) html = '<div style="font-size:12px;color:var(--muted);margin-bottom:6px;">No agenda items yet.</div>';
+      document.getElementById('agendaList').innerHTML = html;
+      agendaItems.forEach(function(v, i) {
+        var el = document.getElementById('ag_' + i);
+        if (el) el.value = v;
+      });
+    }
+    function collectAgenda() {
+      return agendaItems.map(function(v, i) {
+        var el = document.getElementById('ag_' + i);
+        return el ? el.value.trim() : v;
+      }).filter(function(v) { return v; });
+    }
 
     var allMeetings = [];
     var currentDate = new Date();
@@ -433,12 +468,19 @@
       reader.readAsDataURL(file);
     }
 
-    function openPlanModal() { document.getElementById('plan_date').value = new Date().toISOString().split('T')[0]; document.getElementById('planAlertBox').innerHTML = ''; document.getElementById('planModal').classList.remove('hidden'); }
+    function openPlanModal() {
+      document.getElementById('plan_date').value = new Date().toISOString().split('T')[0];
+      document.getElementById('planAlertBox').innerHTML = '';
+      document.getElementById('planModal').classList.remove('hidden');
+      renderAgenda();
+    }
     function closePlanModal() {
       document.getElementById('planModal').classList.add('hidden');
       document.getElementById('uploadStatus').textContent = 'PDF, Word, Image (max 5MB)';
       document.getElementById('uploadStatus').style.color = '';
       document.getElementById('planFileInput').value = '';
+      agendaItems = [];
+      renderAgenda();
     }
 
     function savePlan() {
@@ -452,7 +494,8 @@
         level_of_meeting: document.getElementById('plan_level').value,
         block_cluster: document.getElementById('plan_block').value,
         notes: document.getElementById('plan_notes').value,
-        document_link: document.getElementById('plan_doc_link').value.trim()
+        document_link: document.getElementById('plan_doc_link').value.trim(),
+        agenda_items: JSON.stringify(collectAgenda())
       }})})
       .then(function (r) { return r.json(); }).then(function (res) {
         document.getElementById('savePlanBtn').disabled = false; document.getElementById('savePlanBtn').textContent = 'Save Meeting Plan';
