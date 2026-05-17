@@ -61,30 +61,30 @@
       <!-- Role banner (district/state) -->
       <div id="roleBanner" style="display:none;"></div>
 
-      <!-- Stats (clickable) -->
+      <!-- Stats (in-page filters) -->
       <div class="stats-row fade-up">
-        <a href="myentries.html" class="scard blue" style="text-decoration:none;cursor:pointer;" title="View all meetings">
+        <div class="scard blue" style="cursor:default;">
           <div class="scard-num" id="sTotal">-</div>
           <div class="scard-label">Total</div>
-        </a>
-        <a href="myentries.html" class="scard green" style="text-decoration:none;cursor:pointer;" title="View conducted meetings">
+        </div>
+        <div class="scard green" style="cursor:default;">
           <div class="scard-num" id="sConducted">-</div>
           <div class="scard-label">Conducted</div>
-        </a>
-        <a href="planner.html" class="scard orange" style="text-decoration:none;cursor:pointer;" title="View upcoming meetings">
+        </div>
+        <div class="scard orange" id="cardUpcoming" onclick="filterTable('upcoming')" style="cursor:pointer;" title="Show upcoming meetings">
           <div class="scard-num" id="sUpcoming">-</div>
           <div class="scard-label">Upcoming</div>
-        </a>
-        <a href="planner.html" class="scard red" style="text-decoration:none;cursor:pointer;" title="View overdue meetings">
+        </div>
+        <div class="scard red" id="cardOverdue" onclick="filterTable('overdue')" style="cursor:pointer;" title="Show overdue meetings">
           <div class="scard-num" id="sOverdue">-</div>
           <div class="scard-label">Overdue</div>
-        </a>
+        </div>
       </div>
 
       <!-- Meetings Table (top 5 with pagination) -->
       <div class="sec-card fade-up">
         <div class="sec-head">
-          <span class="sec-head-title">Upcoming &amp; Overdue Meetings</span>
+          <span class="sec-head-title" id="meetTableTitle">Upcoming Meetings</span>
           <a href="planner.html" class="sec-head-link">View All</a>
         </div>
         <div id="tableSpinner" style="padding:24px;text-align:center;"><div class="spinner" style="margin:0 auto;"></div></div>
@@ -188,19 +188,18 @@
       document.getElementById('sUpcoming').textContent  = upcoming;
       document.getElementById('sOverdue').textContent   = overdue;
 
-      // Build meeting rows: overdue first, then upcoming
-      var grpOverdue = [], grpUpcoming = [];
+      // Build meeting rows split by overdue / upcoming
+      allOverdue = []; allUpcoming = [];
       planData.forEach(function(m) {
         if (m.status === 'conducted' || m.status === 'not_conducted') return;
         var d = m.meeting_date ? new Date(m.meeting_date) : null;
         if (d) d.setHours(0,0,0,0);
-        if (d && d < today) grpOverdue.push(m); else grpUpcoming.push(m);
+        if (d && d < today) allOverdue.push(m); else allUpcoming.push(m);
       });
-      grpOverdue.sort(function(a,b) { return new Date(a.meeting_date||0) - new Date(b.meeting_date||0); });
-      grpUpcoming.sort(function(a,b) { return new Date(a.meeting_date||0) - new Date(b.meeting_date||0); });
-      dashRows = grpOverdue.concat(grpUpcoming);
-      dashCurrentPage = 0;
-      renderDashPage();
+      // Upcoming: nearest date first; Overdue: most recent first
+      allUpcoming.sort(function(a,b) { return new Date(a.meeting_date||0) - new Date(b.meeting_date||0); });
+      allOverdue.sort(function(a,b) { return new Date(b.meeting_date||0) - new Date(a.meeting_date||0); });
+      filterTable('upcoming');
 
       // District breakdown for state/admin
       if ((role === 'state' || role === 'admin') && planData.length) {
@@ -276,6 +275,7 @@
 
     var dashRows = [], dashCurrentPage = 0;
     var PAGE_SIZE = 5;
+    var allUpcoming = [], allOverdue = [];
 
     function renderDashPage() {
       var rows = dashRows;
@@ -318,6 +318,22 @@
     function dashPage(dir) {
       var totalPages = Math.ceil(dashRows.length / PAGE_SIZE);
       dashCurrentPage = Math.max(0, Math.min(dashCurrentPage + dir, totalPages - 1));
+      renderDashPage();
+    }
+
+    function filterTable(type) {
+      if (type === 'upcoming') {
+        dashRows = allUpcoming.slice();
+        document.getElementById('meetTableTitle').textContent = 'Upcoming Meetings';
+        document.getElementById('cardUpcoming').style.outline = '2.5px solid #fff';
+        document.getElementById('cardOverdue').style.outline = '';
+      } else {
+        dashRows = allOverdue.slice();
+        document.getElementById('meetTableTitle').textContent = 'Overdue Meetings';
+        document.getElementById('cardOverdue').style.outline = '2.5px solid #fff';
+        document.getElementById('cardUpcoming').style.outline = '';
+      }
+      dashCurrentPage = 0;
       renderDashPage();
     }
 
