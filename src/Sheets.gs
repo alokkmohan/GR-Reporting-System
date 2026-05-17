@@ -133,7 +133,8 @@ function submitMeeting(formData) {
   // Ensure new columns exist
   var lastCol = sheet.getLastColumn();
   var headers = lastCol > 0 ? sheet.getRange(1, 1, 1, lastCol).getValues()[0] : [];
-  ['attendee_type', 'actual_attendee_name', 'meeting_status', 'action_items', 'plan_id', 'co_entry'].forEach(function(col) {
+  ['attendee_type', 'actual_attendee_name', 'meeting_status', 'action_items', 'plan_id', 'co_entry',
+   'reason_not_conducted', 'followup_notes'].forEach(function(col) {
     if (headers.indexOf(col) === -1) {
       sheet.getRange(1, headers.length + 1).setValue(col);
       headers.push(col);
@@ -172,7 +173,9 @@ function submitMeeting(formData) {
     formData.meeting_status || '',
     formData.action_items || '',
     formData.plan_id || '',
-    formData.co_entry || ''
+    formData.co_entry || '',
+    formData.reason_not_conducted || '',
+    formData.followup_notes || ''
   ]);
 
   if (formData.meeting_conducted === 'YES' && formData.followup_date) {

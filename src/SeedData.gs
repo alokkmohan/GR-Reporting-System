@@ -242,20 +242,80 @@ function seedSampleData() {
     });
     updatePlanStatus(c4p2, 'conducted', m5);
 
+    // ── Not-Conducted Meetings (4 records) ──────────────────
+
+    // NC1 — BSA Bahraich: Not Available
+    var nc1 = submitMeeting({
+      user_email:EMAIL, meeting_conducted:'NO',
+      date:dOff(-19), unit:'TAU', district:'Bahraich',
+      block_cluster:'Bahraich Sadar', conducted_by:'BPO', staff_name:'Suresh Yadav',
+      level_of_meeting:'District', stakeholder_type:'BSA', stakeholder_name:'BSA Bahraich',
+      department_organisation:'Basic Shiksha Vibhag', meeting_purpose:'Enrollment',
+      reason_not_conducted:'Not Available',
+      followup_date:dOff(5), followup_status:'Pending',
+      followup_notes:'BSA saab achanak district-level samiksha baithak mein chaley gaye, pehle se suchit nahi tha. Office staff ne bataya ki agle hafte time milega. Phone par short baat hui — BSA ne khud kaha ki schedule karein. Dobara appointment fix kiya gaya.',
+      remark:'Neutral', priority_level:'High',
+      plan_id:'', co_entry:''
+    });
+
+    // NC2 — SDM Hardoi: Refused
+    var nc2 = submitMeeting({
+      user_email:EMAIL, meeting_conducted:'NO',
+      date:dOff(-14), unit:'Pragatai', district:'Hardoi',
+      block_cluster:'Hardoi', conducted_by:'DOL', staff_name:'Ravi Kumar',
+      level_of_meeting:'District', stakeholder_type:'District Collector', stakeholder_name:'SDM Hardoi',
+      department_organisation:"Sub-Divisional Magistrate Office", meeting_purpose:'Introductory Meeting',
+      reason_not_conducted:'Refused',
+      followup_date:'', followup_status:'Pending',
+      followup_notes:'SDM ne office mein milne se mana kar diya. PA ne bataya ki SDM chahte hain ki pehle district-level enrollment data aur program impact report bheja jaaye. Data packet tayar karke bhejne ki planning ki ja rahi hai. Iske baad dobara appointment maanga jaayega.',
+      remark:'Cold', priority_level:'Medium',
+      plan_id:'', co_entry:''
+    });
+
+    // NC3 — BDO Biswan: Travel Issue
+    var nc3 = submitMeeting({
+      user_email:EMAIL, meeting_conducted:'NO',
+      date:dOff(-8), unit:'TAU', district:'Sitapur',
+      block_cluster:'Biswan', conducted_by:'BPO', staff_name:'Kavita Singh',
+      level_of_meeting:'Block', stakeholder_type:'BDO', stakeholder_name:'BDO Biswan',
+      department_organisation:'Block Development Office', meeting_purpose:'School Liasioning',
+      reason_not_conducted:'Travel Issue',
+      followup_date:dOff(7), followup_status:'Pending',
+      followup_notes:'Raste mein gaadi puncture ho gayi — Biswan tak pahunchna sambhav nahi raha. BDO saab se phone par baat ki, unhone kaha ki agle hafte aa jaayein. Naya appointment confirm kiya gaya.',
+      remark:'Neutral', priority_level:'Medium',
+      plan_id:'', co_entry:''
+    });
+
+    // NC4 — ABSA Lucknow: Postponed (auto-plan next date)
+    var nc4 = submitMeeting({
+      user_email:EMAIL, meeting_conducted:'NO',
+      date:dOff(-5), unit:'TAU', district:'Lucknow',
+      block_cluster:'Lucknow Sadar', conducted_by:'ZOL', staff_name:'Priya Sharma',
+      level_of_meeting:'Block', stakeholder_type:'ABSA', stakeholder_name:'ABSA Lucknow Sadar',
+      department_organisation:'Basic Shiksha Vibhag', meeting_purpose:'Review Meeting',
+      reason_not_conducted:'Postponed',
+      followup_date:dOff(12), followup_status:'Pending',
+      followup_notes:'ABSA ne khud phone karke bataya ki uss din unki block-level annual pariksha duty thi. Unhone agle 12 din baad ki date di aur kaha ki tab zaroor milenge. Agenda bhi email par share kar diya gaya.',
+      remark:'Positive', priority_level:'Medium',
+      plan_id:'', co_entry:''
+    });
+
     // Store seed IDs so clearSampleData() can remove them
     var props = PropertiesService.getScriptProperties();
     props.setProperty('SEED_PLAN_IDS',    JSON.stringify([c1p1,c1p2,c1p3,c2p1,c2p2,c4p1,c4p2]));
-    props.setProperty('SEED_MEETING_IDS', JSON.stringify([m1,m2,m3,m4,m5]));
+    props.setProperty('SEED_MEETING_IDS', JSON.stringify([m1,m2,m3,m4,m5,nc1,nc2,nc3,nc4]));
 
-    return '✅ Done! Added 12 planned meetings + 5 conducted meetings across 7 stakeholder chains.\n\n'
-      + 'Chains created:\n'
-      + '  1. BSA Sitapur — 3 meetings (2 done, 1 upcoming Jun ' + dOff(16).slice(-2) + ')\n'
-      + '  2. CDO Hardoi — 2 meetings (1 done, 1 OVERDUE)\n'
-      + '  3. DM Lucknow — upcoming meeting\n'
-      + '  4. DIET Principal Sitapur — COMPLETED (2/2 done)\n'
-      + '  5. BDO Bahraich — OVERDUE single meeting\n'
-      + '  6. ABSA Hardoi — upcoming (June)\n'
-      + '  7. SPD Lucknow — 2 upcoming meetings';
+    return '✅ Done! Added 12 planned + 5 conducted + 4 not-conducted records across 7 chains.\n\n'
+      + 'Conducted:\n'
+      + '  ✓ BSA Sitapur × 2 (Apr + May)\n'
+      + '  ✓ CDO Hardoi × 1 (Apr)\n'
+      + '  ✓ DIET Principal Sitapur × 2 (Apr)\n\n'
+      + 'Not Conducted:\n'
+      + '  ✗ BSA Bahraich — Not Available (rescheduled)\n'
+      + '  ✗ SDM Hardoi — Refused (data maanga)\n'
+      + '  ✗ BDO Biswan — Travel Issue (rescheduled)\n'
+      + '  ✗ ABSA Lucknow — Postponed (unka duty tha)\n\n'
+      + 'Chains: BSA Sitapur (Active) · CDO Hardoi (Overdue) · DM Lucknow · DIET (Done) · BDO Bahraich (Overdue) · ABSA Hardoi · SPD Lucknow';
 
   } catch(e) {
     return '❌ Error: ' + e.message + '\n' + e.stack;
