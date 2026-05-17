@@ -192,7 +192,13 @@
         document.getElementById('saveBtn').disabled = false; document.getElementById('saveBtn').textContent = 'Save Changes';
         if (res.success) {
           var s = grSession();
-          s.full_name = name; s.unit = document.getElementById('e_unit').value; s.designation = document.getElementById('e_designation').value;
+          var u = res.user || {};
+          s.full_name = u.full_name || name;
+          s.unit = u.unit || document.getElementById('e_unit').value;
+          s.designation = u.designation || document.getElementById('e_designation').value;
+          s.district = u.district || s.district || '';
+          s.posting_level = u.posting_level || s.posting_level || '';
+          s.photo_url = u.photo_url || s.photo_url || '';
           localStorage.setItem('grSession', JSON.stringify(s));
           fillHeader(s); fillView(s);
           renderSidebar('profile');

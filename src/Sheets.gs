@@ -80,10 +80,13 @@ function updateUserProfile(email, data) {
   var range = sheet.getDataRange();
   var vals = range.getValues();
   var headers = vals[0];
-  if (headers.indexOf('photo_url') === -1) {
-    sheet.getRange(1, headers.length + 1).setValue('photo_url');
-    headers.push('photo_url');
-  }
+  // Ensure all updateable columns exist in the header row
+  ['full_name', 'unit', 'designation', 'photo_url'].forEach(function(col) {
+    if (headers.indexOf(col) === -1) {
+      sheet.getRange(1, headers.length + 1).setValue(col);
+      headers.push(col);
+    }
+  });
   for (var i = 1; i < vals.length; i++) {
     if (vals[i][headers.indexOf('email')] === email) {
       ['full_name', 'unit', 'designation', 'photo_url'].forEach(function(field) {
