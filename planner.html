@@ -170,14 +170,31 @@
             <div class="form-group" style="margin-bottom:10px;"><label class="form-label">Time (optional)</label><input type="time" id="plan_time" class="form-control"></div>
           </div>
           <div class="plan-row-2">
-            <div class="form-group" style="margin-bottom:4px;">
+            <div class="form-group" style="margin-bottom:10px;">
               <label class="form-label">Level <span class="required">*</span></label>
               <select id="plan_level" class="form-control">
                 <option value="">-- Select --</option>
                 <option>State</option><option>District</option><option>Block</option><option>Cluster</option><option>School</option>
               </select>
             </div>
-            <div class="form-group" style="margin-bottom:4px;"><label class="form-label">Block / Cluster</label><input type="text" id="plan_block" class="form-control" placeholder="Block ya cluster (optional)"></div>
+            <div class="form-group" style="margin-bottom:10px;"><label class="form-label">Block / Cluster</label><input type="text" id="plan_block" class="form-control" placeholder="Block ya cluster (optional)"></div>
+          </div>
+          <div class="form-group" style="margin-bottom:10px;">
+            <label class="form-label">Meeting Mode <span class="required">*</span></label>
+            <div class="toggle-group">
+              <button type="button" class="toggle-btn" id="modeInPerson" onclick="setMeetingMode('in_person')">In Person</button>
+              <button type="button" class="toggle-btn" id="modeOnline" onclick="setMeetingMode('online')">Online (Jitsi)</button>
+            </div>
+          </div>
+          <div id="jitsiSection" style="display:none;">
+            <div class="form-group" style="margin-bottom:4px;">
+              <label class="form-label">Meeting Link</label>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <input type="text" id="plan_meet_link" class="form-control" placeholder="Link generate karo ya paste karo" style="flex:1;">
+                <button type="button" onclick="generateJitsiLink()" style="white-space:nowrap;background:var(--primary);color:#fff;border:none;border-radius:8px;padding:11px 14px;font-size:13px;font-weight:700;cursor:pointer;">Generate</button>
+              </div>
+              <div id="meetLinkCopy" style="display:none;margin-top:6px;font-size:12px;color:var(--success);">Link ready — share it with participants</div>
+            </div>
           </div>
         </div>
 
@@ -255,6 +272,23 @@
     var session = requireAuth();
     renderSidebar('planner');
 
+    // Meeting mode
+    var meetingMode = 'in_person';
+    function setMeetingMode(mode) {
+      meetingMode = mode;
+      document.getElementById('modeInPerson').className = 'toggle-btn' + (mode === 'in_person' ? ' selected-yes' : '');
+      document.getElementById('modeOnline').className = 'toggle-btn' + (mode === 'online' ? ' selected-yes' : '');
+      document.getElementById('jitsiSection').style.display = mode === 'online' ? '' : 'none';
+    }
+    function generateJitsiLink() {
+      var name = (document.getElementById('plan_stakeholder_name').value || 'meeting').replace(/[^a-zA-Z0-9]/g,'').substring(0,10);
+      var date = (document.getElementById('plan_date').value || '').replace(/-/g,'');
+      var rand = Math.random().toString(36).substring(2,6);
+      var link = 'https://meet.jit.si/GR-' + name + '-' + date + '-' + rand;
+      document.getElementById('plan_meet_link').value = link;
+      document.getElementById('meetLinkCopy').style.display = '';
+    }
+
     // Agenda items
     var agendaItems = [];
     function addAgenda() { agendaItems.push(''); renderAgenda(); }
@@ -328,12 +362,19 @@
         var d = m.meeting_date ? new Date(m.meeting_date) : null;
         if (d) d.setHours(0,0,0,0);
         var isOverdue = d && d < today;
+        var modeBadge = m.meeting_mode === 'online'
+          ? '<span style="background:#eff6ff;color:#1e3a8a;border:1px solid #bfdbfe;border-radius:8px;font-size:10px;font-weight:700;padding:2px 7px;margin-left:4px;">ONLINE</span>'
+          : '<span style="background:#f1f5f9;color:#374151;border:1px solid #e2e8f0;border-radius:8px;font-size:10px;font-weight:700;padding:2px 7px;margin-left:4px;">IN PERSON</span>';
+        var joinBtn = (m.meeting_mode === 'online' && m.meet_link)
+          ? '<a href="' + esc(m.meet_link) + '" target="_blank" style="display:block;margin-top:6px;background:#1e3a8a;color:#fff;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;text-decoration:none;text-align:center;">Join Meet</a>'
+          : '';
         html += '<tr>'
           + '<td><div class="ut-date">' + fmtDate(m.meeting_date) + '</div>'
           + (m.meeting_time ? '<div class="ut-type">' + m.meeting_time + '</div>' : '')
           + (isOverdue ? '<div class="ut-overdue-tag">Overdue</div>' : '') + '</td>'
-          + '<td><div class="ut-name">' + esc(m.stakeholder_name || '') + '</div>'
-          + '<div class="ut-type">' + esc(m.stakeholder_type || '') + (m.level_of_meeting ? ' &middot; ' + esc(m.level_of_meeting) : '') + '</div></td>'
+          + '<td><div class="ut-name">' + esc(m.stakeholder_name || '') + modeBadge + '</div>'
+          + '<div class="ut-type">' + esc(m.stakeholder_type || '') + (m.level_of_meeting ? ' &middot; ' + esc(m.level_of_meeting) : '') + '</div>'
+          + joinBtn + '</td>'
           + '<td><div class="ut-purpose">' + esc(m.meeting_purpose || '') + '</div>'
           + (m.notes ? '<div class="ut-notes">' + esc(m.notes) + '</div>' : '') + '</td>'
           + '<td><button class="ut-action" onclick="openActionSheet(\'' + m.plan_id + '\')">Action</button></td>'
@@ -479,6 +520,9 @@
       document.getElementById('uploadStatus').textContent = 'PDF, Word, Image (max 5MB)';
       document.getElementById('uploadStatus').style.color = '';
       document.getElementById('planFileInput').value = '';
+      document.getElementById('plan_meet_link').value = '';
+      document.getElementById('meetLinkCopy').style.display = 'none';
+      setMeetingMode('in_person');
       agendaItems = [];
       renderAgenda();
     }
@@ -495,7 +539,9 @@
         block_cluster: document.getElementById('plan_block').value,
         notes: document.getElementById('plan_notes').value,
         document_link: document.getElementById('plan_doc_link').value.trim(),
-        agenda_items: JSON.stringify(collectAgenda())
+        agenda_items: JSON.stringify(collectAgenda()),
+        meeting_mode: meetingMode,
+        meet_link: meetingMode === 'online' ? document.getElementById('plan_meet_link').value.trim() : ''
       }})})
       .then(function (r) { return r.json(); }).then(function (res) {
         document.getElementById('savePlanBtn').disabled = false; document.getElementById('savePlanBtn').textContent = 'Save Meeting Plan';
