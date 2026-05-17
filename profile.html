@@ -217,29 +217,44 @@
     function uploadPhoto(input) {
       var file = input.files[0];
       if (!file) return;
-      if (file.size > 3 * 1024 * 1024) { alert('Image too large. Max 3MB.'); return; }
+      if (file.size > 10 * 1024 * 1024) { alert('Image too large. Max 10MB.'); return; }
       var wrap = document.getElementById('photoWrap');
       wrap.innerHTML += '<div class="photo-uploading"><div class="spinner" style="margin:0;width:24px;height:24px;border-width:2px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;"></div></div>';
       var reader = new FileReader();
       reader.onload = function(e) {
-        var base64 = e.target.result.split(',')[1];
-        fetch(APP_URL, { method:'POST', body: JSON.stringify({
-          action:'uploadFile', token: grToken(),
-          fileName: file.name, mimeType: file.type, fileData: base64
-        })})
-        .then(function(r) { return r.json(); }).then(function(res) {
-          if (res.success) {
-            var s = grSession(); s.photo_url = res.url;
-            localStorage.setItem('grSession', JSON.stringify(s));
-            // Save photo_url to profile (only pass full_name if it has a value)
-            fetch(APP_URL, { method:'POST', body: JSON.stringify({
-              action:'updateProfile', token: grToken(),
-              full_name: s.full_name || '',
-              unit: s.unit || '', designation: s.designation || '', photo_url: res.url
-            })});
-            fillHeader(s);
-          } else { alert('Photo upload failed. Try again.'); renderPhoto(grSession()); }
-        }).catch(function() { alert('Upload error.'); renderPhoto(grSession()); });
+        var img = new Image();
+        img.onload = function() {
+          // Resize to max 300x300 so payload stays small
+          var MAX = 300;
+          var w = img.width, h = img.height;
+          if (w > h) { if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; } }
+          else       { if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; } }
+          var canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          var base64 = canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
+          fetch(APP_URL, { method:'POST', body: JSON.stringify({
+            action:'uploadFile', token: grToken(),
+            fileName: file.name.replace(/\.[^.]+$/, '') + '.jpg',
+            mimeType: 'image/jpeg', fileData: base64
+          })})
+          .then(function(r) { return r.json(); }).then(function(res) {
+            if (res.success) {
+              var s = grSession(); s.photo_url = res.url;
+              localStorage.setItem('grSession', JSON.stringify(s));
+              fetch(APP_URL, { method:'POST', body: JSON.stringify({
+                action:'updateProfile', token: grToken(),
+                full_name: s.full_name || '',
+                unit: s.unit || '', designation: s.designation || '', photo_url: res.url
+              })});
+              fillHeader(s);
+            } else {
+              alert('Photo upload failed: ' + (res.message || 'Unknown error'));
+              renderPhoto(grSession());
+            }
+          }).catch(function(err) { alert('Upload error: ' + (err.message || err)); renderPhoto(grSession()); });
+        };
+        img.src = e.target.result;
       };
       reader.readAsDataURL(file);
     }
