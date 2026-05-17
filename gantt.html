@@ -1,20 +1,20 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Meeting Gantt — GR Reporting System</title>
+  <title>Meeting Gantt - GR Reporting System</title>
   <link rel="stylesheet" href="style.css">
   <style>
     .gantt-page-header { background: linear-gradient(135deg,#1a2a4a 0%,#2c3e6b 100%); color:#fff; border-radius: var(--radius); padding:16px; margin-bottom:14px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
     .gantt-page-title { font-size:18px; font-weight:800; }
     .gantt-date-range { font-size:12px; opacity:0.8; margin-top:3px; }
 
-    /* ── Filter Bar ── */
+    /* -- Filter Bar -- */
     .gantt-filters { background:#fff; border-radius: var(--radius); box-shadow: var(--shadow); padding:12px 14px; margin-bottom:14px; }
     .filter-row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
     .filter-search-wrap { flex:1; min-width:160px; position:relative; }
-    .filter-search-wrap::before { content:'🔍'; position:absolute; left:10px; top:50%; transform:translateY(-50%); font-size:13px; pointer-events:none; }
+    .filter-search-wrap::before { content:''; position:absolute; left:10px; top:50%; transform:translateY(-50%); font-size:13px; pointer-events:none; }
     .filter-input { width:100%; padding:9px 10px 9px 30px; border:1.5px solid var(--border); border-radius:8px; font-size:13px; box-sizing:border-box; outline:none; }
     .filter-input:focus { border-color: var(--primary); }
     .filter-select { padding:9px 10px; border:1.5px solid var(--border); border-radius:8px; font-size:13px; background:#fff; outline:none; cursor:pointer; min-width:130px; }
@@ -28,7 +28,7 @@
     .filter-count { font-weight:700; color:var(--primary); }
     .filter-clear { color:var(--primary); cursor:pointer; text-decoration:underline; font-size:12px; }
 
-    /* ── Legend ── */
+    /* -- Legend -- */
     .gantt-legend { display:flex; flex-wrap:wrap; gap:8px 16px; margin-bottom:12px; }
     .gantt-legend-item { display:flex; align-items:center; gap:6px; font-size:12px; font-weight:700; color:#374151; }
     .gantt-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
@@ -37,7 +37,7 @@
     .gantt-dot.upcoming   { background:#fff; border:2.5px solid #3498db; }
     .gantt-dot.overdue    { background:#e74c3c; }
 
-    /* ── Gantt Grid ── */
+    /* -- Gantt Grid -- */
     .gantt-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; background:#fff; border-radius: var(--radius); box-shadow: var(--shadow); }
     .gantt-inner { min-width:560px; }
     .gantt-header-row { display:flex; border-bottom:2px solid var(--border); position:sticky; top:0; z-index:2; }
@@ -83,10 +83,10 @@
       <!-- Page Header -->
       <div class="gantt-page-header">
         <div>
-          <div class="gantt-page-title">&#128200; Meeting Gantt</div>
+          <div class="gantt-page-title">Meeting Gantt</div>
           <div class="gantt-date-range" id="ganttDateRange">Loading...</div>
         </div>
-        <a href="planner.html" class="btn btn-outline" style="background:rgba(255,255,255,0.15);color:#fff;border-color:rgba(255,255,255,0.4);font-size:13px;">&#8592; Planner</a>
+        <a href="planner.html" class="btn btn-outline" style="background:rgba(255,255,255,0.15);color:#fff;border-color:rgba(255,255,255,0.4);font-size:13px;">Planner</a>
       </div>
 
       <!-- Filter Bar -->
@@ -107,7 +107,7 @@
         </div>
         <div class="filter-meta" id="filterMeta" style="display:none;">
           <span>Showing <span class="filter-count" id="filterCount">0</span> chains</span>
-          <span class="filter-clear" onclick="clearFilters()">&#10005; Clear filters</span>
+          <span class="filter-clear" onclick="clearFilters()">Clear filters</span>
         </div>
       </div>
 
@@ -127,9 +127,9 @@
         <div class="gantt-inner" id="ganttInner"></div>
       </div>
       <div id="ganttEmpty" class="gantt-empty hidden">
-        <div class="gantt-empty-icon">📭</div>
+        <div class="gantt-empty-icon"></div>
         <div>No meetings found for the selected filters.</div>
-        <a href="planner.html" style="color:var(--primary);font-size:13px;">Plan meetings in Planner →</a>
+        <a href="planner.html" style="color:var(--primary);font-size:13px;">Plan meetings in Planner -></a>
       </div>
 
     </div>
@@ -143,7 +143,7 @@
     var allData = [];
     var statusFilter = 'all';
 
-    // ── Helpers ──────────────────────────────────────────
+    // -- Helpers --
     function addDays(d, n) { var r = new Date(d); r.setDate(r.getDate() + n); return r; }
     function isoDate(d) { return d.toISOString().split('T')[0]; }
     function shortDate(d) { return d.toLocaleDateString('en-IN', { day:'numeric', month:'short' }); }
@@ -164,7 +164,7 @@
       return r;
     }
 
-    // ── Chain status ──────────────────────────────────────
+    // -- Chain status --
     function chainStatus(chain) {
       var hasPlanned = chain.meetings.some(function(m) { return m.status === 'planned'; });
       if (!hasPlanned) return 'completed';
@@ -177,7 +177,7 @@
       return hasOverdue ? 'overdue' : 'active';
     }
 
-    // ── Populate month dropdown ────────────────────────────
+    // -- Populate month dropdown --
     function populateMonths(meetings) {
       var monthSet = {};
       meetings.forEach(function(m) {
@@ -193,7 +193,7 @@
       });
     }
 
-    // ── Apply filters ──────────────────────────────────────
+    // -- Apply filters --
     function applyFilters() {
       var search = document.getElementById('ganttSearch').value.trim().toLowerCase();
       var month  = document.getElementById('ganttMonth').value;
@@ -220,7 +220,7 @@
         });
       }
 
-      // Filter: month → also change date range to show that month
+      // Filter: month -> also change date range to show that month
       var rStart, rEnd;
       if (month) {
         var p = month.split('-');
@@ -255,7 +255,7 @@
         meta.style.display = 'none';
       }
 
-      document.getElementById('ganttDateRange').textContent = shortDate(rStart) + ' — ' + shortDate(rEnd);
+      document.getElementById('ganttDateRange').textContent = shortDate(rStart) + ' - ' + shortDate(rEnd);
       renderGantt(chainList, rStart, rEnd);
     }
 
@@ -275,7 +275,7 @@
       applyFilters();
     }
 
-    // ── Render Gantt ───────────────────────────────────────
+    // -- Render Gantt --
     function renderGantt(chainList, rangeStart, rangeEnd) {
       var wrap  = document.getElementById('ganttWrap');
       var inner = document.getElementById('ganttInner');
@@ -311,7 +311,7 @@
         return { fill:'#fff', stroke:'#3498db' };
       }
 
-      // ── Month sub-header ──
+      // -- Month sub-header --
       var monthCells = {};
       weeks.forEach(function(wk, wi) {
         var mk = monthKey(isoDate(wk));
@@ -328,7 +328,7 @@
         + '<div class="gantt-month-cells">' + monthHeaderCells + '</div>'
         + '</div>';
 
-      // ── Week header ──
+      // -- Week header --
       var headerWeeks = '';
       weeks.forEach(function(wk) {
         var isNow  = wk <= today && addDays(wk, 6) >= today;
@@ -345,16 +345,16 @@
         + '<div class="gantt-weeks-row">' + headerWeeks + '</div>'
         + '</div>';
 
-      // ── Rows ──
+      // -- Rows --
       var bodyHtml = '';
       chainList.forEach(function(chain) {
         var st = chainStatus(chain);
         var stClass = 'chain-' + st;
         var badgeClass = st === 'completed' ? 'badge-completed' : st === 'overdue' ? 'badge-overdue' : 'badge-active';
-        var badgeText = st === 'completed' ? '✓ Done' : st === 'overdue' ? '⚠ Overdue' : '● Active';
+        var badgeText = st === 'completed' ? 'Done Done' : st === 'overdue' ? '! Overdue' : '* Active';
 
         var label = chain.meetings[0];
-        var rowName    = (label.stakeholder_name || '—').substring(0, 22);
+        var rowName    = (label.stakeholder_name || '-').substring(0, 22);
         var rowPurpose = (label.meeting_purpose  || '').substring(0, 24);
 
         var svgH = 52, cy = svgH / 2;
@@ -386,7 +386,7 @@
         dotsInRange.forEach(function(dp) {
           var ds = dotStyle(dp.m);
           var bStyle = ds.stroke !== 'none' ? 'border:2.5px solid ' + ds.stroke + ';' : '';
-          var tip = esc(dp.m.stakeholder_name||'') + ' — ' + fmtDate(dp.m.meeting_date);
+          var tip = esc(dp.m.stakeholder_name||'') + ' - ' + fmtDate(dp.m.meeting_date);
           dotsHtml += '<div title="' + tip + '" style="position:absolute;left:calc(' + dp.x + '% - 7px);top:50%;transform:translateY(-50%);width:14px;height:14px;border-radius:50%;background:' + ds.fill + ';' + bStyle + 'box-shadow:0 1px 4px rgba(0,0,0,0.18);cursor:default;z-index:1;"></div>';
         });
 
@@ -412,7 +412,7 @@
       inner.innerHTML = monthHeaderHtml + headerHtml + '<div class="gantt-body">' + bodyHtml + '</div>';
     }
 
-    // ── Load data ──────────────────────────────────────────
+    // -- Load data --
     fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'getPlannedMeetings', token: grToken() }) })
       .then(function(r){ return r.json(); }).then(function(res) {
         document.getElementById('ganttSpinner').style.display = 'none';
@@ -427,7 +427,7 @@
       }).catch(function() {
         document.getElementById('ganttSpinner').style.display = 'none';
         document.getElementById('ganttEmpty').classList.remove('hidden');
-        document.getElementById('ganttEmpty').innerHTML = '<div class="gantt-empty-icon">⚠️</div><div>Network error. Please refresh.</div>';
+        document.getElementById('ganttEmpty').innerHTML = '<div class="gantt-empty-icon">!</div><div>Network error. Please refresh.</div>';
       });
   </script>
 </body>

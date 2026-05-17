@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -30,7 +30,7 @@
 
     <div id="successScreen" class="hidden">
       <div class="card success-screen">
-        <div class="success-icon">&#10003;</div>
+        <div class="success-icon">OK</div>
         <div class="card-title">Record Saved!</div>
         <p class="text-muted mt-8" id="successMsg">Entry recorded.</p>
         <button class="btn btn-primary mt-16" onclick="window.location.href='planner.html'">Back to Planner</button>
@@ -92,8 +92,8 @@
     try { planData = JSON.parse(sessionStorage.getItem('activePlan') || 'null'); } catch(e) {}
     if (planData) {
       document.getElementById('planBanner').style.display = '';
-      document.getElementById('bannerName').textContent = (planData.stakeholder_type ? planData.stakeholder_type + ' — ' : '') + (planData.stakeholder_name || '');
-      document.getElementById('bannerMeta').textContent = fmtDate(planData.meeting_date) + (planData.meeting_purpose ? '  ·  ' + planData.meeting_purpose : '');
+      document.getElementById('bannerName').textContent = (planData.stakeholder_type ? planData.stakeholder_type + ' - ' : '') + (planData.stakeholder_name || '');
+      document.getElementById('bannerMeta').textContent = fmtDate(planData.meeting_date) + (planData.meeting_purpose ? '  -  ' + planData.meeting_purpose : '');
       document.getElementById('next_stakeholder').value = planData.stakeholder_name || '';
     }
 

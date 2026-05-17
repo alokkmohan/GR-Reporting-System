@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -55,13 +55,13 @@
         <!-- View mode -->
         <div id="viewMode" class="info-section" style="padding-top:6px; padding-bottom:6px;">
           <div id="alertProfile"></div>
-          <div class="info-row"><span class="info-label">Full Name</span><span class="info-value" id="v_name">—</span></div>
-          <div class="info-row"><span class="info-label">Email</span><span class="info-value" id="v_email" style="font-size:13px;">—</span></div>
-          <div class="info-row"><span class="info-label">Designation</span><span class="info-value" id="v_designation">—</span></div>
-          <div class="info-row"><span class="info-label">Unit</span><span class="info-value" id="v_unit">—</span></div>
-          <div class="info-row"><span class="info-label">Posting Level</span><span class="info-value" id="v_posting_level">—</span></div>
-          <div class="info-row" id="districtRow"><span class="info-label">District</span><span class="info-value" id="v_district">—</span></div>
-          <div class="info-row"><span class="info-label">Role</span><span class="info-value" id="v_role">—</span></div>
+          <div class="info-row"><span class="info-label">Full Name</span><span class="info-value" id="v_name">-</span></div>
+          <div class="info-row"><span class="info-label">Email</span><span class="info-value" id="v_email" style="font-size:13px;">-</span></div>
+          <div class="info-row"><span class="info-label">Designation</span><span class="info-value" id="v_designation">-</span></div>
+          <div class="info-row"><span class="info-label">Unit</span><span class="info-value" id="v_unit">-</span></div>
+          <div class="info-row"><span class="info-label">Posting Level</span><span class="info-value" id="v_posting_level">-</span></div>
+          <div class="info-row" id="districtRow"><span class="info-label">District</span><span class="info-value" id="v_district">-</span></div>
+          <div class="info-row"><span class="info-label">Role</span><span class="info-value" id="v_role">-</span></div>
           <div style="padding:14px 0 8px;">
             <button class="btn btn-primary" onclick="showEdit()">Edit Profile</button>
           </div>
@@ -103,7 +103,7 @@
       var wrap = document.getElementById('photoWrap');
       if (s.photo_url) {
         wrap.innerHTML = '<img src="' + esc(s.photo_url) + '" class="photo-circle" onerror="this.outerHTML=\'<div class=\\\"photo-initials\\\">'+initials+'</div>\'">'
-          + '<button class="photo-edit-btn" onclick="document.getElementById(\'photoFileInput\').click()" title="Change photo">&#9998;</button>';
+          + '<button class="photo-edit-btn" onclick="document.getElementById(\'photoFileInput\').click()" title="Change photo">Edit</button>';
       } else {
         wrap.innerHTML = '<div class="photo-initials">' + initials + '</div>'
           + '<button class="photo-edit-btn" onclick="document.getElementById(\'photoFileInput\').click()" title="Add photo">+</button>';
@@ -118,12 +118,12 @@
     }
 
     function fillView(s) {
-      document.getElementById('v_name').textContent = s.full_name || '—';
-      document.getElementById('v_email').textContent = s.email || '—';
-      document.getElementById('v_designation').textContent = s.designation || '—';
-      document.getElementById('v_unit').textContent = s.unit || '—';
-      document.getElementById('v_posting_level').textContent = s.posting_level || '—';
-      document.getElementById('v_district').textContent = s.district || '—';
+      document.getElementById('v_name').textContent = s.full_name || '-';
+      document.getElementById('v_email').textContent = s.email || '-';
+      document.getElementById('v_designation').textContent = s.designation || '-';
+      document.getElementById('v_unit').textContent = s.unit || '-';
+      document.getElementById('v_posting_level').textContent = s.posting_level || '-';
+      document.getElementById('v_district').textContent = s.district || '-';
       document.getElementById('v_role').textContent = (s.role || 'field').toUpperCase();
       document.getElementById('districtRow').style.display = s.posting_level === 'District' ? '' : 'none';
     }

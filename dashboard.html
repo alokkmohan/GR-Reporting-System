@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -91,7 +91,7 @@
       <div class="welcome-bar">
         <div class="welcome-bar-left">
           <div class="greet-line" id="greetLine">Good Morning,</div>
-          <div class="name-line" id="greetName">—</div>
+          <div class="name-line" id="greetName">-</div>
         </div>
         <div class="welcome-bar-right">
           <div class="date-line" id="greetDate"></div>
@@ -102,19 +102,19 @@
       <!-- Stats -->
       <div class="stats-row">
         <div class="scard blue">
-          <div class="scard-num" id="sTotal">—</div>
+          <div class="scard-num" id="sTotal">-</div>
           <div class="scard-label">Total</div>
         </div>
         <div class="scard green">
-          <div class="scard-num" id="sConducted">—</div>
+          <div class="scard-num" id="sConducted">-</div>
           <div class="scard-label">Conducted</div>
         </div>
         <div class="scard orange">
-          <div class="scard-num" id="sUpcoming">—</div>
+          <div class="scard-num" id="sUpcoming">-</div>
           <div class="scard-label">Upcoming</div>
         </div>
         <div class="scard red">
-          <div class="scard-num" id="sOverdue">—</div>
+          <div class="scard-num" id="sOverdue">-</div>
           <div class="scard-label">Overdue</div>
         </div>
       </div>
@@ -122,11 +122,11 @@
       <!-- Quick Actions -->
       <div class="qa-row">
         <button class="qa-btn qa-green" onclick="location.href='formA.html'">
-          <div class="qa-icon">&#10003;</div>
+          <div class="qa-icon">OK</div>
           Meeting<br>Conducted
         </button>
         <button class="qa-btn qa-red" onclick="location.href='formB.html'">
-          <div class="qa-icon">&#10005;</div>
+          <div class="qa-icon">X</div>
           Not<br>Conducted
         </button>
         <button class="qa-btn qa-blue" onclick="location.href='planner.html'">
@@ -139,7 +139,7 @@
       <div class="sec-card">
         <div class="sec-head">
           <span class="sec-head-title">Manage Meetings</span>
-          <a href="myentries.html" class="sec-head-link">View All &#8250;</a>
+          <a href="myentries.html" class="sec-head-link">View All ></a>
         </div>
         <div id="tableSpinner" style="padding:20px;text-align:center;"><div class="spinner" style="margin:0 auto;"></div></div>
         <div id="tableWrap" style="display:none;">
@@ -165,7 +165,7 @@
       <div class="sec-card" id="actionsCard" style="display:none;">
         <div class="sec-head">
           <span class="sec-head-title">Outstanding Action Items</span>
-          <a href="myentries.html" class="sec-head-link">View All &#8250;</a>
+          <a href="myentries.html" class="sec-head-link">View All ></a>
         </div>
         <div class="table-wrap">
           <table class="dtable">
@@ -257,7 +257,7 @@
           if(d) d.setHours(0,0,0,0);
           var od=d&&d<today;
           var stHtml=od?'<span class="st st-overdue">OVERDUE</span>':'<span class="st st-upcoming">UPCOMING</span>';
-          var docHtml=m.document_link?'<a href="'+esc(m.document_link)+'" target="_blank" style="color:var(--primary);font-size:11px;font-weight:600;">PDF</a>':'<span style="color:#d1d5db;">—</span>';
+          var docHtml=m.document_link?'<a href="'+esc(m.document_link)+'" target="_blank" style="color:var(--primary);font-size:11px;font-weight:600;">PDF</a>':'<span style="color:#d1d5db;">-</span>';
           return '<tr>'
             +'<td style="font-size:12px;font-weight:600;white-space:nowrap;">'+fmtDate(m.meeting_date)+'</td>'
             +'<td><div style="font-weight:600;font-size:13px;">'+esc(m.stakeholder_name||'')+'</div><div style="font-size:11px;color:var(--muted);">'+esc(m.stakeholder_type||'')+'</div></td>'
@@ -283,9 +283,9 @@
           var od=due&&due<today;
           return '<tr>'
             +'<td style="font-size:12px;">'+esc(p.ai.action)+'</td>'
-            +'<td style="font-size:12px;">'+esc(p.ai.owner||'—')+'</td>'
+            +'<td style="font-size:12px;">'+esc(p.ai.owner||'-')+'</td>'
             +'<td style="font-size:11px;font-weight:700;'+(od?'color:#dc2626;':'color:#374151;')+'">'+
-              (p.ai.due_date?fmtDate(p.ai.due_date):'—')+'</td>'
+              (p.ai.due_date?fmtDate(p.ai.due_date):'-')+'</td>'
             +'<td style="font-size:11px;color:var(--muted);">'+esc(p.meeting.stakeholder_name||'')+'</td>'
             +'</tr>';
         }).join('');

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -145,7 +145,7 @@
 
         html += '<tr class="' + rowClass + '" style="cursor:pointer;" onclick="toggleDetail(\'' + rid + '\')">'
           + '<td><div class="date-col">' + fmtDate(e.date) + '</div></td>'
-          + '<td><div class="sname">' + esc(e.stakeholder_name || e.stakeholder_type || '—') + '</div>'
+          + '<td><div class="sname">' + esc(e.stakeholder_name || e.stakeholder_type || '-') + '</div>'
           + '<div class="stype">' + esc(e.stakeholder_type || '') + '</div></td>'
           + '<td><div class="purpose-col">' + esc(e.meeting_purpose || (conducted ? '' : (e.reason_not_conducted || ''))) + '</div>'
           + (aiItems.length ? '<div class="ai-badge">' + aiItems.length + ' action' + (aiItems.length > 1 ? 's' : '') + '</div>' : '') + '</td>'
@@ -175,15 +175,15 @@
               html += '<tr' + (overdue ? ' style="background:#fef2f2;"' : '') + '>'
                 + '<td>' + (i+1) + '</td>'
                 + '<td>' + esc(ai.action) + '</td>'
-                + '<td>' + esc(ai.owner || '—') + '</td>'
-                + '<td>' + (ai.due_date ? fmtDate(ai.due_date) : '—') + (overdue ? ' <span style="color:var(--danger);font-weight:700;">Overdue</span>' : '') + '</td>'
+                + '<td>' + esc(ai.owner || '-') + '</td>'
+                + '<td>' + (ai.due_date ? fmtDate(ai.due_date) : '-') + (overdue ? ' <span style="color:var(--danger);font-weight:700;">Overdue</span>' : '') + '</td>'
                 + '</tr>';
             });
             html += '</tbody></table>';
           }
         } else {
           html += '<div class="detail-grid">';
-          html += '<div class="detail-item"><label>Reason</label><span>' + esc(e.reason_not_conducted || '—') + '</span></div>';
+          html += '<div class="detail-item"><label>Reason</label><span>' + esc(e.reason_not_conducted || '-') + '</span></div>';
           if (e.followup_date) html += '<div class="detail-item"><label>Rescheduled To</label><span>' + fmtDate(e.followup_date) + '</span></div>';
           if (e.followup_notes || e.notes) html += '<div class="detail-item" style="grid-column:1/-1;"><label>Notes</label><span>' + esc(e.followup_notes || e.notes || '') + '</span></div>';
           html += '</div>';

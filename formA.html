@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -58,7 +58,7 @@
 
     <div id="successScreen" class="hidden">
       <div class="card success-screen">
-        <div class="success-icon">&#10003;</div>
+        <div class="success-icon">OK</div>
         <div class="card-title">Meeting Logged!</div>
         <p class="text-muted mt-8" id="successMsg">Record saved successfully.</p>
         <div class="success-id" id="submissionIdBox"></div>
@@ -252,7 +252,7 @@
       coAttendees.forEach(function(email, idx) {
         html += '<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">'
           + '<input type="email" class="form-control" id="co_' + idx + '" placeholder="colleague@educategirls.ngo" style="flex:1;" value="">'
-          + '<button type="button" onclick="removeCoAttendee(' + idx + ')" style="background:none;border:none;color:var(--danger);font-size:16px;cursor:pointer;">&#128465;</button>'
+          + '<button type="button" onclick="removeCoAttendee(' + idx + ')" style="background:none;border:none;color:var(--danger);font-size:16px;cursor:pointer;">Del</button>'
           + '</div>';
       });
       document.getElementById('coAttendeeList').innerHTML = html;
@@ -278,7 +278,7 @@
           + '<td><input type="text" class="ai-input" id="ai_a' + idx + '" placeholder="What to do?" value=""></td>'
           + '<td><input type="text" class="ai-input" id="ai_o' + idx + '" placeholder="Who will do it?" value=""></td>'
           + '<td><input type="date" class="ai-input" id="ai_d' + idx + '" value=""></td>'
-          + '<td><button class="ai-del-btn" onclick="removeAI(' + idx + ')">&#128465;</button></td>'
+          + '<td><button class="ai-del-btn" onclick="removeAI(' + idx + ')">Del</button></td>'
           + '</tr>';
       });
       document.getElementById('aiTbody').innerHTML = html;
@@ -308,8 +308,8 @@
 
     if (planData) {
       document.getElementById('planBanner').style.display = '';
-      document.getElementById('bannerName').textContent = (planData.stakeholder_type ? planData.stakeholder_type + ' — ' : '') + (planData.stakeholder_name || '');
-      document.getElementById('bannerMeta').textContent = fmtDate(planData.meeting_date) + (planData.meeting_purpose ? '  ·  ' + planData.meeting_purpose : '');
+      document.getElementById('bannerName').textContent = (planData.stakeholder_type ? planData.stakeholder_type + ' - ' : '') + (planData.stakeholder_name || '');
+      document.getElementById('bannerMeta').textContent = fmtDate(planData.meeting_date) + (planData.meeting_purpose ? '  -  ' + planData.meeting_purpose : '');
       document.getElementById('plannedPersonLabel').textContent = (planData.stakeholder_name || '') + (planData.stakeholder_type ? ' (' + planData.stakeholder_type + ')' : '');
       if (planData.meeting_date) document.getElementById('meet_date').value = planData.meeting_date.toString().substring(0,10);
       // Pre-fill follow-up stakeholder with planned person
@@ -324,7 +324,7 @@
         } catch(e) {}
       }
     } else {
-      document.getElementById('plannedPersonLabel').textContent = 'No plan linked — fill stakeholder manually';
+      document.getElementById('plannedPersonLabel').textContent = 'No plan linked - fill stakeholder manually';
     }
 
     function setAttendee(same) {

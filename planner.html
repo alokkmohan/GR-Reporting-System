@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -69,7 +69,7 @@
   .plan-row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .modal-footer{padding:0 20px}
 
-  /* Action sheet — centered dialog */
+  /* Action sheet - centered dialog */
   .action-sheet{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px}
   .action-sheet.hidden{display:none}
   .action-sheet-inner{background:#fff;border-radius:16px;width:100%;max-width:380px;padding:28px 24px 24px;box-shadow:0 20px 60px rgba(0,0,0,0.25)}
@@ -193,7 +193,7 @@
                 <input type="text" id="plan_meet_link" class="form-control" placeholder="Generate or paste a link" style="flex:1;">
                 <button type="button" onclick="generateJitsiLink()" style="white-space:nowrap;background:var(--primary);color:#fff;border:none;border-radius:8px;padding:11px 14px;font-size:13px;font-weight:700;cursor:pointer;">Generate</button>
               </div>
-              <div id="meetLinkCopy" style="display:none;margin-top:6px;font-size:12px;color:var(--success);">Link ready — share it with participants</div>
+              <div id="meetLinkCopy" style="display:none;margin-top:6px;font-size:12px;color:var(--success);">Link ready - share it with participants</div>
             </div>
           </div>
           <div class="form-group" id="locationGroup" style="margin-bottom:4px;">
@@ -369,7 +369,7 @@
         html += '<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">'
           + '<span style="font-size:12px;font-weight:700;color:var(--muted);min-width:16px;">' + (i+1) + '.</span>'
           + '<input type="text" class="form-control" id="ag_' + i + '" placeholder="Topic to discuss..." style="flex:1;" value="">'
-          + '<button type="button" onclick="removeAgenda(' + i + ')" style="background:none;border:none;color:#d1d5db;cursor:pointer;font-size:16px;">&#128465;</button>'
+          + '<button type="button" onclick="removeAgenda(' + i + ')" style="background:none;border:none;color:#d1d5db;cursor:pointer;font-size:16px;">Del</button>'
           + '</div>';
       });
       if (!agendaItems.length) html = '<div style="font-size:12px;color:var(--muted);margin-bottom:6px;">No agenda items yet.</div>';
@@ -563,7 +563,7 @@
           document.getElementById('uploadProgress').classList.add('hidden');
           if (res.success) {
             document.getElementById('plan_doc_link').value = res.url;
-            document.getElementById('uploadStatus').textContent = '✓ ' + file.name + ' — uploaded';
+            document.getElementById('uploadStatus').textContent = 'Done ' + file.name + ' - uploaded';
             document.getElementById('uploadStatus').style.color = 'var(--success)';
           } else {
             document.getElementById('uploadStatus').textContent = 'Upload failed. Paste Drive link manually.';

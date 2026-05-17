@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -86,9 +86,9 @@
 
       <!-- Tabs -->
       <div class="tl-tabs">
-        <button class="tl-tab active" id="tTabTimeline" onclick="switchTlTab('timeline')">&#128336; Timeline</button>
-        <button class="tl-tab" id="tTabActions" onclick="switchTlTab('actions')">&#128203; Action Items</button>
-        <button class="tl-tab" id="tTabSummary" onclick="switchTlTab('summary')">&#128200; Summary</button>
+        <button class="tl-tab active" id="tTabTimeline" onclick="switchTlTab('timeline')">Timeline</button>
+        <button class="tl-tab" id="tTabActions" onclick="switchTlTab('actions')">Action Items</button>
+        <button class="tl-tab" id="tTabSummary" onclick="switchTlTab('summary')">Summary</button>
       </div>
 
       <!-- Tab: Timeline -->
@@ -108,7 +108,7 @@
     </div>
     <div id="errorState" class="hidden">
       <div class="empty-state">
-        <div style="font-size:32px;margin-bottom:8px;">&#128197;</div>
+        <div style="font-size:32px;margin-bottom:8px;"></div>
         <div style="font-weight:700;">Timeline not found</div>
         <p>Plan ID is invalid or data not available.</p>
         <button class="btn btn-outline mt-8" onclick="window.location.href='planner.html'">Back to Planner</button>
@@ -172,12 +172,12 @@
           var due = ai.due_date ? new Date(ai.due_date) : null;
           if (due) due.setHours(0,0,0,0);
           var isOverdue = due && due < today;
-          var dueStr = ai.due_date ? fmtDate(ai.due_date) : '—';
+          var dueStr = ai.due_date ? fmtDate(ai.due_date) : '-';
           rows += '<tr>'
             + '<td>' + rowNum + '</td>'
             + '<td style="' + (isOverdue ? 'color:#e74c3c;font-weight:700;' : '') + '">' + esc(ai.action) + '</td>'
-            + '<td>' + esc(ai.owner || '—') + '</td>'
-            + '<td style="' + (isOverdue ? 'color:#e74c3c;font-weight:700;' : '') + '">' + dueStr + (isOverdue ? ' &#9888;' : '') + '</td>'
+            + '<td>' + esc(ai.owner || '-') + '</td>'
+            + '<td style="' + (isOverdue ? 'color:#e74c3c;font-weight:700;' : '') + '">' + dueStr + (isOverdue ? ' !' : '') + '</td>'
             + '<td style="font-size:11px;color:var(--muted);">' + esc(item.plan.stakeholder_name || '') + '</td>'
             + '</tr>';
         });
@@ -205,8 +205,8 @@
         else plannedCount++;
       });
       dates.sort(function(a,b) { return a-b; });
-      var firstDate = dates.length ? fmtDate(dates[0].toISOString().split('T')[0]) : '—';
-      var latestDate = dates.length ? fmtDate(dates[dates.length-1].toISOString().split('T')[0]) : '—';
+      var firstDate = dates.length ? fmtDate(dates[0].toISOString().split('T')[0]) : '-';
+      var latestDate = dates.length ? fmtDate(dates[dates.length-1].toISOString().split('T')[0]) : '-';
       var first = data[0].plan;
       var pct = totalCount > 0 ? Math.round((conductedCount / totalCount) * 100) : 0;
 
@@ -217,7 +217,7 @@
         + '<div class="sum-row"><span class="sum-label">Still Planned</span><span class="sum-val" style="color:#3498db;">' + plannedCount + '</span></div>'
         + '<div class="sum-row"><span class="sum-label">First Meeting Date</span><span class="sum-val">' + firstDate + '</span></div>'
         + '<div class="sum-row"><span class="sum-label">Latest Activity</span><span class="sum-val">' + latestDate + '</span></div>'
-        + '<div class="sum-row"><span class="sum-label">Stakeholder</span><span class="sum-val">' + esc(first.stakeholder_name || '—') + '</span></div>'
+        + '<div class="sum-row"><span class="sum-label">Stakeholder</span><span class="sum-val">' + esc(first.stakeholder_name || '-') + '</span></div>'
         + '<div style="margin-top:10px;">'
         + '<div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:4px;"><span>Progress</span><span>' + pct + '% conducted</span></div>'
         + '<div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:' + pct + '%;"></div></div>'
@@ -228,10 +228,10 @@
     function renderTimeline(data) {
       var first = data[0].plan;
       document.getElementById('tlHeader').innerHTML =
-        '<div class="tl-header-label">&#128336; Meeting Chain Timeline</div>'
-        + '<div class="tl-header-title">' + esc(first.stakeholder_type ? first.stakeholder_type + ' — ' : '') + esc(first.stakeholder_name || '') + '</div>'
-        + '<div class="tl-header-meta">' + esc(first.meeting_purpose || '') + (first.level_of_meeting ? '  ·  ' + first.level_of_meeting : '')
-        + '  ·  ' + data.length + ' meeting' + (data.length > 1 ? 's' : '') + ' in chain</div>';
+        '<div class="tl-header-label">Meeting Chain Timeline</div>'
+        + '<div class="tl-header-title">' + esc(first.stakeholder_type ? first.stakeholder_type + ' - ' : '') + esc(first.stakeholder_name || '') + '</div>'
+        + '<div class="tl-header-meta">' + esc(first.meeting_purpose || '') + (first.level_of_meeting ? '  -  ' + first.level_of_meeting : '')
+        + '  -  ' + data.length + ' meeting' + (data.length > 1 ? 's' : '') + ' in chain</div>';
 
       var html = '';
       data.forEach(function(item, idx) {
@@ -239,7 +239,7 @@
         var mtg = item.meeting;
         var status = plan.status;
         var dotClass = status === 'conducted' ? 'conducted' : status === 'not_conducted' ? 'not-done' : status === 'planned' ? 'planned' : 'pending';
-        var dotIcon = status === 'conducted' ? '✓' : status === 'not_conducted' ? '✗' : (idx + 1);
+        var dotIcon = status === 'conducted' ? 'Done' : status === 'not_conducted' ? 'No' : (idx + 1);
 
         html += '<div class="tl-node">';
         html += '<div class="tl-dot ' + dotClass + '">' + dotIcon + '</div>';
@@ -247,7 +247,7 @@
 
         // Card head: date + badge
         var badgeClass = status === 'conducted' ? 'tl-badge-done' : status === 'not_conducted' ? 'tl-badge-notdone' : status === 'planned' ? 'tl-badge-pending' : 'tl-badge-pending';
-        var badgeLabel = status === 'conducted' ? '✓ Conducted' : status === 'not_conducted' ? '✗ Not Conducted' : '⏳ Planned';
+        var badgeLabel = status === 'conducted' ? 'Done Conducted' : status === 'not_conducted' ? 'No Not Conducted' : ' Planned';
         html += '<div class="tl-card-head">';
         html += '<span class="tl-date">' + fmtDate(plan.meeting_date) + (plan.meeting_time ? '  ' + plan.meeting_time : '') + '</span>';
         html += '<span class="' + badgeClass + '">' + badgeLabel + '</span>';
@@ -256,8 +256,8 @@
         // Card body
         html += '<div class="tl-card-body">';
         html += '<div class="tl-who">' + esc(plan.stakeholder_name || '') + '</div>';
-        html += '<div class="tl-purpose">' + esc(plan.stakeholder_type || '') + (plan.meeting_purpose ? '  ·  ' + esc(plan.meeting_purpose) : '') + '</div>';
-        if (plan.level_of_meeting) html += '<div class="tl-purpose">' + esc(plan.level_of_meeting) + (plan.block_cluster ? ' — ' + esc(plan.block_cluster) : '') + '</div>';
+        html += '<div class="tl-purpose">' + esc(plan.stakeholder_type || '') + (plan.meeting_purpose ? '  -  ' + esc(plan.meeting_purpose) : '') + '</div>';
+        if (plan.level_of_meeting) html += '<div class="tl-purpose">' + esc(plan.level_of_meeting) + (plan.block_cluster ? ' - ' + esc(plan.block_cluster) : '') + '</div>';
 
         if (plan.notes) {
           html += '<div class="tl-section"><div class="tl-section-label">Plan Notes</div><div class="tl-section-text">' + esc(plan.notes) + '</div></div>';
@@ -268,15 +268,15 @@
           if (mtg.meeting_conducted === 'YES') {
             // Who attended
             if (mtg.attendee_type === 'alternate' && mtg.actual_attendee_name) {
-              html += '<div class="tl-attendee-alt">&#8645; ' + esc(mtg.actual_attendee_name) + ' (on behalf of planned stakeholder)</div>';
+              html += '<div class="tl-attendee-alt">' + esc(mtg.actual_attendee_name) + ' (on behalf of planned stakeholder)</div>';
             }
             // Key points
             if (mtg.key_discussion_points) {
-              html += '<div class="tl-section"><div class="tl-section-label">&#128221; Key Discussion Points</div><div class="tl-section-text">' + esc(mtg.key_discussion_points) + '</div></div>';
+              html += '<div class="tl-section"><div class="tl-section-label">Key Discussion Points</div><div class="tl-section-text">' + esc(mtg.key_discussion_points) + '</div></div>';
             }
             // Outcome
             if (mtg.outcome) {
-              html += '<div class="tl-section"><div class="tl-section-label">&#127919; Outcome</div><div class="tl-section-text">' + esc(mtg.outcome) + '</div></div>';
+              html += '<div class="tl-section"><div class="tl-section-label">Outcome</div><div class="tl-section-text">' + esc(mtg.outcome) + '</div></div>';
             }
             // Relationship
             if (mtg.remark) {
@@ -284,14 +284,14 @@
             }
             // Meeting status
             if (mtg.meeting_status === 'completed') {
-              html += '<div class="tl-outcome-done">&#9989; Meeting chain completed at this point.</div>';
+              html += '<div class="tl-outcome-done">Done: Meeting chain completed at this point.</div>';
             } else if (mtg.meeting_status === 'follow_up_required') {
-              html += '<div class="tl-outcome-fu">&#128337; Follow-up required — next meeting planned for ' + fmtDate(mtg.followup_date) + '</div>';
+              html += '<div class="tl-outcome-fu">Follow-up required - next meeting planned for ' + fmtDate(mtg.followup_date) + '</div>';
             }
           } else if (mtg.meeting_conducted === 'NO') {
             var reason = mtg.reason_not_conducted || 'Not specified';
-            html += '<div class="tl-not-done-box">&#10007; ' + esc(reason);
-            if (mtg.followup_date) html += ' — Rescheduled to ' + fmtDate(mtg.followup_date);
+            html += '<div class="tl-not-done-box">No: ' + esc(reason);
+            if (mtg.followup_date) html += ' - Rescheduled to ' + fmtDate(mtg.followup_date);
             html += '</div>';
             if (mtg.followup_notes) {
               html += '<div class="tl-section"><div class="tl-section-text">' + esc(mtg.followup_notes) + '</div></div>';
@@ -303,7 +303,7 @@
 
         // Connector arrow between nodes
         if (idx < data.length - 1) {
-          html += '<div class="tl-connector">&#8595;</div>';
+          html += '<div class="tl-connector">|</div>';
         }
       });
 
