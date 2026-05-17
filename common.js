@@ -41,7 +41,7 @@ function renderSidebar(activePage) {
   var navItems = [
     { href: 'dashboard.html', label: 'Dashboard', key: 'dashboard' },
     { href: 'planner.html', label: 'Meeting Planner', key: 'planner' },
-    { href: 'formA.html', label: 'New Meeting', key: 'formA' },
+    { href: 'formA.html', label: 'Log Meeting', key: 'formA' },
     { href: 'myentries.html', label: 'My Entries', key: 'myentries' },
     { href: 'profile.html', label: 'My Profile', key: 'profile' }
   ];

@@ -53,33 +53,53 @@
     <div id="sidebarMount"></div>
     <div class="main-content" style="padding-bottom:80px;">
 
-      <div class="view-tabs" style="margin-top:4px;">
-        <button class="view-tab active" id="tabMonth" onclick="switchView('month')">Month</button>
-        <button class="view-tab" id="tabYear" onclick="switchView('year')">Year</button>
-        <button class="view-tab" id="tabList" onclick="switchView('list')">All</button>
-      </div>
-
-      <div class="card" id="calendarView" style="padding:14px;">
-        <div class="cal-header">
-          <button class="cal-nav" onclick="changeMonth(-1)">&lt;</button>
-          <span id="calTitle" style="font-weight:700;font-size:16px;"></span>
-          <button class="cal-nav" onclick="changeMonth(1)">&gt;</button>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin:4px 0 12px;">
+        <div class="view-tabs" style="margin:0;flex:1;">
+          <button class="view-tab active" id="tabUpcoming" onclick="switchView('upcoming')">Upcoming</button>
+          <button class="view-tab" id="tabMonth" onclick="switchView('month')">Calendar</button>
+          <button class="view-tab" id="tabList" onclick="switchView('list')">All</button>
         </div>
-        <div class="cal-grid" id="calGrid"></div>
+        <button class="btn btn-primary btn-sm" onclick="openPlanModal()" style="margin-left:10px;white-space:nowrap;">+ Plan</button>
       </div>
 
-      <div id="yearView" class="hidden">
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;" id="yearGrid"></div>
+      <!-- Upcoming view -->
+      <div id="upcomingView">
+        <div id="loadingSpinner"><div class="spinner"></div></div>
+        <div id="upcomingList"></div>
+        <div id="emptyUpcoming" class="hidden">
+          <div class="card text-center" style="padding:32px;">
+            <div class="card-title">No Upcoming Meetings</div>
+            <p class="text-muted mt-8">Aage koi meeting plan nahi hai.</p>
+            <button class="btn btn-primary mt-16" onclick="openPlanModal()">+ Plan New Meeting</button>
+          </div>
+        </div>
       </div>
 
-      <button class="btn btn-primary" onclick="openPlanModal()" style="margin-bottom:16px;">+ Plan New Meeting</button>
+      <!-- Calendar view -->
+      <div id="calendarView" class="hidden">
+        <div class="card" style="padding:14px;">
+          <div class="cal-header">
+            <button class="cal-nav" onclick="changeMonth(-1)">&lt;</button>
+            <span id="calTitle" style="font-weight:700;font-size:16px;"></span>
+            <button class="cal-nav" onclick="changeMonth(1)">&gt;</button>
+          </div>
+          <div class="cal-grid" id="calGrid"></div>
+        </div>
+        <div class="card-title mb-8 mt-8" id="listTitle">Meetings</div>
+        <div id="meetingsList"></div>
+        <div id="emptyMeetings" class="hidden">
+          <div class="card text-center" style="padding:24px;">
+            <p class="text-muted">Is mahine koi meeting nahi.</p>
+          </div>
+        </div>
+      </div>
 
-      <div class="card-title mb-8" id="listTitle">Meetings</div>
-      <div id="loadingSpinner"><div class="spinner"></div></div>
-      <div id="meetingsList"></div>
-      <div id="emptyMeetings" class="hidden">
-        <div class="card text-center" style="padding:32px;">
-          <p class="text-muted mt-8">No meetings planned yet. Click "+ Plan New Meeting" to start.</p>
+      <!-- All view -->
+      <div id="allView" class="hidden">
+        <div class="card-title mb-8">All Meetings</div>
+        <div id="allMeetingsList"></div>
+        <div id="emptyAll" class="hidden">
+          <div class="card text-center" style="padding:24px;"><p class="text-muted">Koi meeting nahi mili.</p></div>
         </div>
       </div>
     </div>
@@ -156,10 +176,9 @@
 
     var allMeetings = [];
     var currentDate = new Date();
-    var viewMode = 'month';
+    var viewMode = 'upcoming';
     var activePlanId = '';
 
-    // Check if coming from profile page with a plan to action
     var redirectPlanId = sessionStorage.getItem('redirectPlanId');
     if (redirectPlanId) { sessionStorage.removeItem('redirectPlanId'); }
 
@@ -173,12 +192,50 @@
           allMeetings.forEach(function (m) {
             if (m.status === 'planned' && m.meeting_date && new Date(m.meeting_date) < today) m._overdue = true;
           });
-          renderCalendar();
-          renderList(null);
+          renderUpcoming();
           if (redirectPlanId) { openActionSheet(redirectPlanId); }
         });
     }
     loadMeetings();
+
+    function renderUpcoming() {
+      var today = new Date(); today.setHours(0, 0, 0, 0);
+      var upcoming = allMeetings.filter(function(m) {
+        if (m.status === 'conducted' || m.status === 'not_conducted') return false;
+        if (!m.meeting_date) return false;
+        var d = new Date(m.meeting_date); d.setHours(0,0,0,0);
+        return d >= today;
+      });
+      upcoming.sort(function(a, b) { return new Date(a.meeting_date) - new Date(b.meeting_date); });
+
+      if (upcoming.length === 0) {
+        document.getElementById('upcomingList').innerHTML = '';
+        document.getElementById('emptyUpcoming').classList.remove('hidden');
+        return;
+      }
+      document.getElementById('emptyUpcoming').classList.add('hidden');
+      document.getElementById('upcomingList').innerHTML = buildMeetingRows(upcoming);
+    }
+
+    function buildMeetingRows(meetings) {
+      var statusLabel = { planned: 'Planned', conducted: 'Done', not_conducted: 'Not Done', overdue: 'Overdue' };
+      var statusBadge = { planned: 'badge-pending', conducted: 'badge-active', not_conducted: 'badge-suspended', overdue: 'badge-suspended' };
+      var html = '';
+      meetings.forEach(function (m) {
+        var st = m._overdue ? 'overdue' : (m.status || 'planned');
+        html += '<div class="meeting-row status-' + st + '">'
+          + '<div class="meeting-info">'
+          + '<div class="meeting-title">' + esc(m.stakeholder_name || '') + '</div>'
+          + '<div class="meeting-meta">' + fmtDate(m.meeting_date) + (m.meeting_time ? ' &nbsp;&middot;&nbsp; ' + m.meeting_time : '') + '</div>'
+          + '<div class="meeting-meta">' + esc(m.meeting_purpose || '') + (m.level_of_meeting ? ' &nbsp;&middot;&nbsp; ' + m.level_of_meeting : '') + '</div>'
+          + '<div class="meeting-meta" style="margin-top:4px;"><span class="badge ' + (statusBadge[st] || 'badge-pending') + '">' + (statusLabel[st] || st) + '</span></div>'
+          + '</div>';
+        if (st === 'planned' || st === 'overdue') html += '<button class="action-btn primary" onclick="openActionSheet(\'' + m.plan_id + '\')">Action</button>';
+        else html += '<span class="action-btn muted">Done</span>';
+        html += '</div>';
+      });
+      return html;
+    }
 
     function changeMonth(dir) { currentDate.setMonth(currentDate.getMonth() + dir); renderCalendar(); }
 
@@ -204,68 +261,47 @@
         if (dt.getTime() === today.getTime()) el.classList.add('today');
         if (dotMap[ds]) { el.classList.add('has-meeting'); if (dotMap[ds] === 'conducted') el.classList.add('has-conducted'); if (dotMap[ds] === 'overdue') el.classList.add('has-overdue'); }
         el.innerHTML = '<div class="cal-date">' + d + '</div>';
-        el.addEventListener('click', (function (s) { return function () { renderList(s); }; })(ds));
+        el.addEventListener('click', (function (s) { return function () { renderCalendarDayList(s); }; })(ds));
         grid.appendChild(el);
       }
+      renderCalendarDayList(null);
     }
 
-    function renderYearView() {
-      var y = currentDate.getFullYear();
-      var mnames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      var counts = new Array(12).fill(0);
-      allMeetings.forEach(function (m) { if (!m.meeting_date) return; var dt = new Date(m.meeting_date); if (dt.getFullYear() === y) counts[dt.getMonth()]++; });
-      var html = '<div style="text-align:center;font-weight:700;font-size:16px;margin-bottom:12px;grid-column:1/-1;">' + y + '</div>';
-      mnames.forEach(function (mn, i) {
-        html += '<div class="card" style="text-align:center;padding:12px 8px;cursor:pointer;" onclick="jumpToMonth(' + i + ')">'
-          + '<div style="font-weight:600;">' + mn + '</div>'
-          + '<div style="font-size:22px;font-weight:700;color:var(--primary);">' + counts[i] + '</div>'
-          + '<div style="font-size:11px;color:var(--muted);">meetings</div></div>';
-      });
-      document.getElementById('yearGrid').innerHTML = html;
-    }
-
-    function jumpToMonth(m) { currentDate.setMonth(m); switchView('month'); }
-
-    function switchView(v) {
-      viewMode = v;
-      ['Month','Year','List'].forEach(function (t) { document.getElementById('tab' + t).className = 'view-tab' + (t.toLowerCase() === v ? ' active' : ''); });
-      document.getElementById('calendarView').classList.toggle('hidden', v !== 'month');
-      document.getElementById('yearView').classList.toggle('hidden', v !== 'year');
-      if (v === 'year') renderYearView();
-      if (v !== 'month') renderList(null);
-    }
-
-    function renderList(dateFilter) {
+    function renderCalendarDayList(dateFilter) {
       var meetings = allMeetings.slice();
       if (dateFilter) {
         meetings = meetings.filter(function (m) { return m.meeting_date && m.meeting_date.toString().substring(0, 10) === dateFilter; });
         document.getElementById('listTitle').textContent = 'Meetings on ' + dateFilter + ' (' + meetings.length + ')';
-      } else if (viewMode === 'month') {
+      } else {
         var y = currentDate.getFullYear(), mo = currentDate.getMonth();
         meetings = meetings.filter(function (m) { if (!m.meeting_date) return false; var dt = new Date(m.meeting_date); return dt.getFullYear() === y && dt.getMonth() === mo; });
         document.getElementById('listTitle').textContent = 'This Month (' + meetings.length + ')';
-      } else {
-        document.getElementById('listTitle').textContent = 'All Meetings (' + meetings.length + ')';
       }
       meetings.sort(function (a, b) { return new Date(a.meeting_date) - new Date(b.meeting_date); });
       if (meetings.length === 0) { document.getElementById('meetingsList').innerHTML = ''; document.getElementById('emptyMeetings').classList.remove('hidden'); return; }
       document.getElementById('emptyMeetings').classList.add('hidden');
-      var statusLabel = { planned: 'Planned', conducted: 'Done', not_conducted: 'Not Done', overdue: 'Overdue' };
-      var statusBadge = { planned: 'badge-pending', conducted: 'badge-active', not_conducted: 'badge-suspended', overdue: 'badge-suspended' };
-      var html = '';
-      meetings.forEach(function (m) {
-        var st = m._overdue ? 'overdue' : (m.status || 'planned');
-        html += '<div class="meeting-row status-' + st + '">'
-          + '<div class="meeting-info">'
-          + '<div class="meeting-title">' + esc(m.stakeholder_name || '') + '</div>'
-          + '<div class="meeting-meta">' + fmtDate(m.meeting_date) + (m.meeting_time ? ' ' + m.meeting_time : '') + ' &nbsp;&middot;&nbsp; ' + esc(m.meeting_purpose || '') + (m.level_of_meeting ? ' &nbsp;&middot;&nbsp; ' + m.level_of_meeting : '') + '</div>'
-          + '<div class="meeting-meta" style="margin-top:4px;"><span class="badge ' + (statusBadge[st] || 'badge-pending') + '">' + (statusLabel[st] || st) + '</span></div>'
-          + '</div>';
-        if (st === 'planned' || st === 'overdue') html += '<button class="action-btn primary" onclick="openActionSheet(\'' + m.plan_id + '\')">Action</button>';
-        else html += '<button class="action-btn muted">Done</button>';
-        html += '</div>';
+      document.getElementById('meetingsList').innerHTML = buildMeetingRows(meetings);
+    }
+
+    function renderAll() {
+      var meetings = allMeetings.slice();
+      meetings.sort(function (a, b) { return new Date(a.meeting_date) - new Date(b.meeting_date); });
+      if (meetings.length === 0) { document.getElementById('allMeetingsList').innerHTML = ''; document.getElementById('emptyAll').classList.remove('hidden'); return; }
+      document.getElementById('emptyAll').classList.add('hidden');
+      document.getElementById('allMeetingsList').innerHTML = buildMeetingRows(meetings);
+    }
+
+    function switchView(v) {
+      viewMode = v;
+      var tabs = { upcoming: 'tabUpcoming', month: 'tabMonth', list: 'tabList' };
+      Object.keys(tabs).forEach(function(k) {
+        document.getElementById(tabs[k]).className = 'view-tab' + (k === v ? ' active' : '');
       });
-      document.getElementById('meetingsList').innerHTML = html;
+      document.getElementById('upcomingView').classList.toggle('hidden', v !== 'upcoming');
+      document.getElementById('calendarView').classList.toggle('hidden', v !== 'month');
+      document.getElementById('allView').classList.toggle('hidden', v !== 'list');
+      if (v === 'month') renderCalendar();
+      if (v === 'list') renderAll();
     }
 
     function openPlanModal() { document.getElementById('plan_date').value = new Date().toISOString().split('T')[0]; document.getElementById('planAlertBox').innerHTML = ''; document.getElementById('planModal').classList.remove('hidden'); }
