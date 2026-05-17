@@ -193,6 +193,36 @@ function submitMeeting(formData) {
   return id;
 }
 
+function deletePlannedMeeting(planId) {
+  var sheet = getSheet('PlannedMeetings');
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0];
+  var idCol = headers.indexOf('plan_id');
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][idCol] === planId) { sheet.deleteRow(i + 1); return true; }
+  }
+  return false;
+}
+
+function updatePlannedMeeting(planId, updateData) {
+  var sheet = getSheet('PlannedMeetings');
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0];
+  var idCol = headers.indexOf('plan_id');
+  var fields = ['meeting_date','meeting_time','stakeholder_type','stakeholder_name','meeting_purpose',
+    'level_of_meeting','block_cluster','document_link','agenda_items','meeting_mode','meet_link','location','colleague_email'];
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][idCol] === planId) {
+      fields.forEach(function(field) {
+        var col = headers.indexOf(field);
+        if (col >= 0 && updateData[field] !== undefined) sheet.getRange(i + 1, col + 1).setValue(updateData[field]);
+      });
+      return true;
+    }
+  }
+  return false;
+}
+
 function getMeetingById(submissionId) {
   var rows = sheetToObjects(getSheet('Meetings'));
   return rows.find(function(r) { return r.submission_id === submissionId; }) || null;

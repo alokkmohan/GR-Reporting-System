@@ -209,6 +209,23 @@ function doPost(e) {
       return respond({ success: true, submission_id: submissionId, next_plan_id: nextPlanId });
     }
 
+    if (action === 'deletePlan') {
+      if (!session || session.status !== 'active') return respond({ success: false, message: 'Not authorized.' });
+      var plan = getPlannedMeetingById(params.plan_id);
+      if (!plan) return respond({ success: false, message: 'Plan not found.' });
+      if (plan.user_email !== session.email && session.role !== 'admin') return respond({ success: false, message: 'Not authorized.' });
+      return respond({ success: deletePlannedMeeting(params.plan_id) });
+    }
+
+    if (action === 'updatePlan') {
+      if (!session || session.status !== 'active') return respond({ success: false, message: 'Not authorized.' });
+      var plan = getPlannedMeetingById(params.plan_id);
+      if (!plan) return respond({ success: false, message: 'Plan not found.' });
+      if (plan.user_email !== session.email && session.role !== 'admin') return respond({ success: false, message: 'Not authorized.' });
+      updatePlannedMeeting(params.plan_id, params.data);
+      return respond({ success: true });
+    }
+
     if (action === 'createMeetingDoc') {
       if (!session || session.status !== 'active') return respond({ success: false, message: 'Not authorized.' });
       var meeting = getMeetingById(params.submission_id);

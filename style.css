@@ -300,6 +300,7 @@ tr.row-planned:hover td { background: #dbeafe; }
 }
 @media (min-width: 769px) {
   .hamburger-btn { display: none; }
+  .sidebar { min-height: calc(100vh - 48px); }
 }
 @media (max-width: 640px) {
   .qa-row { grid-template-columns: 1fr 1fr; }

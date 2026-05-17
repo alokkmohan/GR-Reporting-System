@@ -112,7 +112,7 @@
                 <th>Date</th>
                 <th>Who to Meet</th>
                 <th>Agenda</th>
-                <th>Action</th>
+                <th style="text-align:center;">Actions</th>
               </tr>
             </thead>
             <tbody id="upcomingTbody"></tbody>
@@ -154,8 +154,8 @@
     <div class="modal">
       <div class="modal-head">
         <div>
-          <div class="modal-head-title">Plan a Meeting</div>
-          <div class="modal-head-sub">Fill in meeting details</div>
+          <div class="modal-head-title" id="modalTitle">Plan a Meeting</div>
+          <div class="modal-head-sub" id="modalSub">Fill in meeting details</div>
         </div>
         <button class="modal-close" onclick="closePlanModal()">&times;</button>
       </div>
@@ -233,7 +233,6 @@
               <option>Courtesy Meeting</option><option>Other</option>
             </select>
           </div>
-          <div class="form-group" style="margin-bottom:4px;"><label class="form-label">Notes / Key Points</label><textarea id="plan_notes" class="form-control" rows="3" placeholder="Key points to discuss..."></textarea></div>
         </div>
 
         <!-- Section 3b: Colleague -->
@@ -274,6 +273,19 @@
     </div>
   </div>
 
+  <!-- Success toast -->
+  <div id="successToast" style="display:none;position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#059669;color:#fff;padding:12px 22px;border-radius:10px;font-size:14px;font-weight:700;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,0.2);white-space:nowrap;"></div>
+
+  <!-- Delete confirm dialog -->
+  <div class="action-sheet hidden" id="deleteDialog">
+    <div class="action-sheet-inner">
+      <div style="font-size:16px;font-weight:700;margin-bottom:6px;">Delete Meeting Plan?</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:20px;" id="deleteDialogMeta"></div>
+      <button class="btn btn-danger" style="margin-bottom:10px;" onclick="confirmDelete()">Yes, Delete</button>
+      <button class="btn btn-outline" onclick="document.getElementById('deleteDialog').classList.add('hidden')">Cancel</button>
+    </div>
+  </div>
+
   <div class="action-sheet hidden" id="actionSheet">
     <div class="action-sheet-inner">
       <div style="font-size:16px;font-weight:700;margin-bottom:6px;" id="actionSheetTitle"></div>
@@ -288,6 +300,30 @@
   <script>
     var session = requireAuth();
     renderSidebar('planner');
+
+    var editPlanId = null;
+    var deletePlanId = null;
+
+    function showToast(msg, color) {
+      var t = document.getElementById('successToast');
+      t.textContent = msg;
+      t.style.background = color || '#059669';
+      t.style.display = 'block';
+      setTimeout(function() { t.style.display = 'none'; }, 3000);
+    }
+
+    function formatTime(v) {
+      if (!v) return '';
+      var s = String(v);
+      // Google Sheets returns time as 1899-12-30T... datetime
+      if (s.length > 5) {
+        var d = new Date(s);
+        if (!isNaN(d.getTime())) {
+          return String(d.getUTCHours()).padStart(2,'0') + ':' + String(d.getUTCMinutes()).padStart(2,'0');
+        }
+      }
+      return s.substring(0, 5);
+    }
 
     // Meeting mode
     var meetingMode = 'in_person';
@@ -438,16 +474,21 @@
         var joinBtn = (m.meeting_mode === 'online' && m.meet_link)
           ? '<a href="' + esc(m.meet_link) + '" target="_blank" style="display:block;margin-top:6px;background:#1e3a8a;color:#fff;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;text-decoration:none;text-align:center;">Join Meet</a>'
           : '';
+        var t = formatTime(m.meeting_time);
         html += '<tr>'
           + '<td><div class="ut-date">' + fmtDate(m.meeting_date) + '</div>'
-          + (m.meeting_time ? '<div class="ut-type">' + m.meeting_time + '</div>' : '')
+          + (t ? '<div class="ut-type">' + t + '</div>' : '')
           + (isOverdue ? '<div class="ut-overdue-tag">Overdue</div>' : '') + '</td>'
           + '<td><div class="ut-name">' + esc(m.stakeholder_name || '') + modeBadge + '</div>'
           + '<div class="ut-type">' + esc(m.stakeholder_type || '') + (m.level_of_meeting ? ' &middot; ' + esc(m.level_of_meeting) : '') + '</div>'
           + joinBtn + '</td>'
           + '<td><div class="ut-purpose">' + esc(m.meeting_purpose || '') + '</div>'
-          + (m.notes ? '<div class="ut-notes">' + esc(m.notes) + '</div>' : '') + '</td>'
-          + '<td><button class="ut-action" onclick="openActionSheet(\'' + m.plan_id + '\')">Action</button></td>'
+          + (m.agenda_items ? '<div class="ut-notes">' + formatAgendaPreview(m.agenda_items) + '</div>' : '') + '</td>'
+          + '<td style="text-align:center;white-space:nowrap;">'
+          + '<button class="ut-action" style="margin-bottom:4px;" onclick="openActionSheet(\'' + m.plan_id + '\')">Log</button>'
+          + '<br><button onclick="openEditModal(\'' + m.plan_id + '\')" style="background:#1e293b;color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;margin-bottom:4px;">Edit</button>'
+          + '<br><button onclick="openDeleteDialog(\'' + m.plan_id + '\')" style="background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;">Delete</button>'
+          + '</td>'
           + '</tr>';
       });
       document.getElementById('upcomingTbody').innerHTML = html;
@@ -579,54 +620,138 @@
       reader.readAsDataURL(file);
     }
 
-    function openPlanModal() {
-      document.getElementById('plan_date').value = new Date().toISOString().split('T')[0];
-      document.getElementById('planAlertBox').innerHTML = '';
-      document.getElementById('planModal').classList.remove('hidden');
-      renderAgenda();
+    function formatAgendaPreview(raw) {
+      try {
+        var items = JSON.parse(raw || '[]');
+        if (Array.isArray(items) && items.length) return items.slice(0,2).join(', ') + (items.length > 2 ? '...' : '');
+      } catch(e) {}
+      return typeof raw === 'string' ? raw.substring(0, 60) : '';
     }
-    function closePlanModal() {
-      document.getElementById('planModal').classList.add('hidden');
+
+    function resetModal() {
+      editPlanId = null;
+      document.getElementById('modalTitle').textContent = 'Plan a Meeting';
+      document.getElementById('modalSub').textContent = 'Fill in meeting details';
+      document.getElementById('savePlanBtn').textContent = 'Save Meeting Plan';
+      document.getElementById('planAlertBox').innerHTML = '';
       document.getElementById('uploadStatus').textContent = 'PDF, Word, Image (max 5MB)';
       document.getElementById('uploadStatus').style.color = '';
       document.getElementById('planFileInput').value = '';
+      document.getElementById('plan_time').value = '';
       document.getElementById('plan_meet_link').value = '';
       document.getElementById('meetLinkCopy').style.display = 'none';
       document.getElementById('plan_location').value = '';
       document.getElementById('plan_colleague_email').value = '';
       document.getElementById('colleagueResult').style.display = 'none';
+      document.getElementById('plan_doc_link').value = '';
+      ['plan_stakeholder_name','plan_block'].forEach(function(id){ document.getElementById(id).value=''; });
+      ['plan_stakeholder_type','plan_purpose','plan_level'].forEach(function(id){ document.getElementById(id).value=''; });
       setMeetingMode('in_person');
       agendaItems = [];
       renderAgenda();
     }
 
-    function savePlan() {
-      var date = document.getElementById('plan_date').value, stype = document.getElementById('plan_stakeholder_type').value;
-      var sname = document.getElementById('plan_stakeholder_name').value.trim(), purpose = document.getElementById('plan_purpose').value;
-      if (!date || !stype || !sname || !purpose) { document.getElementById('planAlertBox').innerHTML = '<div class="alert alert-error">Please fill all required fields.</div>'; return; }
-      document.getElementById('savePlanBtn').disabled = true; document.getElementById('savePlanBtn').textContent = 'Saving...';
-      fetch(APP_URL, { method: 'POST', body: JSON.stringify({ action: 'planMeeting', token: grToken(), data: {
-        meeting_date: date, meeting_time: document.getElementById('plan_time').value,
-        stakeholder_type: stype, stakeholder_name: sname, meeting_purpose: purpose,
+    function openPlanModal() {
+      resetModal();
+      document.getElementById('plan_date').value = new Date().toISOString().split('T')[0];
+      document.getElementById('planModal').classList.remove('hidden');
+    }
+
+    function openEditModal(planId) {
+      var m = allMeetings.find(function(x){ return x.plan_id === planId; });
+      if (!m) return;
+      resetModal();
+      editPlanId = planId;
+      document.getElementById('modalTitle').textContent = 'Edit Meeting';
+      document.getElementById('modalSub').textContent = 'Update the details below';
+      document.getElementById('savePlanBtn').textContent = 'Update Meeting';
+      document.getElementById('plan_date').value = (m.meeting_date || '').toString().substring(0,10);
+      document.getElementById('plan_time').value = formatTime(m.meeting_time);
+      document.getElementById('plan_stakeholder_type').value = m.stakeholder_type || '';
+      document.getElementById('plan_stakeholder_name').value = m.stakeholder_name || '';
+      document.getElementById('plan_purpose').value = m.meeting_purpose || '';
+      document.getElementById('plan_level').value = m.level_of_meeting || '';
+      document.getElementById('plan_block').value = m.block_cluster || '';
+      document.getElementById('plan_doc_link').value = m.document_link || '';
+      document.getElementById('plan_location').value = m.location || '';
+      document.getElementById('plan_colleague_email').value = m.colleague_email || '';
+      var mode = m.meeting_mode || 'in_person';
+      setMeetingMode(mode);
+      if (mode === 'online') document.getElementById('plan_meet_link').value = m.meet_link || '';
+      try { agendaItems = JSON.parse(m.agenda_items || '[]'); } catch(e) { agendaItems = []; }
+      renderAgenda();
+      document.getElementById('planModal').classList.remove('hidden');
+    }
+
+    function closePlanModal() {
+      document.getElementById('planModal').classList.add('hidden');
+      editPlanId = null;
+    }
+
+    function openDeleteDialog(planId) {
+      var m = allMeetings.find(function(x){ return x.plan_id === planId; });
+      if (!m) return;
+      deletePlanId = planId;
+      document.getElementById('deleteDialogMeta').textContent = esc(m.stakeholder_name || '') + ' - ' + fmtDate(m.meeting_date);
+      document.getElementById('deleteDialog').classList.remove('hidden');
+    }
+
+    function confirmDelete() {
+      if (!deletePlanId) return;
+      document.getElementById('deleteDialog').classList.add('hidden');
+      fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'deletePlan', token: grToken(), plan_id: deletePlanId }) })
+        .then(function(r){ return r.json(); }).then(function(res){
+          deletePlanId = null;
+          if (res.success) { showToast('Meeting deleted.', '#dc2626'); loadMeetings(); }
+          else alert(res.message || 'Could not delete.');
+        }).catch(function(){ deletePlanId = null; alert('Network error.'); });
+    }
+
+    function collectPlanData() {
+      return {
+        meeting_date: document.getElementById('plan_date').value,
+        meeting_time: document.getElementById('plan_time').value,
+        stakeholder_type: document.getElementById('plan_stakeholder_type').value,
+        stakeholder_name: document.getElementById('plan_stakeholder_name').value.trim(),
+        meeting_purpose: document.getElementById('plan_purpose').value,
         level_of_meeting: document.getElementById('plan_level').value,
         block_cluster: document.getElementById('plan_block').value,
-        notes: document.getElementById('plan_notes').value,
         document_link: document.getElementById('plan_doc_link').value.trim(),
         agenda_items: JSON.stringify(collectAgenda()),
         meeting_mode: meetingMode,
         meet_link: meetingMode === 'online' ? document.getElementById('plan_meet_link').value.trim() : '',
         location: document.getElementById('plan_location').value.trim(),
         colleague_email: document.getElementById('plan_colleague_email').value.trim().toLowerCase()
-      }})})
-      .then(function (r) { return r.json(); }).then(function (res) {
-        document.getElementById('savePlanBtn').disabled = false; document.getElementById('savePlanBtn').textContent = 'Save Meeting Plan';
-        if (res.success) {
-          closePlanModal();
-          ['plan_time','plan_stakeholder_name','plan_block','plan_notes','plan_doc_link'].forEach(function (id) { document.getElementById(id).value = ''; });
-          ['plan_stakeholder_type','plan_purpose','plan_level'].forEach(function (id) { document.getElementById(id).value = ''; });
-          loadMeetings();
-        } else { document.getElementById('planAlertBox').innerHTML = '<div class="alert alert-error">' + (res.message || 'Error') + '</div>'; }
-      }).catch(function () { document.getElementById('savePlanBtn').disabled = false; document.getElementById('savePlanBtn').textContent = 'Save Meeting Plan'; document.getElementById('planAlertBox').innerHTML = '<div class="alert alert-error">Network error.</div>'; });
+      };
+    }
+
+    function savePlan() {
+      var data = collectPlanData();
+      if (!data.meeting_date || !data.stakeholder_type || !data.stakeholder_name || !data.meeting_purpose) {
+        document.getElementById('planAlertBox').innerHTML = '<div class="alert alert-error">Please fill all required fields.</div>'; return;
+      }
+      var btn = document.getElementById('savePlanBtn');
+      btn.disabled = true; btn.textContent = editPlanId ? 'Updating...' : 'Saving...';
+
+      var payload = editPlanId
+        ? { action: 'updatePlan', token: grToken(), plan_id: editPlanId, data: data }
+        : { action: 'planMeeting', token: grToken(), data: data };
+
+      fetch(APP_URL, { method:'POST', body: JSON.stringify(payload) })
+        .then(function(r){ return r.json(); }).then(function(res){
+          btn.disabled = false; btn.textContent = editPlanId ? 'Update Meeting' : 'Save Meeting Plan';
+          if (res.success) {
+            var msg = editPlanId ? 'Meeting updated successfully.' : 'Meeting planned successfully.';
+            closePlanModal();
+            loadMeetings();
+            showToast(msg);
+          } else {
+            document.getElementById('planAlertBox').innerHTML = '<div class="alert alert-error">' + (res.message || 'Error') + '</div>';
+          }
+        }).catch(function(){
+          btn.disabled = false; btn.textContent = editPlanId ? 'Update Meeting' : 'Save Meeting Plan';
+          document.getElementById('planAlertBox').innerHTML = '<div class="alert alert-error">Network error.</div>';
+        });
     }
 
     function openActionSheet(planId) {
