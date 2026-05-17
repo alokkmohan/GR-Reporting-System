@@ -75,6 +75,13 @@ function doPost(e) {
       return respond({ success: true, units: getUnits(), designations: getDesignations(), postingLevels: getPostingLevels() });
     }
 
+    // ── MY PROFILE ────────────────────────────────────────
+    if (action === 'getMyProfile') {
+      if (!session || session.status !== 'active') return respond({ success: false, message: 'Not authorized.' });
+      var user = getUserByEmail(session.email);
+      return respond({ success: true, user: user });
+    }
+
     // ── REGISTRATION ──────────────────────────────────────
     if (action === 'register') {
       if (!session || session.status !== 'unregistered') return respond({ success: false, message: 'Session invalid.' });

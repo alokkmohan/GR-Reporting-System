@@ -7,7 +7,8 @@ function planMeeting(data, userEmail, district) {
   var headers = lastCol > 0 ? sheet.getRange(1, 1, 1, lastCol).getValues()[0] : [];
   var required = ['plan_id','timestamp','user_email','district','stakeholder_type','stakeholder_name',
     'meeting_date','meeting_time','level_of_meeting','block_cluster','meeting_purpose','notes',
-    'status','linked_submission_id','document_link','parent_plan_id','chain_id','agenda_items'];
+    'status','linked_submission_id','document_link','parent_plan_id','chain_id','agenda_items',
+    'meeting_mode','meet_link'];
   required.forEach(function(col) {
     if (headers.indexOf(col) === -1) {
       sheet.getRange(1, headers.length + 1).setValue(col);
@@ -31,7 +32,9 @@ function planMeeting(data, userEmail, district) {
     data.document_link || '',
     data.parent_plan_id || '',
     chainId,
-    data.agenda_items || ''
+    data.agenda_items || '',
+    data.meeting_mode || 'in_person',
+    data.meet_link || ''
   ]);
   return id;
 }

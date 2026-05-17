@@ -7,51 +7,180 @@
   <style><?!= include('client/style'); ?></style>
 </head>
 <body>
-  <nav class="navbar">
-    <span class="logo">GR Reporting</span>
-    <span class="nav-user" id="navUser"></span>
-  </nav>
-  <div class="container">
-    <div class="card" style="margin-top:16px">
-      <div class="card-title" id="greetingText">Welcome!</div>
-      <div class="text-muted" id="greetingMeta"></div>
-    </div>
-    <div class="card-title mb-8">Log a Meeting</div>
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;">
-      <button class="btn btn-primary" style="padding:20px 12px;" onclick="goTo('formA')">
-        <span style="font-size:13px; font-weight:500; display:block;">Meeting<br>Conducted</span>
-      </button>
-      <button class="btn btn-outline" style="padding:20px 12px;" onclick="goTo('formB')">
-        <span style="font-size:13px; font-weight:500; display:block;">Not<br>Conducted</span>
-      </button>
-    </div>
-    <div class="card-title mb-8">My Work</div>
-    <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px;">
-      <button class="btn btn-outline" style="text-align:left; padding:14px 16px;" onclick="goTo('planner')">Meeting Planner</button>
-      <button class="btn btn-outline" style="text-align:left; padding:14px 16px;" onclick="goTo('myentries')">My Past Entries</button>
-      <button class="btn btn-outline" id="adminBtn" style="text-align:left; padding:14px 16px; display:none;" onclick="goTo('admin')">Admin Panel</button>
-    </div>
-    <hr class="divider">
-    <button class="btn btn-outline" style="color:#c0392b; border-color:#c0392b;" onclick="logout()">Logout</button>
+
+<div class="drawer-overlay hidden" id="drawerOverlay" onclick="closeDrawer()"></div>
+<div class="drawer hidden" id="drawer">
+  <div class="drawer-header">
+    <div class="drawer-logo">GR Reporting</div>
+    <div class="drawer-user" id="drawerUser"></div>
   </div>
-  <script>
-    var APP_URL = '<?= appUrl ?>';
-    var token = new URLSearchParams(window.location.search).get('token') || '<?= token ?>';
-    var session = null;
-    try { session = JSON.parse('<?= session ?>'); } catch(e) {}
-    if (!session || session.status !== 'active') window.location.href = APP_URL;
+  <div class="drawer-nav">
+    <div class="drawer-section">Main</div>
+    <a class="drawer-link active">Dashboard</a>
+    <a class="drawer-link" onclick="goTo('planner'); closeDrawer()">Meeting Planner</a>
+    <a class="drawer-link" onclick="goTo('myentries'); closeDrawer()">My Entries</a>
+    <div class="drawer-section">Log Meeting</div>
+    <a class="drawer-link" onclick="goTo('formA'); closeDrawer()">Conducted Meeting</a>
+    <a class="drawer-link" onclick="goTo('formB'); closeDrawer()">Not Conducted</a>
+    <div class="drawer-section" id="adminSection" style="display:none">Admin</div>
+    <a class="drawer-link" id="drawerAdmin" style="display:none" onclick="goTo('admin'); closeDrawer()">Admin Panel</a>
+  </div>
+  <div class="drawer-footer">
+    <button class="btn btn-outline btn-sm" style="color:#fca5a5; border-color:rgba(255,255,255,0.2); width:100%; background:rgba(255,255,255,0.05);" onclick="logout()">Logout</button>
+  </div>
+</div>
 
-    document.getElementById('navUser').textContent = session.email || '';
-    var h = new Date().getHours();
-    document.getElementById('greetingText').textContent = (h < 12 ? 'Good Morning' : h < 17 ? 'Good Afternoon' : 'Good Evening') + '!';
-    document.getElementById('greetingMeta').textContent = 'Role: ' + (session.role || '').toUpperCase();
-    if (session.role === 'admin') document.getElementById('adminBtn').style.display = 'block';
+<nav class="navbar">
+  <button class="hamburger" onclick="openDrawer()">&#9776;</button>
+  <span class="logo">GR Reporting</span>
+  <span class="nav-user" id="navUser"></span>
+</nav>
 
-    function goTo(page) { window.location.href = APP_URL + '?page=' + page + '&token=' + token; }
-    function logout() {
-      fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'logout', token: token }) })
-        .finally(function() { window.location.href = APP_URL; });
-    }
-  </script>
+<div class="container" style="padding-top:18px; padding-bottom:32px;">
+
+  <div style="margin-bottom:18px;">
+    <div style="font-size:19px; font-weight:800;" id="greetingText">Welcome!</div>
+    <div style="font-size:13px; color:var(--muted); margin-top:2px;" id="greetingMeta"></div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card stat-blue">
+      <div class="stat-num" id="statTotal">--</div>
+      <div class="stat-label">This Month</div>
+    </div>
+    <div class="stat-card stat-green">
+      <div class="stat-num" id="statConducted">--</div>
+      <div class="stat-label">Conducted</div>
+    </div>
+    <div class="stat-card stat-red">
+      <div class="stat-num" id="statNotConducted">--</div>
+      <div class="stat-label">Not Conducted</div>
+    </div>
+    <div class="stat-card stat-orange">
+      <div class="stat-num" id="statPlanned">--</div>
+      <div class="stat-label">Planned</div>
+    </div>
+  </div>
+
+  <div class="section-header">Log a Meeting</div>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;">
+    <button class="action-card action-green" onclick="goTo('formA')">
+      <div class="action-icon">&#10003;</div>
+      <div class="action-label">Meeting<br>Conducted</div>
+    </button>
+    <button class="action-card action-red" onclick="goTo('formB')">
+      <div class="action-icon">&#10005;</div>
+      <div class="action-label">Not<br>Conducted</div>
+    </button>
+  </div>
+
+  <div class="quick-nav">
+    <button class="quick-pill" onclick="goTo('planner')">+ Plan Meeting</button>
+    <button class="quick-pill" onclick="goTo('myentries')">My Entries</button>
+    <button class="quick-pill" id="adminPill" style="display:none" onclick="goTo('admin')">Admin Panel</button>
+  </div>
+
+  <div class="section-header" style="margin-bottom:12px;">
+    Recent Entries
+    <a onclick="goTo('myentries')" style="float:right; font-size:12px; color:var(--primary); cursor:pointer; font-weight:600; text-transform:none; letter-spacing:0;">View All &rsaquo;</a>
+  </div>
+  <div class="card" style="padding:0; overflow:hidden;" id="recentCard">
+    <div style="padding:16px; color:var(--muted); font-size:14px;">Loading...</div>
+  </div>
+
+  <div class="section-header" style="margin-top:20px; margin-bottom:12px;">
+    Planned Meetings
+    <a onclick="goTo('planner')" style="float:right; font-size:12px; color:var(--primary); cursor:pointer; font-weight:600; text-transform:none; letter-spacing:0;">View All &rsaquo;</a>
+  </div>
+  <div class="card" style="padding:0; overflow:hidden;" id="plannedCard">
+    <div style="padding:16px; color:var(--muted); font-size:14px;">Loading...</div>
+  </div>
+
+</div>
+
+<script>
+  var APP_URL = '<?= appUrl ?>';
+  var token = new URLSearchParams(window.location.search).get('token') || '<?= token ?>';
+  var session = null;
+  try { session = JSON.parse('<?= session ?>'); } catch(e) {}
+  if (!session || session.status !== 'active') window.location.href = APP_URL;
+
+  var h = new Date().getHours();
+  var firstName = (session.full_name || session.email || '').split(' ')[0];
+  document.getElementById('greetingText').textContent = (h < 12 ? 'Good Morning' : h < 17 ? 'Good Afternoon' : 'Good Evening') + ', ' + firstName + '!';
+  document.getElementById('greetingMeta').textContent = (session.role || '').toUpperCase() + '  |  ' + (session.email || '');
+  document.getElementById('navUser').textContent = firstName;
+  document.getElementById('drawerUser').textContent = session.email || '';
+
+  if (session.role === 'admin') {
+    document.getElementById('drawerAdmin').style.display = 'block';
+    document.getElementById('adminSection').style.display = 'block';
+    document.getElementById('adminPill').style.display = 'inline-block';
+  }
+
+  function goTo(page) { window.location.href = APP_URL + '?page=' + page + '&token=' + token; }
+  function openDrawer() { document.getElementById('drawer').classList.remove('hidden'); document.getElementById('drawerOverlay').classList.remove('hidden'); }
+  function closeDrawer() { document.getElementById('drawer').classList.add('hidden'); document.getElementById('drawerOverlay').classList.add('hidden'); }
+  function logout() {
+    fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'logout', token: token }) })
+      .finally(function() { window.location.href = APP_URL; });
+  }
+
+  function fmtDate(d) {
+    if (!d) return '';
+    var s = String(d);
+    if (s.length > 10) s = s.substring(0, 10);
+    return s;
+  }
+
+  fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'getMyMeetings', token: token }) })
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+      if (!res.success) return;
+      var data = res.data || [];
+      var now = new Date();
+      var thisMonth = data.filter(function(m) {
+        var d = new Date(m.timestamp || m.date);
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      });
+      document.getElementById('statTotal').textContent = thisMonth.length;
+      document.getElementById('statConducted').textContent = thisMonth.filter(function(m) { return m.meeting_conducted === 'YES'; }).length;
+      document.getElementById('statNotConducted').textContent = thisMonth.filter(function(m) { return m.meeting_conducted === 'NO'; }).length;
+
+      var recent = data.slice().reverse().slice(0, 6);
+      if (recent.length === 0) {
+        document.getElementById('recentCard').innerHTML = '<div style="padding:16px; color:var(--muted); font-size:14px;">No entries yet. Log your first meeting above!</div>';
+        return;
+      }
+      var rows = recent.map(function(m) {
+        var badge = m.meeting_conducted === 'YES'
+          ? '<span class="badge-conducted">CONDUCTED</span>'
+          : '<span class="badge-not-conducted">NOT CONDUCTED</span>';
+        var who = m.stakeholder_name || m.stakeholder_type || '—';
+        var dist = m.district ? '<span style="color:var(--muted)"> | ' + m.district + '</span>' : '';
+        return '<tr><td><div style="font-weight:600; font-size:13px;">' + who + '</div><div style="font-size:11px; color:var(--muted); margin-top:2px;">' + fmtDate(m.date) + dist + '</div></td><td style="text-align:right;">' + badge + '</td></tr>';
+      }).join('');
+      document.getElementById('recentCard').innerHTML = '<div class="table-wrap"><table class="recent-table"><thead><tr><th>Meeting</th><th style="text-align:right;">Status</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+    });
+
+  fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'getPlannedMeetings', token: token }) })
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+      if (!res.success) return;
+      var pending = (res.data || []).filter(function(m) { return m.status === 'planned'; });
+      document.getElementById('statPlanned').textContent = pending.length;
+      var upcoming = pending.sort(function(a, b) { return new Date(a.date) - new Date(b.date); }).slice(0, 5);
+      if (upcoming.length === 0) {
+        document.getElementById('plannedCard').innerHTML = '<div style="padding:16px; color:var(--muted); font-size:14px;">No upcoming planned meetings. <a onclick="goTo(\'planner\')" style="color:var(--primary); cursor:pointer; font-weight:600;">Plan one now &rsaquo;</a></div>';
+        return;
+      }
+      var rows = upcoming.map(function(m) {
+        var who = m.stakeholder_name || m.stakeholder_type || '—';
+        var purpose = m.purpose || '';
+        return '<tr><td><div style="font-weight:600; font-size:13px;">' + who + '</div><div style="font-size:11px; color:var(--muted); margin-top:2px;">' + purpose + '</div></td><td style="text-align:right; white-space:nowrap;"><span class="badge-planned">' + fmtDate(m.date) + '</span></td></tr>';
+      }).join('');
+      document.getElementById('plannedCard').innerHTML = '<div class="table-wrap"><table class="recent-table"><thead><tr><th>Meeting</th><th style="text-align:right;">Date</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+    });
+</script>
 </body>
 </html>
