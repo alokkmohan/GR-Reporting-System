@@ -130,11 +130,19 @@ function submitMeeting(formData) {
   var ts = formatTimestamp(new Date());
   var rm = getReportingMonth(formData.date);
 
-  // Ensure new columns exist
+  // Ensure ALL columns exist (handles fresh sheet with no headers)
   var lastCol = sheet.getLastColumn();
   var headers = lastCol > 0 ? sheet.getRange(1, 1, 1, lastCol).getValues()[0] : [];
-  ['attendee_type', 'actual_attendee_name', 'meeting_status', 'action_items', 'plan_id', 'co_entry',
-   'reason_not_conducted', 'followup_notes'].forEach(function(col) {
+  var allCols = [
+    'submission_id','timestamp','user_email','meeting_conducted','date','reporting_month',
+    'unit','district','block_cluster','conducted_by','staff_name','level_of_meeting',
+    'other_participants','stakeholder_type','stakeholder_name','department_organisation',
+    'meeting_purpose','key_discussion_points','outcome','next_action','responsible_person',
+    'followup_date','followup_status','photo_link','remark','priority_level','escalation_required',
+    'attendee_type','actual_attendee_name','meeting_status','action_items','plan_id','co_entry',
+    'reason_not_conducted','followup_notes'
+  ];
+  allCols.forEach(function(col) {
     if (headers.indexOf(col) === -1) {
       sheet.getRange(1, headers.length + 1).setValue(col);
       headers.push(col);

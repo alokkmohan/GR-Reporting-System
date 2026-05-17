@@ -1,5 +1,53 @@
-// Run seedSampleData() once from the Apps Script editor to load demo data.
-// Run clearSampleData() to remove it.
+// ── USAGE ────────────────────────────────────────────────────────────────────
+// resetSampleData()  → wipes sheets clean + loads fresh sample data (use this)
+// seedSampleData()   → adds data on top of existing rows (run ONLY on clean sheets)
+// clearSampleData()  → removes last seed run's rows by stored IDs
+
+function resetSampleData() {
+  try {
+    // ── Wipe Meetings sheet and rebuild with correct headers ──
+    var meetSheet = getSheet('Meetings');
+    if (meetSheet) {
+      meetSheet.clearContents();
+      meetSheet.appendRow([
+        'submission_id','timestamp','user_email','meeting_conducted','date','reporting_month',
+        'unit','district','block_cluster','conducted_by','staff_name','level_of_meeting',
+        'other_participants','stakeholder_type','stakeholder_name','department_organisation',
+        'meeting_purpose','key_discussion_points','outcome','next_action','responsible_person',
+        'followup_date','followup_status','photo_link','remark','priority_level','escalation_required',
+        'attendee_type','actual_attendee_name','meeting_status','action_items','plan_id','co_entry',
+        'reason_not_conducted','followup_notes'
+      ]);
+    }
+
+    // ── Wipe PlannedMeetings sheet and rebuild with correct headers ──
+    var planSheet = getSheet('PlannedMeetings');
+    if (planSheet) {
+      planSheet.clearContents();
+      planSheet.appendRow([
+        'plan_id','timestamp','user_email','district','stakeholder_type','stakeholder_name',
+        'meeting_date','meeting_time','level_of_meeting','block_cluster','meeting_purpose','notes',
+        'status','linked_submission_id','document_link','parent_plan_id','chain_id','agenda_items'
+      ]);
+    }
+
+    // ── Clear Followups data (keep header if exists) ──
+    var fSheet = getSheet('Followups');
+    if (fSheet && fSheet.getLastRow() > 1) {
+      fSheet.deleteRows(2, fSheet.getLastRow() - 1);
+    }
+
+    // ── Clear stored seed IDs ──
+    var props = PropertiesService.getScriptProperties();
+    props.deleteProperty('SEED_PLAN_IDS');
+    props.deleteProperty('SEED_MEETING_IDS');
+
+    // ── Re-seed with fresh data ──
+    return seedSampleData();
+  } catch(e) {
+    return '❌ Reset Error: ' + e.message + '\n' + e.stack;
+  }
+}
 
 function seedSampleData() {
   try {
