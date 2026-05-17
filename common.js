@@ -15,9 +15,14 @@ function requireAuth() {
           sess.unit = res.user.unit || '';
           sess.full_name = res.user.full_name || sess.full_name || '';
           sess.district = res.user.district || sess.district || '';
+          sess.photo_url = res.user.photo_url || sess.photo_url || '';
           localStorage.setItem('grSession', JSON.stringify(sess));
           var badge = document.querySelector('.role-badge');
           if (badge) badge.textContent = sess.designation || sess.role || 'Field';
+          var avatarWrap = document.querySelector('.sidebar-avatar-wrap');
+          if (avatarWrap && sess.photo_url) {
+            avatarWrap.innerHTML = '<img src="' + sess.photo_url + '" onerror="this.style.display=\'none\'" style="width:52px;height:52px;border-radius:50%;object-fit:cover;display:block;">';
+          }
         }
       }).catch(function() {});
   }
