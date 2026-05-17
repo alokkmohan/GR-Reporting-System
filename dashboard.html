@@ -6,59 +6,75 @@
   <title>Dashboard GR Reporting System</title>
   <link rel="stylesheet" href="style.css">
   <style>
-    .welcome-card {
+    .welcome-bar {
       background: linear-gradient(135deg, #922b21 0%, #c0392b 60%, #e74c3c 100%);
-      color: #fff; border-radius: var(--radius); padding: 18px 16px;
-      margin: 4px 0 14px; box-shadow: 0 4px 16px rgba(192,57,43,0.3);
+      color: #fff; border-radius: var(--radius); padding: 16px 18px;
+      margin-bottom: 16px; box-shadow: 0 4px 16px rgba(192,57,43,0.28);
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
     }
-    .welcome-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
-    .welcome-greeting { font-size: 12px; opacity: 0.85; font-weight: 600; letter-spacing: 0.3px; margin-bottom: 2px; }
-    .welcome-name { font-size: 20px; font-weight: 800; line-height: 1.2; }
-    .welcome-right { text-align: right; flex-shrink: 0; }
-    .welcome-date { font-size: 11px; opacity: 0.78; margin-bottom: 4px; }
-    .welcome-chip { display: inline-block; background: rgba(255,255,255,0.22); border: 1px solid rgba(255,255,255,0.38); border-radius: 12px; padding: 2px 10px; font-size: 11px; font-weight: 700; }
+    .welcome-bar-left .greet-line { font-size: 12px; opacity: 0.82; font-weight: 600; }
+    .welcome-bar-left .name-line { font-size: 20px; font-weight: 800; line-height: 1.2; }
+    .welcome-bar-right { text-align: right; flex-shrink: 0; }
+    .welcome-bar-right .date-line { font-size: 11px; opacity: 0.78; margin-bottom: 4px; }
+    .wchip { display: inline-block; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.35); border-radius: 12px; padding: 2px 10px; font-size: 11px; font-weight: 700; margin-left: 4px; }
 
-    /* Donut stat card */
-    .stat-combo-card { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow); padding: 14px 14px 12px; margin-bottom: 16px; display: flex; align-items: center; gap: 16px; }
-    .stat-donut-wrap { flex-shrink: 0; }
-    .stat-pills-wrap { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .stat-pill { background: #f9fafb; border-radius: 10px; padding: 10px 8px; text-align: center; border-left: 3px solid var(--primary); }
-    .stat-pill.green  { border-left-color: #27ae60; }
-    .stat-pill.blue   { border-left-color: #3498db; }
-    .stat-pill.red    { border-left-color: #e74c3c; }
-    .stat-pill.gray   { border-left-color: #95a5a6; }
-    .stat-pill-num  { font-size: 24px; font-weight: 800; color: var(--primary); line-height: 1; }
-    .stat-pill.green  .stat-pill-num { color: #27ae60; }
-    .stat-pill.blue   .stat-pill-num { color: #3498db; }
-    .stat-pill.red    .stat-pill-num { color: #e74c3c; }
-    .stat-pill.gray   .stat-pill-num { color: #95a5a6; }
-    .stat-pill-label { font-size: 10px; font-weight: 700; color: var(--muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.3px; }
-    .donut-legend { display: flex; flex-wrap: wrap; gap: 6px 12px; margin-top: 10px; }
-    .donut-legend-item { font-size: 11px; font-weight: 600; color: #374151; display: flex; align-items: center; gap: 4px; }
-    .donut-legend-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+    /* STATS */
+    .stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 16px; }
+    .scard { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow); padding: 14px 12px; text-align: center; border-top: 3px solid var(--border); }
+    .scard.blue  { border-top-color: #2563eb; }
+    .scard.green { border-top-color: #059669; }
+    .scard.orange{ border-top-color: #d97706; }
+    .scard.red   { border-top-color: #dc2626; }
+    .scard-num { font-size: 26px; font-weight: 800; line-height: 1; }
+    .scard.blue  .scard-num { color: #2563eb; }
+    .scard.green .scard-num { color: #059669; }
+    .scard.orange .scard-num { color: #d97706; }
+    .scard.red   .scard-num { color: #dc2626; }
+    .scard-label { font-size: 10px; font-weight: 700; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.4px; }
 
-    /* Table */
-    .section-card { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; margin-bottom: 14px; }
-    .section-head { padding: 12px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-    .section-head-title { font-size: 14px; font-weight: 700; }
-    .section-head-link { font-size: 12px; color: var(--primary); font-weight: 600; text-decoration: none; }
-    .mtable { width: 100%; border-collapse: collapse; font-size: 13px; }
-    .mtable th { background: #f9fafb; padding: 8px 10px; text-align: left; font-weight: 700; border-bottom: 2px solid var(--border); font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; white-space: nowrap; }
-    .mtable td { padding: 9px 10px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
-    .mtable tr:last-child td { border-bottom: none; }
-    .mtable tr:hover td { background: #fafafa; }
-    .mstk-name { font-weight: 600; font-size: 13px; }
-    .mstk-type { font-size: 11px; color: var(--muted); }
-    .mpurpose  { font-size: 12px; color: #374151; }
-    .date-line { font-size: 12px; font-weight: 600; white-space: nowrap; }
-    .overdue-tag { background: #fef2f2; color: var(--danger); font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 8px; display: inline-block; margin-top: 2px; }
-    .st-conducted    { background: #ecfdf5; color: #065f46; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 10px; white-space: nowrap; display: inline-block; }
-    .st-not-done     { background: #fdf2f2; color: #7b1f1f; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 10px; white-space: nowrap; display: inline-block; }
-    .st-upcoming     { background: #fffbeb; color: #92400e;  font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 10px; white-space: nowrap; display: inline-block; }
-    .st-overdue      { background: #fef2f2; color: var(--danger); font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 10px; white-space: nowrap; display: inline-block; }
-    .doc-link  { color: var(--primary); text-decoration: none; font-size: 11px; font-weight: 600; }
-    .doc-link:hover { text-decoration: underline; }
-    .empty-row td { text-align: center; padding: 28px 16px; color: var(--muted); font-size: 13px; }
+    /* QUICK ACTIONS */
+    .qa-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+    .qa-btn { border: none; border-radius: var(--radius); padding: 16px 10px; cursor: pointer; text-align: center; font-weight: 700; font-size: 13px; transition: all 0.2s; box-shadow: var(--shadow); }
+    .qa-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.13); }
+    .qa-green { background: #ecfdf5; color: #065f46; border: 1.5px solid #6ee7b7; }
+    .qa-red   { background: #fdf2f2; color: #7f1d1d; border: 1.5px solid #fca5a5; }
+    .qa-blue  { background: #eff6ff; color: #1e3a8a; border: 1.5px solid #bfdbfe; }
+    .qa-icon { font-size: 20px; margin-bottom: 5px; }
+
+    /* SECTION CARD */
+    .sec-card { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; margin-bottom: 14px; }
+    .sec-head { background: #1a2340; color: #fff; padding: 11px 14px; display: flex; align-items: center; justify-content: space-between; }
+    .sec-head-title { font-size: 13px; font-weight: 700; letter-spacing: 0.2px; }
+    .sec-head-link { font-size: 12px; color: rgba(255,255,255,0.7); font-weight: 600; cursor: pointer; text-decoration: none; }
+    .sec-head-link:hover { color: #fff; }
+
+    /* TABLE */
+    .dtable { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .dtable th { background: #f1f5f9; padding: 8px 12px; text-align: left; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; border-bottom: 1px solid var(--border); }
+    .dtable td { padding: 10px 12px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
+    .dtable tr:last-child td { border-bottom: none; }
+    .dtable tr:hover td { background: #fafafa; }
+    .dtable .empty-row td { text-align: center; color: var(--muted); padding: 24px; font-size: 13px; }
+
+    /* STATUS BADGES */
+    .st { display: inline-block; padding: 3px 9px; border-radius: 10px; font-size: 10px; font-weight: 700; white-space: nowrap; }
+    .st-conducted { background: #ecfdf5; color: #065f46; border: 1px solid #6ee7b7; }
+    .st-not-done  { background: #fdf2f2; color: #7b1f1f; border: 1px solid #fca5a5; }
+    .st-upcoming  { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+    .st-overdue   { background: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; }
+    .st-planned   { background: #eff6ff; color: #1e3a8a; border: 1px solid #bfdbfe; }
+
+    /* DONUT */
+    .donut-row { display: flex; align-items: center; gap: 16px; padding: 14px; }
+    .donut-legend { display: flex; flex-wrap: wrap; gap: 8px 14px; }
+    .dl-item { font-size: 12px; font-weight: 600; color: #374151; display: flex; align-items: center; gap: 5px; }
+    .dl-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+
+    @media (max-width: 640px) {
+      .stats-row { grid-template-columns: repeat(2,1fr); }
+      .qa-row { grid-template-columns: 1fr 1fr; }
+      .qa-row .qa-btn:last-child { grid-column: span 2; }
+    }
   </style>
 </head>
 <body>
@@ -71,88 +87,97 @@
     <div id="sidebarMount"></div>
     <div class="main-content">
 
-      <div class="welcome-card">
-        <div class="welcome-row">
-          <div>
-            <div class="welcome-greeting" id="greetLabel">Good Morning,</div>
-            <div class="welcome-name" id="greetName">—</div>
-          </div>
-          <div class="welcome-right">
-            <div class="welcome-date" id="greetDate"></div>
-            <div id="greetChips"></div>
-          </div>
+      <!-- Welcome -->
+      <div class="welcome-bar">
+        <div class="welcome-bar-left">
+          <div class="greet-line" id="greetLine">Good Morning,</div>
+          <div class="name-line" id="greetName">—</div>
+        </div>
+        <div class="welcome-bar-right">
+          <div class="date-line" id="greetDate"></div>
+          <div id="greetChips"></div>
         </div>
       </div>
 
-      <!-- Donut + stat pills combined card -->
-      <div class="stat-combo-card">
-        <div class="stat-donut-wrap">
-          <div id="donutSvg">
-            <svg width="110" height="110" viewBox="0 0 110 110">
-              <circle cx="55" cy="55" r="40" fill="none" stroke="#f1f5f9" stroke-width="14"/>
-              <text x="55" y="61" text-anchor="middle" font-size="20" font-weight="800" fill="#1a1a2e">—</text>
-            </svg>
-          </div>
-          <div class="donut-legend" id="donutLegend"></div>
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="scard blue">
+          <div class="scard-num" id="sTotal">—</div>
+          <div class="scard-label">Total</div>
         </div>
-        <div class="stat-pills-wrap">
-          <div class="stat-pill">
-            <div class="stat-pill-num" id="sTotal">—</div>
-            <div class="stat-pill-label">Total</div>
-          </div>
-          <div class="stat-pill green">
-            <div class="stat-pill-num" id="sConducted">—</div>
-            <div class="stat-pill-label">Conducted</div>
-          </div>
-          <div class="stat-pill blue">
-            <div class="stat-pill-num" id="sUpcoming">—</div>
-            <div class="stat-pill-label">Upcoming</div>
-          </div>
-          <div class="stat-pill red">
-            <div class="stat-pill-num" id="sOverdue">—</div>
-            <div class="stat-pill-label">Overdue</div>
-          </div>
+        <div class="scard green">
+          <div class="scard-num" id="sConducted">—</div>
+          <div class="scard-label">Conducted</div>
+        </div>
+        <div class="scard orange">
+          <div class="scard-num" id="sUpcoming">—</div>
+          <div class="scard-label">Upcoming</div>
+        </div>
+        <div class="scard red">
+          <div class="scard-num" id="sOverdue">—</div>
+          <div class="scard-label">Overdue</div>
         </div>
       </div>
 
-      <!-- Meeting Table -->
-      <div class="section-card">
-        <div class="section-head">
-          <span class="section-head-title">Upcoming Meetings</span>
-          <a href="planner.html" class="section-head-link">+ Plan New &nbsp;&#8250;</a>
+      <!-- Quick Actions -->
+      <div class="qa-row">
+        <button class="qa-btn qa-green" onclick="location.href='formA.html'">
+          <div class="qa-icon">&#10003;</div>
+          Meeting<br>Conducted
+        </button>
+        <button class="qa-btn qa-red" onclick="location.href='formB.html'">
+          <div class="qa-icon">&#10005;</div>
+          Not<br>Conducted
+        </button>
+        <button class="qa-btn qa-blue" onclick="location.href='planner.html'">
+          <div class="qa-icon">+</div>
+          Plan<br>Meeting
+        </button>
+      </div>
+
+      <!-- Meetings Section -->
+      <div class="sec-card">
+        <div class="sec-head">
+          <span class="sec-head-title">Manage Meetings</span>
+          <a href="myentries.html" class="sec-head-link">View All &#8250;</a>
         </div>
         <div id="tableSpinner" style="padding:20px;text-align:center;"><div class="spinner" style="margin:0 auto;"></div></div>
-        <div class="table-wrap" id="tableWrap" style="display:none;">
-          <table class="mtable">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Who to Meet</th>
-                <th>Purpose</th>
-                <th>Status</th>
-                <th>Doc</th>
-              </tr>
-            </thead>
-            <tbody id="dashTbody"></tbody>
-          </table>
+        <div id="tableWrap" style="display:none;">
+
+          <!-- Donut + legend -->
+          <div class="donut-row" id="donutRow" style="display:none;">
+            <div id="donutSvg" style="flex-shrink:0;"></div>
+            <div class="donut-legend" id="donutLegend"></div>
+          </div>
+          <div style="border-top:1px solid var(--border);"></div>
+
+          <div class="table-wrap">
+            <table class="dtable">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Who to Meet</th>
+                  <th>Purpose</th>
+                  <th>Status</th>
+                  <th>Doc</th>
+                </tr>
+              </thead>
+              <tbody id="dashTbody"></tbody>
+            </table>
+          </div>
         </div>
       </div>
 
-      <!-- Outstanding Action Items -->
-      <div class="section-card" id="actionsCard" style="display:none;">
-        <div class="section-head">
-          <span class="section-head-title">&#128203; Outstanding Action Items</span>
-          <a href="myentries.html" class="section-head-link">View All &nbsp;&#8250;</a>
+      <!-- Action Items -->
+      <div class="sec-card" id="actionsCard" style="display:none;">
+        <div class="sec-head">
+          <span class="sec-head-title">Outstanding Action Items</span>
+          <a href="myentries.html" class="sec-head-link">View All &#8250;</a>
         </div>
         <div class="table-wrap">
-          <table class="mtable">
+          <table class="dtable">
             <thead>
-              <tr>
-                <th>Action</th>
-                <th>Owner</th>
-                <th>Due</th>
-                <th>Meeting</th>
-              </tr>
+              <tr><th>Action</th><th>Owner</th><th>Due</th><th>Meeting</th></tr>
             </thead>
             <tbody id="actionsTbody"></tbody>
           </table>
@@ -168,167 +193,131 @@
     renderSidebar('dashboard');
 
     var h = new Date().getHours();
-    document.getElementById('greetLabel').textContent = h < 12 ? 'Good Morning,' : h < 17 ? 'Good Afternoon,' : 'Good Evening,';
+    document.getElementById('greetLine').textContent = h < 12 ? 'Good Morning,' : h < 17 ? 'Good Afternoon,' : 'Good Evening,';
     document.getElementById('greetName').textContent = session.full_name ? session.full_name.split(' ')[0] : (session.email || 'there');
-    document.getElementById('greetDate').textContent = new Date().toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+    document.getElementById('greetDate').textContent = new Date().toLocaleDateString('en-IN', { weekday:'short', day:'numeric', month:'short', year:'numeric' });
     var chips = [];
     if (session.designation) chips.push(session.designation);
     if (session.district) chips.push(session.district);
-    document.getElementById('greetChips').innerHTML = chips.map(function(c) {
-      return '<span class="welcome-chip" style="margin-left:4px;">' + esc(c) + '</span>';
-    }).join('');
+    document.getElementById('greetChips').innerHTML = chips.map(function(c) { return '<span class="wchip">'+esc(c)+'</span>'; }).join('');
 
     var today = new Date(); today.setHours(0,0,0,0);
     var planData = null, meetData = null;
 
     function buildDonut(segs, tot) {
       var cx=55,cy=55,r=40,sw=14,circ=2*Math.PI*r;
-      var svg='<svg width="110" height="110" viewBox="0 0 110 110">';
+      var svg='<svg width="100" height="100" viewBox="0 0 110 110">';
       svg+='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="#f1f5f9" stroke-width="'+sw+'"/>';
       var angle=-90;
       segs.forEach(function(s){
         if(!s.v)return;
         var pct=s.v/tot,dash=pct*circ;
-        svg+='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="'+s.c+'" stroke-width="'+sw+'" stroke-dasharray="'+dash.toFixed(1)+' '+circ.toFixed(1)+'" transform="rotate('+angle+' '+cx+' '+cy+')" stroke-linecap="butt"/>';
+        svg+='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="'+s.c+'" stroke-width="'+sw+'" stroke-dasharray="'+dash.toFixed(1)+' '+circ.toFixed(1)+'" transform="rotate('+angle+' '+cx+' '+cy+')"/>';
         angle+=pct*360;
       });
-      svg+='<text x="'+cx+'" y="'+(cy+6)+'" text-anchor="middle" font-size="20" font-weight="800" fill="#1a1a2e">'+tot+'</text>';
-      svg+='</svg>';
+      svg+='<text x="'+cx+'" y="'+(cy+7)+'" text-anchor="middle" font-size="20" font-weight="800" fill="#1a1a2e">'+tot+'</text></svg>';
       return svg;
     }
 
-    // Called when both fetches complete
     function renderDashboard() {
       if (!planData || !meetData) return;
-
-      document.getElementById('tableSpinner').classList.add('hidden');
+      document.getElementById('tableSpinner').style.display = 'none';
       document.getElementById('tableWrap').style.display = '';
 
-      // ── Counts ──────────────────────────────────────────
-      // Conducted / Not Done → from actual meeting submissions (Meetings sheet)
-      var conducted = 0, notDone = 0;
-      meetData.forEach(function(m) {
-        if (m.meeting_conducted === 'YES') conducted++;
-        else if (m.meeting_conducted === 'NO') notDone++;
+      var conducted=0, notDone=0;
+      meetData.forEach(function(m){
+        if(m.meeting_conducted==='YES') conducted++;
+        else if(m.meeting_conducted==='NO') notDone++;
+      });
+      var upcoming=0, overdue=0;
+      planData.forEach(function(m){
+        if(m.status==='conducted'||m.status==='not_conducted') return;
+        var d=m.meeting_date?new Date(m.meeting_date):null;
+        if(d){d.setHours(0,0,0,0);}
+        if(d&&d<today) overdue++; else upcoming++;
       });
 
-      // Upcoming / Overdue → from pending plans (PlannedMeetings sheet)
-      var upcoming = 0, overdue = 0;
-      planData.forEach(function(m) {
-        if (m.status === 'conducted' || m.status === 'not_conducted') return;
-        var d = m.meeting_date ? new Date(m.meeting_date) : null;
-        if (d) d.setHours(0,0,0,0);
-        if (d && d < today) overdue++; else upcoming++;
-      });
+      var total=conducted+notDone;
+      document.getElementById('sTotal').textContent=total;
+      document.getElementById('sConducted').textContent=conducted;
+      document.getElementById('sUpcoming').textContent=upcoming;
+      document.getElementById('sOverdue').textContent=overdue;
 
-      var total = conducted + notDone;
-      document.getElementById('sTotal').textContent = total;
-      document.getElementById('sConducted').textContent = conducted;
-      document.getElementById('sUpcoming').textContent = upcoming;
-      document.getElementById('sOverdue').textContent = overdue;
-
-      // ── Donut ────────────────────────────────────────────
-      var donutTotal = conducted + notDone + upcoming + overdue;
-      var segs = [
-        {v: conducted, c: '#27ae60', label: 'Conducted'},
-        {v: notDone,   c: '#e67e22', label: 'Not Done'},
-        {v: upcoming,  c: '#3498db', label: 'Upcoming'},
-        {v: overdue,   c: '#e74c3c', label: 'Overdue'}
+      var donutTotal=conducted+notDone+upcoming+overdue;
+      var segs=[
+        {v:conducted, c:'#059669', label:'Conducted'},
+        {v:notDone,   c:'#e67e22', label:'Not Done'},
+        {v:upcoming,  c:'#2563eb', label:'Upcoming'},
+        {v:overdue,   c:'#dc2626', label:'Overdue'}
       ];
-      if (donutTotal > 0) document.getElementById('donutSvg').innerHTML = buildDonut(segs, donutTotal);
-      var legendHtml = '';
-      segs.forEach(function(s) {
-        if (!s.v) return;
-        legendHtml += '<div class="donut-legend-item"><div class="donut-legend-dot" style="background:'+s.c+';"></div>'+s.label+': '+s.v+'</div>';
-      });
-      document.getElementById('donutLegend').innerHTML = legendHtml;
-
-      // ── Upcoming meetings table (pending plans only) ─────
-      var grpOverdue = [], grpUpcoming = [];
-      planData.forEach(function(m) {
-        if (m.status === 'conducted' || m.status === 'not_conducted') return;
-        var d = m.meeting_date ? new Date(m.meeting_date) : null;
-        if (d) d.setHours(0,0,0,0);
-        if (d && d < today) grpOverdue.push(m); else grpUpcoming.push(m);
-      });
-      grpOverdue.sort(function(a,b) { return new Date(a.meeting_date||0)-new Date(b.meeting_date||0); });
-      grpUpcoming.sort(function(a,b) { return new Date(a.meeting_date||0)-new Date(b.meeting_date||0); });
-      var sorted = grpUpcoming.concat(grpOverdue);
-
-      if (!sorted.length) {
-        document.getElementById('dashTbody').innerHTML = '<tr class="empty-row"><td colspan="5">Koi upcoming meeting nahi hai. <a href="planner.html" style="color:var(--primary);">Plan karo</a></td></tr>';
-      } else {
-        var html = '';
-        sorted.forEach(function(m) {
-          var d = m.meeting_date ? new Date(m.meeting_date) : null;
-          if (d) d.setHours(0,0,0,0);
-          var isOverdue = d && d < today;
-          var statusHtml = isOverdue
-            ? '<span class="st-overdue">Overdue</span>'
-            : '<span class="st-upcoming">Upcoming</span>';
-          var docHtml = m.document_link
-            ? '<a href="'+esc(m.document_link)+'" target="_blank" class="doc-link">PDF</a>'
-            : '<span style="color:#d1d5db;">—</span>';
-          html += '<tr>'
-            + '<td><div class="date-line">'+fmtDate(m.meeting_date)+'</div>'
-              + (isOverdue ? '<div class="overdue-tag">Overdue</div>' : '')+'</td>'
-            + '<td><div class="mstk-name">'+esc(m.stakeholder_name||'')+'</div>'
-              + '<div class="mstk-type">'+esc(m.stakeholder_type||'')+'</div></td>'
-            + '<td><div class="mpurpose">'+esc(m.meeting_purpose||'')+'</div></td>'
-            + '<td>'+statusHtml+'</td>'
-            + '<td>'+docHtml+'</td>'
-            + '</tr>';
-        });
-        document.getElementById('dashTbody').innerHTML = html;
+      if(donutTotal>0){
+        document.getElementById('donutSvg').innerHTML=buildDonut(segs,donutTotal);
+        document.getElementById('donutLegend').innerHTML=segs.filter(function(s){return s.v;}).map(function(s){
+          return '<div class="dl-item"><div class="dl-dot" style="background:'+s.c+';"></div>'+s.label+': <b>'+s.v+'</b></div>';
+        }).join('');
+        document.getElementById('donutRow').style.display='flex';
       }
 
-      // ── Outstanding action items (from meetings) ─────────
-      var pending = [];
-      meetData.forEach(function(m) {
-        if (m.meeting_conducted !== 'YES') return;
-        var items = [];
-        try { items = JSON.parse(m.action_items || '[]'); } catch(e) {}
-        items.forEach(function(ai) { if (ai.action) pending.push({ ai:ai, meeting:m }); });
+      var grpOverdue=[], grpUpcoming=[];
+      planData.forEach(function(m){
+        if(m.status==='conducted'||m.status==='not_conducted') return;
+        var d=m.meeting_date?new Date(m.meeting_date):null;
+        if(d) d.setHours(0,0,0,0);
+        if(d&&d<today) grpOverdue.push(m); else grpUpcoming.push(m);
       });
-      if (pending.length) {
-        pending.sort(function(a,b) { return new Date(a.ai.due_date||'9999')-new Date(b.ai.due_date||'9999'); });
-        var ahtml = '';
-        pending.slice(0,5).forEach(function(p) {
-          var due = p.ai.due_date ? new Date(p.ai.due_date) : null;
-          if (due) due.setHours(0,0,0,0);
-          var od = due && due < today;
-          ahtml += '<tr>'
-            + '<td style="font-size:12px;">'+esc(p.ai.action)+'</td>'
-            + '<td style="font-size:12px;">'+esc(p.ai.owner||'—')+'</td>'
-            + '<td><span style="font-size:11px;font-weight:700;'+(od?'color:var(--danger);':'color:#374151;')+'">'+
-              (p.ai.due_date?fmtDate(p.ai.due_date):'—')+(od?' &#9888;':'')+'</span></td>'
-            + '<td style="font-size:11px;color:var(--muted);">'+esc(p.meeting.stakeholder_name||'')+'</td>'
-            + '</tr>';
-        });
-        document.getElementById('actionsTbody').innerHTML = ahtml;
-        document.getElementById('actionsCard').style.display = '';
+      grpOverdue.sort(function(a,b){return new Date(a.meeting_date||0)-new Date(b.meeting_date||0);});
+      grpUpcoming.sort(function(a,b){return new Date(a.meeting_date||0)-new Date(b.meeting_date||0);});
+      var rows = grpUpcoming.concat(grpOverdue);
+
+      if(!rows.length){
+        document.getElementById('dashTbody').innerHTML='<tr class="empty-row"><td colspan="5">No pending meetings. <a href="planner.html" style="color:var(--primary);font-weight:600;">Plan one now</a></td></tr>';
+      } else {
+        document.getElementById('dashTbody').innerHTML=rows.map(function(m){
+          var d=m.meeting_date?new Date(m.meeting_date):null;
+          if(d) d.setHours(0,0,0,0);
+          var od=d&&d<today;
+          var stHtml=od?'<span class="st st-overdue">OVERDUE</span>':'<span class="st st-upcoming">UPCOMING</span>';
+          var docHtml=m.document_link?'<a href="'+esc(m.document_link)+'" target="_blank" style="color:var(--primary);font-size:11px;font-weight:600;">PDF</a>':'<span style="color:#d1d5db;">—</span>';
+          return '<tr>'
+            +'<td style="font-size:12px;font-weight:600;white-space:nowrap;">'+fmtDate(m.meeting_date)+'</td>'
+            +'<td><div style="font-weight:600;font-size:13px;">'+esc(m.stakeholder_name||'')+'</div><div style="font-size:11px;color:var(--muted);">'+esc(m.stakeholder_type||'')+'</div></td>'
+            +'<td style="font-size:12px;color:#374151;">'+esc(m.meeting_purpose||'')+'</td>'
+            +'<td>'+stHtml+'</td>'
+            +'<td>'+docHtml+'</td>'
+            +'</tr>';
+        }).join('');
+      }
+
+      var pending=[];
+      meetData.forEach(function(m){
+        if(m.meeting_conducted!=='YES') return;
+        var items=[];
+        try{items=JSON.parse(m.action_items||'[]');}catch(e){}
+        items.forEach(function(ai){if(ai.action) pending.push({ai:ai,meeting:m});});
+      });
+      if(pending.length){
+        pending.sort(function(a,b){return new Date(a.ai.due_date||'9999')-new Date(b.ai.due_date||'9999');});
+        document.getElementById('actionsTbody').innerHTML=pending.slice(0,5).map(function(p){
+          var due=p.ai.due_date?new Date(p.ai.due_date):null;
+          if(due) due.setHours(0,0,0,0);
+          var od=due&&due<today;
+          return '<tr>'
+            +'<td style="font-size:12px;">'+esc(p.ai.action)+'</td>'
+            +'<td style="font-size:12px;">'+esc(p.ai.owner||'—')+'</td>'
+            +'<td style="font-size:11px;font-weight:700;'+(od?'color:#dc2626;':'color:#374151;')+'">'+
+              (p.ai.due_date?fmtDate(p.ai.due_date):'—')+'</td>'
+            +'<td style="font-size:11px;color:var(--muted);">'+esc(p.meeting.stakeholder_name||'')+'</td>'
+            +'</tr>';
+        }).join('');
+        document.getElementById('actionsCard').style.display='';
       }
     }
 
-    // ── Fetch plans ───────────────────────────────────────
-    fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'getPlannedMeetings', token: grToken() }) })
-      .then(function(r) { return r.json(); }).then(function(res) {
-        planData = res.success ? (res.data || []) : [];
-        renderDashboard();
-      }).catch(function() {
-        planData = [];
-        renderDashboard();
-      });
+    fetch(APP_URL,{method:'POST',body:JSON.stringify({action:'getPlannedMeetings',token:grToken()})})
+      .then(function(r){return r.json();}).then(function(res){planData=res.success?(res.data||[]):[];renderDashboard();}).catch(function(){planData=[];renderDashboard();});
 
-    // ── Fetch meetings (conducted / not-done counts + actions) ─
-    fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'getMyMeetings', token: grToken() }) })
-      .then(function(r) { return r.json(); }).then(function(res) {
-        meetData = res.success ? (res.data || []) : [];
-        renderDashboard();
-      }).catch(function() {
-        meetData = [];
-        renderDashboard();
-      });
+    fetch(APP_URL,{method:'POST',body:JSON.stringify({action:'getMyMeetings',token:grToken()})})
+      .then(function(r){return r.json();}).then(function(res){meetData=res.success?(res.data||[]):[];renderDashboard();}).catch(function(){meetData=[];renderDashboard();});
   </script>
 </body>
 </html>
