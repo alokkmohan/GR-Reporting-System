@@ -121,7 +121,7 @@
       <!-- Meeting Table -->
       <div class="section-card">
         <div class="section-head">
-          <span class="section-head-title">All Planned Meetings</span>
+          <span class="section-head-title">Upcoming Meetings</span>
           <a href="planner.html" class="section-head-link">+ Plan New &nbsp;&#8250;</a>
         </div>
         <div id="tableSpinner" style="padding:20px;text-align:center;"><div class="spinner" style="margin:0 auto;"></div></div>
@@ -185,24 +185,23 @@
         document.getElementById('sUpcoming').textContent = upcoming;
         document.getElementById('sOverdue').textContent = overdue;
 
-        if (meetings.length === 0) {
-          document.getElementById('dashTbody').innerHTML = '<tr class="empty-row"><td colspan="5">No meetings planned yet. <a href="planner.html" style="color:var(--primary);">Plan one now</a></td></tr>';
-          return;
-        }
-
-        // Sort: overdue → upcoming → done (recent first)
-        var grpOverdue = [], grpUpcoming = [], grpDone = [];
+        // Filter: only upcoming and overdue (not already conducted / not_conducted)
+        var grpOverdue = [], grpUpcoming = [];
         meetings.forEach(function(m) {
+          if (m.status === 'conducted' || m.status === 'not_conducted') return;
           var d = m.meeting_date ? new Date(m.meeting_date) : null;
           if (d) d.setHours(0, 0, 0, 0);
-          if (m.status === 'conducted' || m.status === 'not_conducted') grpDone.push(m);
-          else if (d && d < today) grpOverdue.push(m);
+          if (d && d < today) grpOverdue.push(m);
           else grpUpcoming.push(m);
         });
         grpOverdue.sort(function(a,b) { return new Date(a.meeting_date||0) - new Date(b.meeting_date||0); });
         grpUpcoming.sort(function(a,b) { return new Date(a.meeting_date||0) - new Date(b.meeting_date||0); });
-        grpDone.sort(function(a,b) { return new Date(b.meeting_date||0) - new Date(a.meeting_date||0); });
-        var sorted = grpOverdue.concat(grpUpcoming).concat(grpDone);
+        var sorted = grpOverdue.concat(grpUpcoming);
+
+        if (sorted.length === 0) {
+          document.getElementById('dashTbody').innerHTML = '<tr class="empty-row"><td colspan="5">Koi upcoming meeting nahi hai. <a href="planner.html" style="color:var(--primary);">Plan karo</a></td></tr>';
+          return;
+        }
 
         var html = '';
         sorted.forEach(function(m) {
