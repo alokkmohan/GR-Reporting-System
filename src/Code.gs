@@ -123,7 +123,7 @@ function doPost(e) {
         file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
         var isImage = (params.mimeType || '').indexOf('image/') === 0;
         var url = isImage
-          ? 'https://lh3.googleusercontent.com/d/' + file.getId()
+          ? 'https://drive.google.com/thumbnail?id=' + file.getId() + '&sz=w300-h300'
           : 'https://drive.google.com/file/d/' + file.getId() + '/view';
         return respond({ success: true, url: url, name: file.getName() });
       } catch(e) {
