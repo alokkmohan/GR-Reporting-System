@@ -33,6 +33,17 @@
     .with-btn { border:2px solid var(--border); border-radius:8px; padding:9px 8px; text-align:center; cursor:pointer; font-size:12px; font-weight:700; background:#fff; transition:all 0.15s; }
     .with-btn.sel { border-color:var(--warning); background:#fffbeb; color:#92400e; }
     .step-nav { display:flex; gap:10px; margin-top:16px; }
+    /* Action Items table */
+    .ai-table { width:100%; border-collapse:collapse; font-size:13px; margin-top:8px; }
+    .ai-table th { background:#f3f4f6; padding:7px 8px; text-align:left; font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.3px; border-bottom:2px solid var(--border); }
+    .ai-table td { padding:6px 4px; border-bottom:1px solid #f3f4f6; vertical-align:top; }
+    .ai-table tr:last-child td { border-bottom:none; }
+    .ai-input { border:1.5px solid var(--border); border-radius:6px; padding:6px 8px; font-size:12px; width:100%; box-sizing:border-box; background:#fff; }
+    .ai-input:focus { outline:none; border-color:var(--primary); }
+    .ai-del-btn { background:none; border:none; color:#d1d5db; cursor:pointer; font-size:16px; padding:4px; }
+    .ai-del-btn:hover { color:var(--danger); }
+    .add-ai-btn { background:none; border:1.5px dashed var(--border); border-radius:8px; padding:8px; width:100%; text-align:center; font-size:12px; font-weight:700; color:var(--primary); cursor:pointer; margin-top:8px; }
+    .add-ai-btn:hover { background:#fdf4f4; border-color:var(--primary); }
   </style>
 </head>
 <body>
@@ -99,8 +110,16 @@
         </div>
         <div class="form-group">
           <label class="form-label">Other Participants (optional)</label>
-          <input type="text" id="other_participants" class="form-control" placeholder="Aur kaun tha meeting mein?">
+          <input type="text" id="other_participants" class="form-control" placeholder="External attendees...">
         </div>
+
+        <div class="form-group">
+          <label class="form-label">&#128101; Co-Attendee from Team (optional)</label>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">Agar aapke saath koi aur team member bhi gaya ho to unka email daalo — record unke profile mein bhi add ho jayega</div>
+          <div id="coAttendeeList"></div>
+          <button type="button" class="add-ai-btn" onclick="addCoAttendee()">+ Add Team Member</button>
+        </div>
+
         <div class="step-nav">
           <button class="btn btn-primary" style="flex:1;" onclick="goStep(1,2)">Next &#8594;</button>
         </div>
@@ -174,6 +193,26 @@
           </div>
         </div>
 
+        <!-- Action Items (like Quixy Actions-Add) -->
+        <div style="margin-top:16px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+            <label class="form-label" style="margin:0;">&#128203; Action Items</label>
+            <span style="font-size:11px;color:var(--muted);">Who will do what, by when</span>
+          </div>
+          <table class="ai-table" id="aiTable">
+            <thead>
+              <tr>
+                <th style="width:40%;">Action</th>
+                <th style="width:30%;">Owner</th>
+                <th style="width:22%;">Due Date</th>
+                <th style="width:8%;"></th>
+              </tr>
+            </thead>
+            <tbody id="aiTbody"></tbody>
+          </table>
+          <button type="button" class="add-ai-btn" onclick="addAI()">+ Add Action Item</button>
+        </div>
+
         <div class="form-group" style="margin-top:14px;">
           <label class="form-label">Photo / Document Link (optional)</label>
           <input type="url" id="photo_link" class="form-control" placeholder="Google Drive link...">
@@ -200,6 +239,65 @@
     var followupWith = 'same';
     var savedSubmissionId = '';
     var savedNextPlanId = '';
+    var aiItems = [];
+
+    var coAttendees = [];
+    function addCoAttendee() {
+      coAttendees.push('');
+      renderCoAttendees();
+    }
+    function removeCoAttendee(idx) { coAttendees.splice(idx, 1); renderCoAttendees(); }
+    function renderCoAttendees() {
+      var html = '';
+      coAttendees.forEach(function(email, idx) {
+        html += '<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">'
+          + '<input type="email" class="form-control" id="co_' + idx + '" placeholder="colleague@educategirls.ngo" style="flex:1;" value="">'
+          + '<button type="button" onclick="removeCoAttendee(' + idx + ')" style="background:none;border:none;color:var(--danger);font-size:16px;cursor:pointer;">&#128465;</button>'
+          + '</div>';
+      });
+      document.getElementById('coAttendeeList').innerHTML = html;
+      coAttendees.forEach(function(e, idx) {
+        document.getElementById('co_' + idx).value = e;
+      });
+    }
+    function collectCoAttendees() {
+      return coAttendees.map(function(e, idx) {
+        return (document.getElementById('co_' + idx) || {}).value || '';
+      }).filter(function(e) { return e.trim(); });
+    }
+
+    function addAI() {
+      aiItems.push({ action: '', owner: session.full_name || '', due_date: '' });
+      renderAI();
+    }
+    function removeAI(idx) { aiItems.splice(idx, 1); renderAI(); }
+    function renderAI() {
+      var html = '';
+      aiItems.forEach(function(item, idx) {
+        html += '<tr>'
+          + '<td><input type="text" class="ai-input" id="ai_a' + idx + '" placeholder="Kya karna hai?" value=""></td>'
+          + '<td><input type="text" class="ai-input" id="ai_o' + idx + '" placeholder="Kaun karega?" value=""></td>'
+          + '<td><input type="date" class="ai-input" id="ai_d' + idx + '" value=""></td>'
+          + '<td><button class="ai-del-btn" onclick="removeAI(' + idx + ')">&#128465;</button></td>'
+          + '</tr>';
+      });
+      document.getElementById('aiTbody').innerHTML = html;
+      aiItems.forEach(function(item, idx) {
+        document.getElementById('ai_a' + idx).value = item.action;
+        document.getElementById('ai_o' + idx).value = item.owner;
+        document.getElementById('ai_d' + idx).value = item.due_date;
+      });
+    }
+    function collectAI() {
+      var result = [];
+      aiItems.forEach(function(item, idx) {
+        var a = (document.getElementById('ai_a' + idx) || {}).value || '';
+        var o = (document.getElementById('ai_o' + idx) || {}).value || '';
+        var d = (document.getElementById('ai_d' + idx) || {}).value || '';
+        if (a.trim()) result.push({ action: a.trim(), owner: o.trim(), due_date: d });
+      });
+      return result;
+    }
 
     var planData = null;
     try { planData = JSON.parse(sessionStorage.getItem('activePlan') || 'null'); } catch(e) {}
@@ -309,7 +407,9 @@
         followup_notes: document.getElementById('followup_notes').value,
         attendee_type: attendeeSame ? 'planned' : 'alternate',
         actual_attendee_name: attendeeSame ? '' : document.getElementById('actual_attendee_name').value.trim(),
-        photo_link: document.getElementById('photo_link').value.trim()
+        photo_link: document.getElementById('photo_link').value.trim(),
+        action_items: JSON.stringify(collectAI()),
+        co_attendees: collectCoAttendees()
       };
 
       fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'submitMeeting', token: token, plan_id: planId, formData: fd }) })

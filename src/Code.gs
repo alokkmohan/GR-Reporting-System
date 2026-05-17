@@ -143,6 +143,7 @@ function doPost(e) {
       var user = getUserByEmail(session.email);
       params.formData.user_email = session.email;
       params.formData.district = user ? user.district : '';
+      params.formData.plan_id = params.plan_id || '';
       var submissionId = submitMeeting(params.formData);
       if (params.plan_id) {
         var newStatus = params.formData.meeting_conducted === 'YES' ? 'conducted' : 'not_conducted';
@@ -154,6 +155,22 @@ function doPost(e) {
                        || (fd.meeting_conducted === 'NO'  && fd.reason_not_conducted === 'Postponed'    && fd.followup_date);
       if (needsFollowUp && params.plan_id) {
         nextPlanId = createFollowUpPlan(params.plan_id, fd, session.email, fd.district || '');
+      }
+      // Duplicate submission for co-attendees so it appears in their records too
+      var coAttendees = params.formData.co_attendees || [];
+      if (Array.isArray(coAttendees)) {
+        coAttendees.forEach(function(coEmail) {
+          coEmail = (coEmail || '').toLowerCase().trim();
+          if (!coEmail || coEmail === session.email) return;
+          var coUser = getUserByEmail(coEmail);
+          if (!coUser) return;
+          var coData = JSON.parse(JSON.stringify(params.formData));
+          coData.user_email = coEmail;
+          coData.district = coUser.district || coData.district;
+          coData.staff_name = coUser.full_name || coData.staff_name;
+          coData.co_entry = 'yes';
+          submitMeeting(coData);
+        });
       }
       return respond({ success: true, submission_id: submissionId, next_plan_id: nextPlanId });
     }

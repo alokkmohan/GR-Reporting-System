@@ -3,8 +3,40 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>My Entries GR Reporting System</title>
+  <title>My Entries GR Reporting</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    .filter-tabs { display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap; }
+    .ftab { padding:6px 14px; border:1.5px solid var(--border); border-radius:20px; font-size:12px; font-weight:700; cursor:pointer; background:#fff; transition:all 0.15s; white-space:nowrap; }
+    .ftab.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+    .section-card { background:#fff; border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; margin-bottom:14px; }
+    .mtable { width:100%; border-collapse:collapse; font-size:13px; }
+    .mtable th { background:#f9fafb; padding:9px 10px; text-align:left; font-weight:700; border-bottom:2px solid var(--border); font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.4px; white-space:nowrap; }
+    .mtable td { padding:10px 10px; border-bottom:1px solid #f3f4f6; vertical-align:middle; }
+    .mtable tr:last-child td { border-bottom:none; }
+    .mtable tr:hover td { background:#fafafa; }
+    .row-conducted td { border-left:3px solid var(--success); }
+    .row-not-done td { border-left:3px solid var(--warning); }
+    .row-not-done td:first-child { border-left:3px solid var(--warning); }
+    .st-conducted { background:#ecfdf5; color:#065f46; font-size:11px; font-weight:700; padding:3px 9px; border-radius:10px; white-space:nowrap; display:inline-block; }
+    .st-not-done  { background:#fef3c7; color:#92400e; font-size:11px; font-weight:700; padding:3px 9px; border-radius:10px; white-space:nowrap; display:inline-block; }
+    .sname { font-weight:700; font-size:13px; }
+    .stype { font-size:11px; color:var(--muted); }
+    .date-col { font-size:12px; font-weight:700; white-space:nowrap; }
+    .purpose-col { font-size:12px; color:#374151; }
+    .ai-badge { display:inline-block; background:#dbeafe; color:#1e3a5f; font-size:10px; font-weight:800; padding:2px 7px; border-radius:8px; margin-top:3px; }
+    .view-btn { padding:5px 10px; border:1.5px solid var(--primary); border-radius:6px; font-size:11px; font-weight:700; color:var(--primary); background:#fff; cursor:pointer; white-space:nowrap; }
+    .view-btn:hover { background:var(--primary); color:#fff; }
+    .empty-row td { text-align:center; padding:32px 16px; color:var(--muted); font-size:13px; }
+    .detail-panel { background:#f9fafb; border-top:1px solid var(--border); padding:12px 14px; display:none; }
+    .detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .detail-item label { font-size:10px; font-weight:700; text-transform:uppercase; color:var(--muted); letter-spacing:0.3px; display:block; margin-bottom:2px; }
+    .detail-item span { font-size:12px; color:#374151; }
+    .ai-row-table { width:100%; border-collapse:collapse; font-size:11px; margin-top:4px; }
+    .ai-row-table th { background:#e5e7eb; padding:4px 8px; font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; }
+    .ai-row-table td { padding:5px 8px; border-bottom:1px solid #f3f4f6; }
+    .ai-row-table tr:last-child td { border-bottom:none; }
+  </style>
 </head>
 <body>
   <nav class="navbar">
@@ -15,67 +47,166 @@
   <div class="app-layout">
   <div id="sidebarMount"></div>
   <div class="main-content">
+
     <div id="loadingSpinner"><div class="spinner"></div></div>
     <div id="alertBox"></div>
-    <div id="entriesList"></div>
+
+    <div id="mainContent" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div class="filter-tabs" id="filterTabs">
+          <div class="ftab active" onclick="setFilter('all',this)">All</div>
+          <div class="ftab" onclick="setFilter('conducted',this)">&#10003; Conducted</div>
+          <div class="ftab" onclick="setFilter('not_conducted',this)">&#10007; Not Done</div>
+          <div class="ftab" onclick="setFilter('actions',this)">&#128203; Has Actions</div>
+        </div>
+        <span id="countBadge" style="font-size:12px;font-weight:700;color:var(--muted);white-space:nowrap;"></span>
+      </div>
+
+      <div class="section-card">
+        <table class="mtable">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Stakeholder</th>
+              <th>Purpose</th>
+              <th>Status</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody id="entriesTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
     <div id="emptyState" class="hidden">
       <div class="card text-center" style="padding:40px 20px;">
+        <div style="font-size:36px;margin-bottom:8px;">&#128197;</div>
         <div class="card-title">No Entries Yet</div>
-        <p class="text-muted mt-8">You have not submitted any meeting records.</p>
-        <button class="btn btn-primary mt-16" onclick="window.location.href='planner.html'">Submit First Entry</button>
+        <p class="text-muted mt-8">No meeting records found.</p>
+        <button class="btn btn-primary mt-16" onclick="window.location.href='planner.html'">Go to Planner</button>
       </div>
     </div>
   </div>
+  </div>
 
-  </div></div>
   <script src="common.js"></script>
   <script>
     var session = requireAuth();
     renderSidebar('myentries');
-    var token = grToken();
+    var allData = [];
+    var currentFilter = 'all';
+    var openRowId = null;
 
     var actionKey = 'getMyMeetings';
-    if (session.role === 'state' || session.role === 'admin') actionKey = 'getAllMeetings';
-    else if (session.role === 'district') actionKey = 'getDistrictMeetings';
+    if (session.role === 'state' || session.role === 'admin') actionKey = 'getMyMeetings';
 
-    fetch(APP_URL, { method: 'POST', body: JSON.stringify({ action: actionKey, token: token }) })
-    .then(function(r) { return r.json(); })
-    .then(function(res) {
-      document.getElementById('loadingSpinner').classList.add('hidden');
-      if (!res.success) {
-        document.getElementById('alertBox').innerHTML = '<div class="alert alert-error">' + (res.message || 'Failed to load.') + '</div>';
+    fetch(APP_URL, { method:'POST', body: JSON.stringify({ action: actionKey, token: grToken() }) })
+      .then(function(r) { return r.json(); }).then(function(res) {
+        document.getElementById('loadingSpinner').classList.add('hidden');
+        if (!res.success) { document.getElementById('alertBox').innerHTML = '<div class="alert alert-error">' + esc(res.message||'Failed') + '</div>'; return; }
+        allData = (res.data || []).sort(function(a,b) { return new Date(b.date||b.timestamp||0) - new Date(a.date||a.timestamp||0); });
+        if (!allData.length) { document.getElementById('emptyState').classList.remove('hidden'); return; }
+        document.getElementById('mainContent').style.display = '';
+        renderTable();
+      }).catch(function() {
+        document.getElementById('loadingSpinner').classList.add('hidden');
+        document.getElementById('alertBox').innerHTML = '<div class="alert alert-error">Network error.</div>';
+      });
+
+    function setFilter(f, el) {
+      currentFilter = f;
+      document.querySelectorAll('.ftab').forEach(function(t) { t.classList.remove('active'); });
+      el.classList.add('active');
+      openRowId = null;
+      renderTable();
+    }
+
+    function renderTable() {
+      var filtered = allData.filter(function(e) {
+        if (currentFilter === 'conducted') return e.meeting_conducted === 'YES';
+        if (currentFilter === 'not_conducted') return e.meeting_conducted === 'NO';
+        if (currentFilter === 'actions') {
+          try { var ai = JSON.parse(e.action_items || '[]'); return ai.length > 0; } catch(ex) { return false; }
+        }
+        return true;
+      });
+      document.getElementById('countBadge').textContent = filtered.length + ' records';
+      if (!filtered.length) {
+        document.getElementById('entriesTbody').innerHTML = '<tr class="empty-row"><td colspan="5">No records found for this filter.</td></tr>';
         return;
       }
-      var data = res.data || [];
-      if (data.length === 0) { document.getElementById('emptyState').classList.remove('hidden'); return; }
-      data.sort(function(a, b) { return new Date(b.timestamp) - new Date(a.timestamp); });
-      var html = '<div class="card-title mb-8">Total: ' + data.length + ' entries</div>';
-      data.forEach(function(entry) {
-        var conducted = entry.meeting_conducted === 'YES';
-        html += '<div class="entry-card' + (conducted ? '' : ' no-meeting') + '">';
-        html += '<div style="display:flex; justify-content:space-between; align-items:flex-start;">';
-        html += '<div class="entry-title">' + (entry.stakeholder_name || entry.stakeholder_type || 'N/A') + '</div>';
-        html += '<span class="badge ' + (conducted ? 'badge-active' : 'badge-pending') + '">' + (conducted ? 'Meeting Done' : 'Not Conducted') + '</span>';
-        html += '</div>';
+      var html = '';
+      filtered.forEach(function(e, idx) {
+        var conducted = e.meeting_conducted === 'YES';
+        var rowClass = conducted ? 'row-conducted' : 'row-not-done';
+        var aiItems = [];
+        try { aiItems = JSON.parse(e.action_items || '[]'); } catch(ex) {}
+        var rid = 'row_' + idx;
+
+        html += '<tr class="' + rowClass + '" style="cursor:pointer;" onclick="toggleDetail(\'' + rid + '\')">'
+          + '<td><div class="date-col">' + fmtDate(e.date) + '</div></td>'
+          + '<td><div class="sname">' + esc(e.stakeholder_name || e.stakeholder_type || '—') + '</div>'
+          + '<div class="stype">' + esc(e.stakeholder_type || '') + '</div></td>'
+          + '<td><div class="purpose-col">' + esc(e.meeting_purpose || (conducted ? '' : (e.reason_not_conducted || ''))) + '</div>'
+          + (aiItems.length ? '<div class="ai-badge">&#128203; ' + aiItems.length + ' action' + (aiItems.length > 1 ? 's' : '') + '</div>' : '') + '</td>'
+          + '<td>' + (conducted ? '<span class="st-conducted">&#10003; Conducted</span>' : '<span class="st-not-done">&#10007; Not Done</span>') + '</td>'
+          + '<td><button class="view-btn">&#8964;</button></td>'
+          + '</tr>';
+
+        // Detail panel row
+        html += '<tr id="' + rid + '" style="display:none;"><td colspan="5"><div class="detail-panel" style="display:block;">';
         if (conducted) {
-          html += '<div class="entry-meta">Level: ' + (entry.level_of_meeting || '') + ' &nbsp;|&nbsp; Purpose: ' + (entry.meeting_purpose || '') + '</div>';
-          html += '<div class="entry-meta">Staff: ' + (entry.staff_name || '') + ' &nbsp;|&nbsp; Date: ' + (entry.date || '') + '</div>';
-          if (entry.outcome) html += '<div class="entry-meta" style="margin-top:6px; color:#202124;">' + entry.outcome.substring(0, 100) + (entry.outcome.length > 100 ? '...' : '') + '</div>';
-          if (entry.followup_date) html += '<div class="entry-meta">Follow-up: ' + entry.followup_date + ' - ' + (entry.followup_status || 'Pending') + '</div>';
+          html += '<div class="detail-grid" style="margin-bottom:10px;">';
+          if (e.staff_name) html += '<div class="detail-item"><label>Conducted By</label><span>' + esc(e.staff_name) + (e.conducted_by ? ' (' + esc(e.conducted_by) + ')' : '') + '</span></div>';
+          if (e.level_of_meeting) html += '<div class="detail-item"><label>Level</label><span>' + esc(e.level_of_meeting) + '</span></div>';
+          if (e.attendee_type === 'alternate' && e.actual_attendee_name) html += '<div class="detail-item" style="grid-column:1/-1;"><label>Who Attended</label><span>&#8645; ' + esc(e.actual_attendee_name) + ' (on behalf)</span></div>';
+          if (e.key_discussion_points) html += '<div class="detail-item" style="grid-column:1/-1;"><label>Key Discussion Points</label><span>' + esc(e.key_discussion_points) + '</span></div>';
+          if (e.outcome) html += '<div class="detail-item" style="grid-column:1/-1;"><label>Outcome</label><span>' + esc(e.outcome) + '</span></div>';
+          if (e.remark) html += '<div class="detail-item"><label>Relationship</label><span>' + esc(e.remark) + '</span></div>';
+          if (e.meeting_status) html += '<div class="detail-item"><label>Meeting Status</label><span>' + (e.meeting_status === 'completed' ? '&#9989; Completed' : '&#128337; Follow-up Required') + '</span></div>';
+          html += '</div>';
+          if (aiItems.length) {
+            html += '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;color:var(--muted);margin-bottom:6px;">&#128203; Action Items</div>';
+            html += '<table class="ai-row-table"><thead><tr><th>#</th><th>Action</th><th>Owner</th><th>Due Date</th></tr></thead><tbody>';
+            aiItems.forEach(function(ai, i) {
+              var today = new Date(); today.setHours(0,0,0,0);
+              var due = ai.due_date ? new Date(ai.due_date) : null;
+              var overdue = due && due < today;
+              html += '<tr' + (overdue ? ' style="background:#fef2f2;"' : '') + '>'
+                + '<td>' + (i+1) + '</td>'
+                + '<td>' + esc(ai.action) + '</td>'
+                + '<td>' + esc(ai.owner || '—') + '</td>'
+                + '<td>' + (ai.due_date ? fmtDate(ai.due_date) : '—') + (overdue ? ' <span style="color:var(--danger);font-weight:700;">Overdue</span>' : '') + '</td>'
+                + '</tr>';
+            });
+            html += '</tbody></table>';
+          }
         } else {
-          html += '<div class="entry-meta">Staff: ' + (entry.staff_name || '') + ' &nbsp;|&nbsp; Date: ' + (entry.date || '') + '</div>';
-          html += '<div class="entry-meta">Reason: ' + (entry.reason_not_conducted || '') + '</div>';
-          if (entry.followup_date) html += '<div class="entry-meta">Next planned: ' + entry.followup_date + '</div>';
+          html += '<div class="detail-grid">';
+          html += '<div class="detail-item"><label>Reason</label><span>' + esc(e.reason_not_conducted || '—') + '</span></div>';
+          if (e.followup_date) html += '<div class="detail-item"><label>Rescheduled To</label><span>' + fmtDate(e.followup_date) + '</span></div>';
+          if (e.followup_notes || e.notes) html += '<div class="detail-item" style="grid-column:1/-1;"><label>Notes</label><span>' + esc(e.followup_notes || e.notes || '') + '</span></div>';
+          html += '</div>';
         }
-        html += '<div class="entry-meta" style="font-size:11px; margin-top:6px; color:#9aa0a6;">ID: ' + (entry.submission_id || '') + '</div>';
-        html += '</div>';
+        if (e.plan_id) {
+          html += '<button class="btn btn-outline btn-sm" style="margin-top:10px;" onclick="window.location.href=\'timeline.html?plan_id=' + esc(e.plan_id) + '\'">&#128336; View Timeline</button>';
+        }
+        html += '</div></td></tr>';
       });
-      document.getElementById('entriesList').innerHTML = html;
-    })
-    .catch(function() {
-      document.getElementById('loadingSpinner').classList.add('hidden');
-      document.getElementById('alertBox').innerHTML = '<div class="alert alert-error">Network error. Please try again.</div>';
-    });
+      document.getElementById('entriesTbody').innerHTML = html;
+    }
+
+    function toggleDetail(rid) {
+      var row = document.getElementById(rid);
+      if (!row) return;
+      var visible = row.style.display !== 'none';
+      if (openRowId && openRowId !== rid) {
+        var prev = document.getElementById(openRowId);
+        if (prev) prev.style.display = 'none';
+      }
+      row.style.display = visible ? 'none' : '';
+      openRowId = visible ? null : rid;
+    }
   </script>
 </body>
 </html>

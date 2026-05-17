@@ -125,6 +125,27 @@
         </div>
       </div>
 
+      <!-- Outstanding Action Items -->
+      <div class="section-card" id="actionsCard" style="display:none;">
+        <div class="section-head">
+          <span class="section-head-title">&#128203; Outstanding Action Items</span>
+          <a href="myentries.html" class="section-head-link">View All &nbsp;&#8250;</a>
+        </div>
+        <div class="table-wrap">
+          <table class="mtable">
+            <thead>
+              <tr>
+                <th>Action</th>
+                <th>Owner</th>
+                <th>Due</th>
+                <th>Meeting</th>
+              </tr>
+            </thead>
+            <tbody id="actionsTbody"></tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -215,6 +236,41 @@
             + '</tr>';
         });
         document.getElementById('dashTbody').innerHTML = html;
+
+        // Load outstanding action items from logged meetings
+        fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'getMyMeetings', token: grToken() }) })
+          .then(function(r) { return r.json(); }).then(function(mr) {
+            if (!mr.success) return;
+            var today = new Date(); today.setHours(0,0,0,0);
+            var pending = [];
+            (mr.data || []).forEach(function(m) {
+              if (m.meeting_conducted !== 'YES') return;
+              var items = [];
+              try { items = JSON.parse(m.action_items || '[]'); } catch(e) {}
+              items.forEach(function(ai) {
+                if (ai.action) pending.push({ ai: ai, meeting: m });
+              });
+            });
+            if (!pending.length) return;
+            // Sort by due date ascending
+            pending.sort(function(a,b) { return new Date(a.ai.due_date||'9999') - new Date(b.ai.due_date||'9999'); });
+            var top = pending.slice(0, 5);
+            var ahtml = '';
+            top.forEach(function(p) {
+              var due = p.ai.due_date ? new Date(p.ai.due_date) : null;
+              if (due) due.setHours(0,0,0,0);
+              var overdue = due && due < today;
+              var dueStr = p.ai.due_date ? fmtDate(p.ai.due_date) : '—';
+              ahtml += '<tr>'
+                + '<td style="font-size:12px;">' + esc(p.ai.action) + '</td>'
+                + '<td style="font-size:12px;">' + esc(p.ai.owner || '—') + '</td>'
+                + '<td><span style="font-size:11px;font-weight:700;' + (overdue ? 'color:var(--danger);' : 'color:#374151;') + '">' + dueStr + (overdue ? ' &#9888;' : '') + '</span></td>'
+                + '<td style="font-size:11px;color:var(--muted);">' + esc(p.meeting.stakeholder_name || '') + '</td>'
+                + '</tr>';
+            });
+            document.getElementById('actionsTbody').innerHTML = ahtml;
+            document.getElementById('actionsCard').style.display = '';
+          }).catch(function() {});
       }).catch(function() {
         document.getElementById('tableSpinner').classList.add('hidden');
         document.getElementById('tableWrap').style.display = '';

@@ -133,7 +133,7 @@ function submitMeeting(formData) {
   // Ensure new columns exist
   var lastCol = sheet.getLastColumn();
   var headers = lastCol > 0 ? sheet.getRange(1, 1, 1, lastCol).getValues()[0] : [];
-  ['attendee_type', 'actual_attendee_name', 'meeting_status'].forEach(function(col) {
+  ['attendee_type', 'actual_attendee_name', 'meeting_status', 'action_items', 'plan_id', 'co_entry'].forEach(function(col) {
     if (headers.indexOf(col) === -1) {
       sheet.getRange(1, headers.length + 1).setValue(col);
       headers.push(col);
@@ -169,7 +169,10 @@ function submitMeeting(formData) {
     formData.escalation_required || '',
     formData.attendee_type || '',
     formData.actual_attendee_name || '',
-    formData.meeting_status || ''
+    formData.meeting_status || '',
+    formData.action_items || '',
+    formData.plan_id || '',
+    formData.co_entry || ''
   ]);
 
   if (formData.meeting_conducted === 'YES' && formData.followup_date) {
