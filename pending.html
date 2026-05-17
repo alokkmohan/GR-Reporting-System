@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pending Approval GR Reporting System</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <span class="logo">GR Reporting System</span>
+    <a href="#" onclick="logout()">Logout</a>
+  </nav>
+  <div class="container">
+    <div class="card" style="margin-top:32px; text-align:center; padding:40px 24px;">
+      <div class="card-title" style="font-size:20px;">Account Under Review</div>
+      <p class="text-muted" style="margin-top:12px; line-height:1.6;">
+        Your registration has been submitted successfully.<br>
+        Please wait for admin approval before you can log entries.
+      </p>
+      <hr class="divider">
+      <p class="text-muted">Contact <strong>alok.mohan@educategirls.ngo</strong><br>if approval is taking too long.</p>
+      <button class="btn btn-outline mt-16" style="max-width:200px; margin:16px auto 0;" onclick="window.location.reload()">Check Status</button>
+    </div>
+  </div>
+  <script>
+    var APP_URL = 'https://script.google.com/macros/s/AKfycbxEIOaI_Zt48oMxVVOE_x-D58pNVFLKzz2G6xMEVxDVROYAKmNEt2dFELxQRbUY9igt/exec';
+    var token = new URLSearchParams(window.location.search).get('token') || localStorage.getItem('grToken') || '';
+    function logout() {
+      fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'logout', token: token }) })
+        .finally(function() {
+          localStorage.removeItem('grToken');
+          localStorage.removeItem('grSession');
+          window.location.href = 'index.html';
+        });
+    }
+  </script>
+</body>
+</html>

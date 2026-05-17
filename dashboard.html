@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard GR Reporting System</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <span class="logo">GR Reporting</span>
+    <span class="nav-user" id="navUser"></span>
+  </nav>
+  <div class="container">
+    <div class="card" style="margin-top:16px">
+      <div class="card-title" id="greetingText">Welcome!</div>
+      <div class="text-muted" id="greetingMeta"></div>
+    </div>
+    <div class="card-title mb-8">Log a Meeting</div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;">
+      <button class="btn btn-primary" style="padding:20px 12px;" onclick="window.location.href='formA.html'">
+        <span style="font-size:13px; font-weight:500; display:block;">Meeting<br>Conducted</span>
+      </button>
+      <button class="btn btn-outline" style="padding:20px 12px;" onclick="window.location.href='formB.html'">
+        <span style="font-size:13px; font-weight:500; display:block;">Not<br>Conducted</span>
+      </button>
+    </div>
+    <div class="card-title mb-8">My Work</div>
+    <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px;">
+      <button class="btn btn-outline" style="text-align:left; padding:14px 16px;" onclick="window.location.href='planner.html'">Meeting Planner</button>
+      <button class="btn btn-outline" style="text-align:left; padding:14px 16px;" onclick="window.location.href='myentries.html'">My Past Entries</button>
+      <button class="btn btn-outline" id="adminBtn" style="text-align:left; padding:14px 16px; display:none;" onclick="window.location.href='admin.html'">Admin Panel</button>
+    </div>
+    <hr class="divider">
+    <button class="btn btn-outline" style="color:#c0392b; border-color:#c0392b;" onclick="logout()">Logout</button>
+  </div>
+  <script>
+    var APP_URL = 'https://script.google.com/macros/s/AKfycbxEIOaI_Zt48oMxVVOE_x-D58pNVFLKzz2G6xMEVxDVROYAKmNEt2dFELxQRbUY9igt/exec';
+    var token = new URLSearchParams(window.location.search).get('token') || localStorage.getItem('grToken') || '';
+    var session = JSON.parse(localStorage.getItem('grSession') || 'null');
+    if (token) localStorage.setItem('grToken', token);
+    if (!session || session.status !== 'active') { window.location.href = 'index.html'; }
+
+    document.getElementById('navUser').textContent = session.email || '';
+    var h = new Date().getHours();
+    document.getElementById('greetingText').textContent = (h < 12 ? 'Good Morning' : h < 17 ? 'Good Afternoon' : 'Good Evening') + '!';
+    document.getElementById('greetingMeta').textContent = 'Role: ' + (session.role || '').toUpperCase();
+    if (session.role === 'admin') document.getElementById('adminBtn').style.display = 'block';
+
+    function logout() {
+      fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'logout', token: token }) })
+        .finally(function() {
+          localStorage.removeItem('grToken');
+          localStorage.removeItem('grSession');
+          window.location.href = 'index.html';
+        });
+    }
+  </script>
+</body>
+</html>

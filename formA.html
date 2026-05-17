@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Meeting Conducted GR Reporting</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="planner.html">Back</a>
+    <span class="logo">Meeting Conducted</span>
+    <span></span>
+  </nav>
+  <div class="container">
+    <div id="successScreen" class="hidden">
+      <div class="card success-screen">
+        <div class="success-icon">Done</div>
+        <div class="card-title">Submitted Successfully!</div>
+        <p class="text-muted mt-8">Meeting record saved.</p>
+        <div class="success-id" id="submissionIdBox"></div>
+        <button class="btn btn-primary mt-16" onclick="window.location.href='planner.html'">Back to Planner</button>
+        <button class="btn btn-outline mt-8" onclick="location.reload()">Submit Another</button>
+      </div>
+    </div>
+    <div id="formContainer">
+      <div id="alertBox"></div>
+      <div id="planInfoCard" class="hidden"><div class="alert alert-info" id="planInfoText"></div></div>
+      <div class="progress-label" id="progressLabel">Step 1 of 4</div>
+      <div class="progress-bar">
+        <div class="progress-step active" id="ps1"></div>
+        <div class="progress-step" id="ps2"></div>
+        <div class="progress-step" id="ps3"></div>
+        <div class="progress-step" id="ps4"></div>
+      </div>
+
+      <div class="card" id="step1">
+        <div class="section-header">Identification</div>
+        <div class="form-group"><label class="form-label">Date <span class="required">*</span></label><input type="date" id="date" class="form-control" onchange="updateMonth()"></div>
+        <div class="form-group"><label class="form-label">Reporting Month</label><input type="text" id="reporting_month" class="form-control" readonly></div>
+        <div class="form-group">
+          <label class="form-label">Unit <span class="required">*</span></label>
+          <select id="unit" class="form-control"><option value="">-- Select Unit --</option><option>TST</option><option>TAU</option><option>District Unit</option><option>State Unit</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">District</label><input type="text" id="district" class="form-control" readonly></div>
+        <div class="form-group"><label class="form-label">Block / Cluster</label><input type="text" id="block_cluster" class="form-control" placeholder="Enter block or cluster"></div>
+        <button class="btn btn-primary" onclick="next(1)">Next</button>
+      </div>
+
+      <div class="card hidden" id="step2">
+        <div class="section-header">Meeting Details</div>
+        <div class="form-group">
+          <label class="form-label">Meeting Conducted By <span class="required">*</span></label>
+          <select id="conducted_by" class="form-control"><option value="">-- Select --</option><option>SOH</option><option>ZOL</option><option>DOL</option><option>DPO</option><option>BPO</option><option>DPTO</option><option>SPSS</option><option>SIL</option><option>TAU Lead</option><option>Director Operations</option><option>Program Associate</option><option>Other</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Staff Name <span class="required">*</span></label><input type="text" id="staff_name" class="form-control" placeholder="Full name"></div>
+        <div class="form-group">
+          <label class="form-label">Level of Meeting <span class="required">*</span></label>
+          <select id="level_of_meeting" class="form-control"><option value="">-- Select --</option><option>State</option><option>District</option><option>Block</option><option>Cluster</option><option>School</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Any Other Participants</label><input type="text" id="other_participants" class="form-control" placeholder="Optional"></div>
+        <div style="display:flex;gap:10px;"><button class="btn btn-outline" onclick="prev(2)">Back</button><button class="btn btn-primary" onclick="next(2)">Next</button></div>
+      </div>
+
+      <div class="card hidden" id="step3">
+        <div class="section-header">Stakeholder</div>
+        <div class="form-group">
+          <label class="form-label">Stakeholder Type <span class="required">*</span></label>
+          <select id="stakeholder_type" class="form-control" onchange="toggleOtherDept()"><option value="">-- Select --</option><option>ACS</option><option>DGSE</option><option>UIC</option><option>SPD</option><option>ASPD</option><option>JD</option><option>BSA</option><option>CDO</option><option>District Collector</option><option>DIET Principal</option><option>ABSA</option><option>ARP</option><option>DC- Gender</option><option>DC-Training</option><option>DC- MIS</option><option>DC- Community</option><option>DC-IED</option><option>Head Teacher</option><option>Teacher</option><option>Development Partner Cell</option><option>Other Department</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Stakeholder Name <span class="required">*</span></label><input type="text" id="stakeholder_name" class="form-control" placeholder="Name of official met"></div>
+        <div class="form-group hidden" id="otherDeptGroup"><label class="form-label">Department / Organisation</label><input type="text" id="department_organisation" class="form-control" placeholder="Specify department"></div>
+        <div class="section-header" style="margin-top:8px;">Meeting Content</div>
+        <div class="form-group">
+          <label class="form-label">Meeting Purpose <span class="required">*</span></label>
+          <select id="meeting_purpose" class="form-control"><option value="">-- Select --</option><option>Introductory Meeting</option><option>Enrollment</option><option>Retention</option><option>Learning</option><option>Invitation</option><option>Review Meeting</option><option>MPR Submission</option><option>DTF</option><option>School Liasioning</option><option>Courtesy Meeting</option><option>Other</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Key Discussion Points</label><textarea id="key_discussion_points" class="form-control" placeholder="Bullet points of discussion"></textarea></div>
+        <div class="form-group"><label class="form-label">Outcome <span class="required">*</span></label><textarea id="outcome" class="form-control" placeholder="What was the result?"></textarea></div>
+        <div style="display:flex;gap:10px;"><button class="btn btn-outline" onclick="prev(3)">Back</button><button class="btn btn-primary" onclick="next(3)">Next</button></div>
+      </div>
+
+      <div class="card hidden" id="step4">
+        <div class="section-header">Action &amp; Follow-up</div>
+        <div class="form-group"><label class="form-label">Next Action <span class="required">*</span></label><input type="text" id="next_action" class="form-control" placeholder="What needs to be done next?"></div>
+        <div class="form-group"><label class="form-label">Responsible Person</label><input type="text" id="responsible_person" class="form-control" placeholder="Who will follow up?"></div>
+        <div class="form-group"><label class="form-label">Follow-up Date</label><input type="date" id="followup_date" class="form-control"></div>
+        <div class="form-group">
+          <label class="form-label">Follow-up Status</label>
+          <select id="followup_status" class="form-control"><option value="">-- Select --</option><option>Pending</option><option>Completed</option><option>Not Required</option></select>
+        </div>
+        <div class="section-header" style="margin-top:8px;">Supporting Info</div>
+        <div class="form-group"><label class="form-label">Photo Link (Google Drive)</label><input type="url" id="photo_link" class="form-control" placeholder="https://drive.google.com/..."></div>
+        <div class="form-group">
+          <label class="form-label">Remark <span class="required">*</span></label>
+          <select id="remark" class="form-control"><option value="">-- Select --</option><option>Positive</option><option>Neutral</option><option>Cold</option><option>Not Reachable</option></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Priority Level</label>
+          <select id="priority_level" class="form-control"><option value="">-- Select --</option><option>High</option><option>Medium</option><option>Low</option></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Escalation Required?</label>
+          <div class="toggle-group">
+            <button type="button" class="toggle-btn" id="escYes" onclick="setEsc('Yes')">Yes</button>
+            <button type="button" class="toggle-btn" id="escNo" onclick="setEsc('No')">No</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button class="btn btn-outline" onclick="prev(4)">Back</button>
+          <button class="btn btn-success" id="submitBtn" onclick="submitForm()">Submit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var APP_URL = 'https://script.google.com/macros/s/AKfycbxEIOaI_Zt48oMxVVOE_x-D58pNVFLKzz2G6xMEVxDVROYAKmNEt2dFELxQRbUY9igt/exec';
+    var token = localStorage.getItem('grToken') || '';
+    var session = JSON.parse(localStorage.getItem('grSession') || 'null');
+    if (!session || session.status !== 'active') { window.location.href = 'index.html'; }
+
+    var planId = new URLSearchParams(window.location.search).get('plan_id') || '';
+    var escValue = '';
+
+    document.getElementById('district').value = session.district || '';
+
+    var planData = null;
+    try { planData = JSON.parse(sessionStorage.getItem('activePlan') || 'null'); } catch(e) {}
+    if (planData && planData.plan_id === planId) {
+      document.getElementById('planInfoCard').classList.remove('hidden');
+      document.getElementById('planInfoText').textContent = 'Planned meeting with ' + planData.stakeholder_name + ' on ' + planData.meeting_date;
+      document.getElementById('stakeholder_name').value = planData.stakeholder_name || '';
+      document.getElementById('meeting_purpose').value = planData.meeting_purpose || '';
+      document.getElementById('level_of_meeting').value = planData.level_of_meeting || '';
+      document.getElementById('block_cluster').value = planData.block_cluster || '';
+      if (planData.stakeholder_type) { document.getElementById('stakeholder_type').value = planData.stakeholder_type; toggleOtherDept(); }
+      if (planData.meeting_date) { document.getElementById('date').value = planData.meeting_date.toString().substring(0,10); updateMonth(); }
+    }
+
+    if (!document.getElementById('date').value) { document.getElementById('date').value = new Date().toISOString().split('T')[0]; updateMonth(); }
+
+    function updateMonth() {
+      var d = document.getElementById('date').value; if (!d) return;
+      var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      document.getElementById('reporting_month').value = months[new Date(d).getMonth()] + ' ' + new Date(d).getFullYear();
+    }
+    function toggleOtherDept() { document.getElementById('otherDeptGroup').classList.toggle('hidden', document.getElementById('stakeholder_type').value !== 'Other Department'); }
+    function setEsc(v) { escValue = v; document.getElementById('escYes').className = 'toggle-btn' + (v==='Yes'?' selected-yes':''); document.getElementById('escNo').className = 'toggle-btn' + (v==='No'?' selected-no':''); }
+    function showAlert(msg) { document.getElementById('alertBox').innerHTML = '<div class="alert alert-error">' + msg + '</div>'; window.scrollTo(0,0); }
+    function next(s) { if (!validate(s)) return; document.getElementById('step'+s).classList.add('hidden'); document.getElementById('step'+(s+1)).classList.remove('hidden'); progress(s+1); window.scrollTo(0,0); }
+    function prev(s) { document.getElementById('step'+s).classList.add('hidden'); document.getElementById('step'+(s-1)).classList.remove('hidden'); progress(s-1); window.scrollTo(0,0); }
+    function progress(s) { document.getElementById('progressLabel').textContent = 'Step '+s+' of 4'; for(var i=1;i<=4;i++) document.getElementById('ps'+i).className='progress-step'+(i<s?' done':i===s?' active':''); }
+    function validate(s) {
+      if (s===1 && (!document.getElementById('date').value || !document.getElementById('unit').value)) { showAlert('Date and Unit are required.'); return false; }
+      if (s===2 && (!document.getElementById('conducted_by').value || !document.getElementById('staff_name').value.trim() || !document.getElementById('level_of_meeting').value)) { showAlert('All required fields must be filled.'); return false; }
+      if (s===3 && (!document.getElementById('stakeholder_type').value || !document.getElementById('stakeholder_name').value.trim() || !document.getElementById('meeting_purpose').value || !document.getElementById('outcome').value.trim())) { showAlert('All required fields must be filled.'); return false; }
+      document.getElementById('alertBox').innerHTML = ''; return true;
+    }
+    function submitForm() {
+      if (!document.getElementById('next_action').value.trim()) { showAlert('Next Action is required.'); return; }
+      if (!document.getElementById('remark').value) { showAlert('Remark is required.'); return; }
+      document.getElementById('submitBtn').disabled = true; document.getElementById('submitBtn').textContent = 'Submitting...';
+      fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'submitMeeting', token: token, plan_id: planId, formData: {
+        meeting_conducted:'YES', date:document.getElementById('date').value, unit:document.getElementById('unit').value,
+        district:document.getElementById('district').value, block_cluster:document.getElementById('block_cluster').value,
+        conducted_by:document.getElementById('conducted_by').value, staff_name:document.getElementById('staff_name').value,
+        level_of_meeting:document.getElementById('level_of_meeting').value, other_participants:document.getElementById('other_participants').value,
+        stakeholder_type:document.getElementById('stakeholder_type').value, stakeholder_name:document.getElementById('stakeholder_name').value,
+        department_organisation:document.getElementById('department_organisation').value, meeting_purpose:document.getElementById('meeting_purpose').value,
+        key_discussion_points:document.getElementById('key_discussion_points').value, outcome:document.getElementById('outcome').value,
+        next_action:document.getElementById('next_action').value, responsible_person:document.getElementById('responsible_person').value,
+        followup_date:document.getElementById('followup_date').value, followup_status:document.getElementById('followup_status').value,
+        photo_link:document.getElementById('photo_link').value, remark:document.getElementById('remark').value,
+        priority_level:document.getElementById('priority_level').value, escalation_required:escValue
+      }})})
+      .then(function(r) { return r.json(); }).then(function(res) {
+        if (res.success) { sessionStorage.removeItem('activePlan'); document.getElementById('formContainer').classList.add('hidden'); document.getElementById('successScreen').classList.remove('hidden'); document.getElementById('submissionIdBox').textContent = 'ID: ' + res.submission_id; window.scrollTo(0,0); }
+        else { showAlert(res.message || 'Submission failed.'); document.getElementById('submitBtn').disabled = false; document.getElementById('submitBtn').textContent = 'Submit'; }
+      }).catch(function() { showAlert('Network error.'); document.getElementById('submitBtn').disabled = false; document.getElementById('submitBtn').textContent = 'Submit'; });
+    }
+  </script>
+</body>
+</html>

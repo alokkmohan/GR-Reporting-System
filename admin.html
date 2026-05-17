@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin Panel GR Reporting System</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="planner.html">Back</a>
+    <span class="logo">Admin Panel</span>
+    <span></span>
+  </nav>
+
+  <div class="container">
+    <div id="alertBox"></div>
+
+    <div style="display:flex; gap:8px; margin-bottom:16px;">
+      <button class="btn btn-primary btn-sm" id="tabPending" onclick="showTab('pending')">Pending Approval</button>
+      <button class="btn btn-outline btn-sm" id="tabAll" onclick="showTab('all')">All Users</button>
+    </div>
+
+    <div id="pendingSection">
+      <div class="card-title mb-8">Pending Approval</div>
+      <div id="pendingSpinner"><div class="spinner"></div></div>
+      <div id="pendingList"></div>
+      <div id="pendingEmpty" class="hidden">
+        <div class="card text-center" style="padding:24px;">
+          <p class="text-muted mt-8">No pending approvals.</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="allSection" class="hidden">
+      <div class="card-title mb-8">All Users</div>
+      <div id="allSpinner"><div class="spinner"></div></div>
+      <div id="allList"></div>
+    </div>
+  </div>
+
+  <script>
+    var APP_URL = 'https://script.google.com/macros/s/AKfycbxEIOaI_Zt48oMxVVOE_x-D58pNVFLKzz2G6xMEVxDVROYAKmNEt2dFELxQRbUY9igt/exec';
+    var token = localStorage.getItem('grToken') || '';
+    var session = JSON.parse(localStorage.getItem('grSession') || 'null');
+    if (!session || session.status !== 'active' || session.role !== 'admin') {
+      window.location.href = 'index.html';
+    }
+
+    function showAlert(msg, type) {
+      document.getElementById('alertBox').innerHTML = '<div class="alert alert-' + type + '">' + msg + '</div>';
+      setTimeout(function(){ document.getElementById('alertBox').innerHTML = ''; }, 3000);
+    }
+
+    function showTab(tab) {
+      document.getElementById('pendingSection').classList.toggle('hidden', tab !== 'pending');
+      document.getElementById('allSection').classList.toggle('hidden', tab !== 'all');
+      document.getElementById('tabPending').className = 'btn btn-sm ' + (tab === 'pending' ? 'btn-primary' : 'btn-outline');
+      document.getElementById('tabAll').className = 'btn btn-sm ' + (tab === 'all' ? 'btn-primary' : 'btn-outline');
+      if (tab === 'all') loadAllUsers();
+    }
+
+    fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'getPendingUsers', token: token }) })
+      .then(function(r) { return r.json(); })
+      .then(function(res) {
+        document.getElementById('pendingSpinner').classList.add('hidden');
+        if (!res.success) { showAlert(res.message || 'Error loading users.', 'error'); return; }
+        var users = res.data || [];
+        if (users.length === 0) { document.getElementById('pendingEmpty').classList.remove('hidden'); return; }
+        var html = '';
+        users.forEach(function(u) {
+          html += '<div class="card" style="margin-bottom:12px;" id="pcard_' + btoa(u.email) + '">';
+          html += '<div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:8px;">';
+          html += '<div><div class="entry-title">' + u.full_name + '</div>';
+          html += '<div class="entry-meta">' + u.email + '</div>';
+          html += '<div class="entry-meta">' + u.district + ' | ' + u.zone + ' | ' + u.designation + '</div>';
+          html += '<div class="entry-meta">Registered: ' + u.registered_on + '</div></div>';
+          html += '</div>';
+          html += '<div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">';
+          html += '<select class="form-control" style="width:auto; padding:8px 12px; font-size:14px;" id="role_' + btoa(u.email) + '">';
+          html += '<option value="field" selected>field</option><option value="district">district</option><option value="state">state</option><option value="admin">admin</option>';
+          html += '</select>';
+          html += '<button class="btn btn-success btn-sm" onclick="approveUser(\'' + u.email + '\')">Approve</button>';
+          html += '<button class="btn btn-danger btn-sm" onclick="suspendUser(\'' + u.email + '\')">Reject</button>';
+          html += '</div></div>';
+        });
+        document.getElementById('pendingList').innerHTML = html;
+      });
+
+    function loadAllUsers() {
+      if (document.getElementById('allList').innerHTML) return;
+      fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'getAllUsers', token: token }) })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+          document.getElementById('allSpinner').classList.add('hidden');
+          if (!res.success) { showAlert(res.message || 'Error.', 'error'); return; }
+          var users = res.data || [];
+          var html = '<div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>District</th><th>Role</th><th>Status</th><th>Action</th></tr></thead><tbody>';
+          users.forEach(function(u) {
+            html += '<tr>';
+            html += '<td>' + u.full_name + '</td>';
+            html += '<td style="font-size:13px;">' + u.email + '</td>';
+            html += '<td>' + u.district + '</td>';
+            html += '<td><select class="form-control" style="padding:6px 8px; font-size:13px; width:auto;" onchange="changeRole(\'' + u.email + '\', this.value)">';
+            ['field','district','state','admin'].forEach(function(r) {
+              html += '<option value="' + r + '"' + (u.role === r ? ' selected' : '') + '>' + r + '</option>';
+            });
+            html += '</select></td>';
+            html += '<td><span class="badge badge-' + u.status + '">' + u.status + '</span></td>';
+            html += '<td>';
+            if (u.status !== 'active') html += '<button class="btn btn-success btn-sm" onclick="approveUser(\'' + u.email + '\')">Approve</button> ';
+            if (u.status !== 'suspended') html += '<button class="btn btn-danger btn-sm" onclick="suspendUser(\'' + u.email + '\')">Suspend</button>';
+            html += '</td></tr>';
+          });
+          html += '</tbody></table></div>';
+          document.getElementById('allList').innerHTML = html;
+        });
+    }
+
+    function approveUser(email) {
+      var roleEl = document.getElementById('role_' + btoa(email));
+      var role = roleEl ? roleEl.value : 'field';
+      Promise.all([
+        fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'approveUser', token: token, email: email }) }).then(function(r){return r.json();}),
+        fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'updateRole', token: token, email: email, role: role }) }).then(function(r){return r.json();})
+      ]).then(function() {
+        showAlert(email + ' approved as ' + role + '.', 'success');
+        var card = document.getElementById('pcard_' + btoa(email));
+        if (card) card.remove();
+        document.getElementById('allList').innerHTML = '';
+      });
+    }
+
+    function suspendUser(email) {
+      fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'suspendUser', token: token, email: email }) })
+        .then(function(r) { return r.json(); })
+        .then(function() {
+          showAlert(email + ' suspended.', 'error');
+          var card = document.getElementById('pcard_' + btoa(email));
+          if (card) card.remove();
+          document.getElementById('allList').innerHTML = '';
+        });
+    }
+
+    function changeRole(email, role) {
+      fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'updateRole', token: token, email: email, role: role }) })
+        .then(function(r) { return r.json(); })
+        .then(function() { showAlert('Role updated to ' + role + '.', 'success'); });
+    }
+  </script>
+</body>
+</html>

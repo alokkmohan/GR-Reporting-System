@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My Entries GR Reporting System</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="planner.html">Back</a>
+    <span class="logo">My Entries</span>
+    <span></span>
+  </nav>
+
+  <div class="container">
+    <div id="loadingSpinner"><div class="spinner"></div></div>
+    <div id="alertBox"></div>
+    <div id="entriesList"></div>
+    <div id="emptyState" class="hidden">
+      <div class="card text-center" style="padding:40px 20px;">
+        <div class="card-title">No Entries Yet</div>
+        <p class="text-muted mt-8">You have not submitted any meeting records.</p>
+        <button class="btn btn-primary mt-16" onclick="window.location.href='planner.html'">Submit First Entry</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var APP_URL = 'https://script.google.com/macros/s/AKfycbxEIOaI_Zt48oMxVVOE_x-D58pNVFLKzz2G6xMEVxDVROYAKmNEt2dFELxQRbUY9igt/exec';
+    var token = localStorage.getItem('grToken') || '';
+    var session = JSON.parse(localStorage.getItem('grSession') || 'null');
+    if (!session || session.status !== 'active') { window.location.href = 'index.html'; }
+
+    var actionKey = 'getMyMeetings';
+    if (session.role === 'state' || session.role === 'admin') actionKey = 'getAllMeetings';
+    else if (session.role === 'district') actionKey = 'getDistrictMeetings';
+
+    fetch(APP_URL, { method: 'POST', body: JSON.stringify({ action: actionKey, token: token }) })
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+      document.getElementById('loadingSpinner').classList.add('hidden');
+      if (!res.success) {
+        document.getElementById('alertBox').innerHTML = '<div class="alert alert-error">' + (res.message || 'Failed to load.') + '</div>';
+        return;
+      }
+      var data = res.data || [];
+      if (data.length === 0) { document.getElementById('emptyState').classList.remove('hidden'); return; }
+      data.sort(function(a, b) { return new Date(b.timestamp) - new Date(a.timestamp); });
+      var html = '<div class="card-title mb-8">Total: ' + data.length + ' entries</div>';
+      data.forEach(function(entry) {
+        var conducted = entry.meeting_conducted === 'YES';
+        html += '<div class="entry-card' + (conducted ? '' : ' no-meeting') + '">';
+        html += '<div style="display:flex; justify-content:space-between; align-items:flex-start;">';
+        html += '<div class="entry-title">' + (entry.stakeholder_name || entry.stakeholder_type || 'N/A') + '</div>';
+        html += '<span class="badge ' + (conducted ? 'badge-active' : 'badge-pending') + '">' + (conducted ? 'Meeting Done' : 'Not Conducted') + '</span>';
+        html += '</div>';
+        if (conducted) {
+          html += '<div class="entry-meta">Level: ' + (entry.level_of_meeting || '') + ' &nbsp;|&nbsp; Purpose: ' + (entry.meeting_purpose || '') + '</div>';
+          html += '<div class="entry-meta">Staff: ' + (entry.staff_name || '') + ' &nbsp;|&nbsp; Date: ' + (entry.date || '') + '</div>';
+          if (entry.outcome) html += '<div class="entry-meta" style="margin-top:6px; color:#202124;">' + entry.outcome.substring(0, 100) + (entry.outcome.length > 100 ? '...' : '') + '</div>';
+          if (entry.followup_date) html += '<div class="entry-meta">Follow-up: ' + entry.followup_date + ' - ' + (entry.followup_status || 'Pending') + '</div>';
+        } else {
+          html += '<div class="entry-meta">Staff: ' + (entry.staff_name || '') + ' &nbsp;|&nbsp; Date: ' + (entry.date || '') + '</div>';
+          html += '<div class="entry-meta">Reason: ' + (entry.reason_not_conducted || '') + '</div>';
+          if (entry.followup_date) html += '<div class="entry-meta">Next planned: ' + entry.followup_date + '</div>';
+        }
+        html += '<div class="entry-meta" style="font-size:11px; margin-top:6px; color:#9aa0a6;">ID: ' + (entry.submission_id || '') + '</div>';
+        html += '</div>';
+      });
+      document.getElementById('entriesList').innerHTML = html;
+    })
+    .catch(function() {
+      document.getElementById('loadingSpinner').classList.add('hidden');
+      document.getElementById('alertBox').innerHTML = '<div class="alert alert-error">Network error. Please try again.</div>';
+    });
+  </script>
+</body>
+</html>

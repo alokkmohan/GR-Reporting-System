@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Create Account GR Reporting System</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="index.html">Back</a>
+    <span class="logo">Create Account</span>
+    <span></span>
+  </nav>
+  <div class="container">
+
+    <div id="stepEmail" class="card" style="margin-top:16px">
+      <div class="card-title">Sign Up</div>
+      <div class="card-subtitle">Only @educategirls.ngo email addresses are allowed</div>
+      <div id="alertBox1"></div>
+      <div class="form-group">
+        <label class="form-label">Email Address <span class="required">*</span></label>
+        <input type="email" id="emailInput" class="form-control" placeholder="you@educategirls.ngo">
+      </div>
+      <button class="btn btn-primary" id="sendOtpBtn" onclick="requestOTP()">Send OTP</button>
+    </div>
+
+    <div id="stepOTP" class="card hidden" style="margin-top:16px">
+      <div class="card-title">Verify Email</div>
+      <div class="alert alert-info" id="otpMsg"></div>
+      <div id="alertBox2"></div>
+      <div class="form-group">
+        <label class="form-label">Enter OTP <span class="required">*</span></label>
+        <input type="number" id="otpInput" class="form-control otp-input" placeholder="------">
+      </div>
+      <button class="btn btn-primary" id="verifyBtn" onclick="verifyOTP()">Verify OTP</button>
+      <button class="btn btn-outline mt-8" onclick="backToEmail()">Change Email</button>
+    </div>
+
+    <div id="stepProfile" class="card hidden" style="margin-top:16px">
+      <div class="card-title">Complete Your Profile</div>
+      <div class="card-subtitle">This information will be attached to all your entries</div>
+      <div id="alertBox3"></div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" id="emailDisplay" class="form-control" readonly>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Full Name <span class="required">*</span></label>
+        <input type="text" id="full_name" class="form-control" placeholder="Your full name">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Posting Level <span class="required">*</span></label>
+        <select id="posting_level" class="form-control" onchange="toggleDistrict()">
+          <option value="">Loading...</option>
+        </select>
+      </div>
+      <div class="form-group hidden" id="districtGroup">
+        <label class="form-label">District <span class="required">*</span></label>
+        <select id="district" class="form-control">
+          <option value="">-- Select District --</option>
+          <option>Agra</option><option>Aligarh</option><option>Ambedkar Nagar</option>
+          <option>Amethi</option><option>Amroha</option><option>Auraiya</option>
+          <option>Azamgarh</option><option>Baghpat</option><option>Bahraich</option>
+          <option>Ballia</option><option>Balrampur</option><option>Banda</option>
+          <option>Barabanki</option><option>Bareilly</option><option>Basti</option>
+          <option>Bhadohi</option><option>Bijnor</option><option>Budaun</option>
+          <option>Bulandshahr</option><option>Chandauli</option><option>Chitrakoot</option>
+          <option>Deoria</option><option>Etah</option><option>Etawah</option>
+          <option>Farrukhabad</option><option>Fatehpur</option><option>Firozabad</option>
+          <option>Gautam Buddha Nagar</option><option>Ghaziabad</option><option>Ghazipur</option>
+          <option>Gonda</option><option>Gorakhpur</option><option>Hamirpur</option>
+          <option>Hapur</option><option>Hardoi</option><option>Hathras</option>
+          <option>Jalaun</option><option>Jaunpur</option><option>Jhansi</option>
+          <option>Kannauj</option><option>Kanpur Dehat</option><option>Kanpur Nagar</option>
+          <option>Kasganj</option><option>Kaushambi</option><option>Kheri</option>
+          <option>Kushinagar</option><option>Lalitpur</option><option>Lucknow</option>
+          <option>Maharajganj</option><option>Mahoba</option><option>Mainpuri</option>
+          <option>Mathura</option><option>Mau</option><option>Meerut</option>
+          <option>Mirzapur</option><option>Moradabad</option><option>Muzaffarnagar</option>
+          <option>Pilibhit</option><option>Pratapgarh</option><option>Prayagraj</option>
+          <option>Rae Bareli</option><option>Rampur</option><option>Saharanpur</option>
+          <option>Sambhal</option><option>Sant Kabir Nagar</option><option>Shahjahanpur</option>
+          <option>Shamli</option><option>Shravasti</option><option>Siddharthnagar</option>
+          <option>Sitapur</option><option>Sonbhadra</option><option>Sultanpur</option>
+          <option>Unnao</option><option>Varanasi</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Unit <span class="required">*</span></label>
+        <select id="unit" class="form-control">
+          <option value="">Loading...</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Designation <span class="required">*</span></label>
+        <select id="designation" class="form-control">
+          <option value="">Loading...</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="submitProfile()">Create Account</button>
+    </div>
+
+    <div id="stepSuccess" class="card hidden" style="margin-top:16px">
+      <div class="success-screen">
+        <div class="success-icon">&#10003;</div>
+        <div class="card-title">Account Created!</div>
+        <div class="card-subtitle" style="margin-top:8px">Your account has been created successfully. Redirecting you to the planner...</div>
+      </div>
+    </div>
+
+    <div id="loadingSpinner" class="hidden"><div class="spinner"></div></div>
+  </div>
+
+  <script>
+    var APP_URL = 'https://script.google.com/macros/s/AKfycbxEIOaI_Zt48oMxVVOE_x-D58pNVFLKzz2G6xMEVxDVROYAKmNEt2dFELxQRbUY9igt/exec';
+    var currentEmail = '';
+    var sessionToken = '';
+
+    fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'getDropdowns' }) })
+      .then(function(r) { return r.json(); }).then(function(res) {
+        function fillSelect(id, items, label) {
+          var sel = document.getElementById(id);
+          sel.innerHTML = '<option value="">-- Select ' + label + ' --</option>';
+          (items || []).forEach(function(v) {
+            var o = document.createElement('option'); o.value = v; o.textContent = v; sel.appendChild(o);
+          });
+        }
+        if (res.success) {
+          fillSelect('posting_level', res.postingLevels, 'Posting Level');
+          fillSelect('unit', res.units, 'Unit');
+          fillSelect('designation', res.designations, 'Designation');
+        }
+      }).catch(function() {
+        document.getElementById('unit').innerHTML = '<option value="">-- Select Unit --</option><option>TAU</option><option>TST</option><option>Vidhaya</option><option>Pragatai</option><option>Other</option>';
+        document.getElementById('designation').innerHTML = '<option value="">-- Select Designation --</option><option>BPO</option><option>DPO</option><option>ZOL</option><option>Other</option>';
+      });
+
+    var urlParams = new URLSearchParams(window.location.search);
+    var preToken = urlParams.get('token') || '';
+    var preEmail = urlParams.get('email') || '';
+    if (preEmail) {
+      currentEmail = decodeURIComponent(preEmail);
+      sessionToken = preToken;
+      document.getElementById('stepEmail').classList.add('hidden');
+      document.getElementById('stepProfile').classList.remove('hidden');
+      document.getElementById('emailDisplay').value = currentEmail;
+    }
+
+    function setLoading(on) { document.getElementById('loadingSpinner').classList.toggle('hidden', !on); }
+    function showAlert(id, msg, type) { document.getElementById(id).innerHTML = '<div class="alert alert-' + type + '">' + msg + '</div>'; }
+
+    function requestOTP() {
+      currentEmail = document.getElementById('emailInput').value.trim().toLowerCase();
+      if (!currentEmail.endsWith('@educategirls.ngo')) { showAlert('alertBox1', 'Only @educategirls.ngo emails are allowed.', 'error'); return; }
+      document.getElementById('sendOtpBtn').disabled = true;
+      setLoading(true);
+      fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'sendOTP', email: currentEmail, source: 'signup' }) })
+        .then(function(r) { return r.json(); }).then(function(res) {
+          setLoading(false); document.getElementById('sendOtpBtn').disabled = false;
+          if (res.success) {
+            document.getElementById('stepEmail').classList.add('hidden');
+            document.getElementById('stepOTP').classList.remove('hidden');
+            document.getElementById('otpMsg').textContent = 'OTP sent to ' + currentEmail;
+          } else { showAlert('alertBox1', res.message || 'Error sending OTP.', 'error'); }
+        }).catch(function() { setLoading(false); document.getElementById('sendOtpBtn').disabled = false; showAlert('alertBox1', 'Network error.', 'error'); });
+    }
+
+    function verifyOTP() {
+      var otp = document.getElementById('otpInput').value.trim();
+      if (otp.length < 6) { showAlert('alertBox2', 'Enter 6-digit OTP.', 'error'); return; }
+      document.getElementById('verifyBtn').disabled = true;
+      setLoading(true);
+      fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'verifyOTP', email: currentEmail, otp: otp }) })
+        .then(function(r) { return r.json(); }).then(function(res) {
+          setLoading(false);
+          if (res.success) {
+            sessionToken = res.token;
+            localStorage.setItem('grToken', res.token);
+            if (res.status === 'active') {
+              var sess = res.user ? { email: res.user.email, role: res.user.role, status: 'active', full_name: res.user.full_name || '', district: res.user.district || '' } : { email: currentEmail, role: res.role || 'field', status: 'active' };
+              localStorage.setItem('grSession', JSON.stringify(sess));
+              window.location.href = 'planner.html';
+              return;
+            }
+            if (res.status === 'pending') { window.location.href = 'pending.html?token=' + res.token; return; }
+            document.getElementById('stepOTP').classList.add('hidden');
+            document.getElementById('stepProfile').classList.remove('hidden');
+            document.getElementById('emailDisplay').value = currentEmail;
+          } else { document.getElementById('verifyBtn').disabled = false; showAlert('alertBox2', res.message || 'Incorrect OTP.', 'error'); }
+        }).catch(function() { setLoading(false); document.getElementById('verifyBtn').disabled = false; showAlert('alertBox2', 'Network error.', 'error'); });
+    }
+
+    function submitProfile() {
+      var full_name = document.getElementById('full_name').value.trim();
+      var posting_level = document.getElementById('posting_level').value;
+      var district = document.getElementById('district').value;
+      var unit = document.getElementById('unit').value;
+      var designation = document.getElementById('designation').value;
+      if (!full_name || !posting_level || !unit || !designation) { showAlert('alertBox3', 'Please fill all required fields.', 'error'); return; }
+      if (posting_level === 'District' && !district) { showAlert('alertBox3', 'Please select your district.', 'error'); return; }
+      setLoading(true);
+      fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'register', token: sessionToken, email: currentEmail, full_name: full_name, posting_level: posting_level, district: district, unit: unit, designation: designation }) })
+        .then(function(r) { return r.json(); }).then(function(res) {
+          setLoading(false);
+          if (res.success) {
+            localStorage.setItem('grToken', res.token);
+            localStorage.setItem('grSession', JSON.stringify({ email: currentEmail, role: 'field', status: 'active', district: district || '', full_name: full_name }));
+            document.getElementById('stepProfile').classList.add('hidden');
+            document.getElementById('stepSuccess').classList.remove('hidden');
+            setTimeout(function() { window.location.href = 'planner.html'; }, 2500);
+          } else showAlert('alertBox3', res.message || 'Registration failed.', 'error');
+        }).catch(function() { setLoading(false); showAlert('alertBox3', 'Network error.', 'error'); });
+    }
+
+    function toggleDistrict() {
+      var level = document.getElementById('posting_level').value;
+      document.getElementById('districtGroup').classList.toggle('hidden', level !== 'District');
+      if (level !== 'District') document.getElementById('district').value = '';
+    }
+
+    function backToEmail() { document.getElementById('stepOTP').classList.add('hidden'); document.getElementById('stepEmail').classList.remove('hidden'); }
+  </script>
+</body>
+</html>
