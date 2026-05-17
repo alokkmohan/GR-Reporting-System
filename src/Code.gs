@@ -107,6 +107,19 @@ function doPost(e) {
       return respond({ success: true, user: updatedUser });
     }
 
+    // ── FILE UPLOAD ───────────────────────────────────────
+    if (action === 'uploadFile') {
+      if (!session || session.status !== 'active') return respond({ success: false, message: 'Not authorized.' });
+      try {
+        var blob = Utilities.newBlob(Utilities.base64Decode(params.fileData), params.mimeType || 'application/octet-stream', params.fileName || 'document');
+        var file = DriveApp.createFile(blob);
+        file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+        return respond({ success: true, url: 'https://drive.google.com/file/d/' + file.getId() + '/view', name: file.getName() });
+      } catch(e) {
+        return respond({ success: false, message: 'Upload failed: ' + e.toString() });
+      }
+    }
+
     // ── PLANNED MEETINGS ──────────────────────────────────
     if (action === 'planMeeting') {
       if (!session || session.status !== 'active') return respond({ success: false, message: 'Not authorized.' });

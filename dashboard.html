@@ -8,68 +8,64 @@
   <style>
     .welcome-card {
       background: linear-gradient(135deg, #922b21 0%, #c0392b 60%, #e74c3c 100%);
-      color: #fff; border-radius: var(--radius); padding: 20px 18px;
-      margin: 4px 0 16px; box-shadow: 0 4px 16px rgba(192,57,43,0.3);
+      color: #fff; border-radius: var(--radius); padding: 18px 16px;
+      margin: 4px 0 14px; box-shadow: 0 4px 16px rgba(192,57,43,0.3);
     }
-    .welcome-greeting { font-size: 13px; opacity: 0.85; font-weight: 600; letter-spacing: 0.3px; margin-bottom: 4px; }
-    .welcome-name { font-size: 22px; font-weight: 800; line-height: 1.2; }
-    .welcome-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
-    .welcome-right { text-align: right; }
-    .welcome-date { font-size: 12px; opacity: 0.78; margin-bottom: 4px; }
-    .welcome-chip {
-      display: inline-block; background: rgba(255,255,255,0.22);
-      border: 1px solid rgba(255,255,255,0.38); border-radius: 12px;
-      padding: 3px 12px; font-size: 11px; font-weight: 700; letter-spacing: 0.3px;
-    }
-    .stat-card { padding: 14px 14px 12px; border-top: 3px solid var(--primary); }
+    .welcome-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+    .welcome-greeting { font-size: 12px; opacity: 0.85; font-weight: 600; letter-spacing: 0.3px; margin-bottom: 2px; }
+    .welcome-name { font-size: 20px; font-weight: 800; line-height: 1.2; }
+    .welcome-right { text-align: right; flex-shrink: 0; }
+    .welcome-date { font-size: 11px; opacity: 0.78; margin-bottom: 4px; }
+    .welcome-chip { display: inline-block; background: rgba(255,255,255,0.22); border: 1px solid rgba(255,255,255,0.38); border-radius: 12px; padding: 2px 10px; font-size: 11px; font-weight: 700; }
+
+    .stat-card { padding: 11px 10px 10px; border-top: 3px solid var(--primary); }
     .stat-card.green { border-top-color: var(--success); }
     .stat-card.orange { border-top-color: var(--warning); }
     .stat-card.red { border-top-color: var(--danger); }
-    .stat-icon { font-size: 18px; margin-bottom: 6px; color: var(--muted); }
-    .stat-number { font-size: 30px; font-weight: 800; }
-    .stat-label { font-size: 11px; font-weight: 600; color: var(--muted); margin-top: 2px; letter-spacing: 0.3px; text-transform: uppercase; }
-    .qa-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-    .qa-tile {
-      background: #fff; border-radius: var(--radius); padding: 16px 12px;
-      text-align: center; cursor: pointer; box-shadow: var(--shadow);
-      border: 2px solid transparent; transition: all 0.18s; text-decoration: none;
-    }
+    .stat-card.purple { border-top-color: #7c3aed; }
+    .stat-card.purple .stat-number { color: #7c3aed; }
+    .stat-card.blue { border-top-color: #1d4ed8; }
+    .stat-card.blue .stat-number { color: #1d4ed8; }
+    .stat-icon { font-size: 16px; color: var(--muted); margin-bottom: 4px; }
+    .stat-number { font-size: 26px; font-weight: 800; }
+    .stat-label { font-size: 10px; font-weight: 600; color: var(--muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.3px; }
+
+    .qa-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+    .qa-tile { background: #fff; border-radius: var(--radius); padding: 14px 10px; text-align: center; cursor: pointer; box-shadow: var(--shadow); border: 2px solid transparent; transition: all 0.18s; }
     .qa-tile:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
-    .qa-tile.primary:hover { border-color: var(--success); }
-    .qa-tile.warn:hover { border-color: var(--muted); }
-    .qa-icon { font-size: 26px; margin-bottom: 6px; }
+    .qa-tile.done:hover { border-color: var(--success); }
+    .qa-tile.notdone:hover { border-color: var(--danger); }
+    .qa-icon { font-size: 22px; margin-bottom: 4px; }
     .qa-label { font-size: 13px; font-weight: 700; color: var(--text); }
     .qa-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
     .section-card { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; margin-bottom: 14px; }
-    .section-head {
-      padding: 13px 16px; border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .section-head-title { font-size: 15px; font-weight: 700; }
-    .section-head-link { font-size: 13px; color: var(--primary); font-weight: 600; text-decoration: none; }
+    .section-head { padding: 12px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .section-head-title { font-size: 14px; font-weight: 700; }
+    .section-head-link { font-size: 12px; color: var(--primary); font-weight: 600; text-decoration: none; }
+
     .mtable { width: 100%; border-collapse: collapse; font-size: 13px; }
-    .mtable th {
-      background: #f9fafb; padding: 9px 12px; text-align: left;
-      font-weight: 700; border-bottom: 2px solid var(--border);
-      font-size: 11px; color: var(--muted); text-transform: uppercase;
-      letter-spacing: 0.5px; white-space: nowrap;
-    }
-    .mtable td { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+    .mtable th { background: #f9fafb; padding: 8px 10px; text-align: left; font-weight: 700; border-bottom: 2px solid var(--border); font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; white-space: nowrap; }
+    .mtable td { padding: 9px 10px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
     .mtable tr:last-child td { border-bottom: none; }
     .mtable tr:hover td { background: #fafafa; }
     .mstk-name { font-weight: 600; font-size: 13px; }
-    .mstk-type { font-size: 11px; color: var(--muted); margin-top: 2px; }
-    .mact-pts { font-size: 12px; color: #374151; max-width: 140px; }
-    .m-overdue { background: #fef2f2; color: var(--danger); font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px; display: inline-block; margin-top: 3px; }
-    .m-done-txt { font-size: 12px; color: var(--success); font-weight: 600; }
-    .mbtn-yes { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; border-radius: 6px; padding: 5px 9px; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap; }
-    .mbtn-no { background: #fdf2f2; color: #7b1f1f; border: 1px solid #fca5a5; border-radius: 6px; padding: 5px 9px; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+    .mstk-type { font-size: 11px; color: var(--muted); }
+    .mpurpose { font-size: 12px; color: #374151; }
+    .date-line { font-size: 12px; font-weight: 600; white-space: nowrap; }
+    .overdue-tag { background: #fef2f2; color: var(--danger); font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 8px; display: inline-block; margin-top: 2px; }
+    .mbtn-yes { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; border-radius: 6px; padding: 5px 8px; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+    .mbtn-no { background: #fdf2f2; color: #7b1f1f; border: 1px solid #fca5a5; border-radius: 6px; padding: 5px 8px; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap; }
     .mbtn-yes:hover { background: #d1fae5; }
     .mbtn-no:hover { background: #fee2e2; }
-    .doc-link { color: var(--primary); text-decoration: none; font-size: 12px; font-weight: 600; }
+    .btn-actions { display: flex; gap: 5px; flex-wrap: nowrap; }
+    .st-conducted { background: #ecfdf5; color: #065f46; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 10px; white-space: nowrap; }
+    .st-not-conducted { background: #fdf2f2; color: #7b1f1f; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 10px; white-space: nowrap; }
+    .st-upcoming { background: #fffbeb; color: #92400e; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 10px; white-space: nowrap; }
+    .st-overdue { background: #fef2f2; color: var(--danger); font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 10px; white-space: nowrap; }
+    .empty-row td { text-align: center; padding: 28px 16px; color: var(--muted); font-size: 13px; }
+    .doc-link { color: var(--primary); text-decoration: none; font-size: 11px; font-weight: 600; }
     .doc-link:hover { text-decoration: underline; }
-    .empty-row td { text-align: center; padding: 32px 16px; color: var(--muted); font-size: 13px; }
-    .btn-actions { display: flex; gap: 5px; }
   </style>
 </head>
 <body>
@@ -85,7 +81,7 @@
       <div class="welcome-card">
         <div class="welcome-row">
           <div>
-            <div class="welcome-greeting" id="greetLabel">Good Morning</div>
+            <div class="welcome-greeting" id="greetLabel">Good Morning,</div>
             <div class="welcome-name" id="greetName">—</div>
           </div>
           <div class="welcome-right">
@@ -95,16 +91,22 @@
         </div>
       </div>
 
-      <div class="stats-grid" style="margin-bottom:16px;">
+      <!-- 6 Stats: 3 per row -->
+      <div class="stats-grid" style="margin-bottom:14px;">
         <div class="stat-card">
           <div class="stat-icon">&#128197;</div>
-          <div class="stat-number" id="sPlanned">—</div>
+          <div class="stat-number" id="sTotal">—</div>
           <div class="stat-label">Total Planned</div>
         </div>
         <div class="stat-card green">
           <div class="stat-icon">&#10003;</div>
           <div class="stat-number" id="sConducted">—</div>
           <div class="stat-label">Conducted</div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-icon">&#10007;</div>
+          <div class="stat-number" id="sNotDone">—</div>
+          <div class="stat-label">Not Done</div>
         </div>
         <div class="stat-card orange">
           <div class="stat-icon">&#9201;</div>
@@ -116,24 +118,31 @@
           <div class="stat-number" id="sOverdue">—</div>
           <div class="stat-label">Overdue</div>
         </div>
+        <div class="stat-card blue">
+          <div class="stat-icon">&#9999;</div>
+          <div class="stat-number" id="sPending">—</div>
+          <div class="stat-label">Pending Action</div>
+        </div>
       </div>
 
+      <!-- Quick Actions -->
       <div class="qa-grid">
-        <div class="qa-tile primary" onclick="window.location.href='formA.html'">
+        <div class="qa-tile done" onclick="window.location.href='formA.html'">
           <div class="qa-icon" style="color:var(--success);">&#10003;</div>
-          <div class="qa-label">Meeting Done</div>
-          <div class="qa-sub">Log conducted meeting</div>
+          <div class="qa-label">Log Meeting</div>
+          <div class="qa-sub">Meeting ho gayi</div>
         </div>
-        <div class="qa-tile warn" onclick="window.location.href='formB.html'">
+        <div class="qa-tile notdone" onclick="window.location.href='formB.html'">
           <div class="qa-icon" style="color:var(--danger);">&#10007;</div>
           <div class="qa-label">Not Conducted</div>
-          <div class="qa-sub">Mark with reason</div>
+          <div class="qa-sub">Meeting nahi hui</div>
         </div>
       </div>
 
+      <!-- Full Meeting Table -->
       <div class="section-card">
         <div class="section-head">
-          <span class="section-head-title">Planned Meetings</span>
+          <span class="section-head-title">All Planned Meetings</span>
           <a href="planner.html" class="section-head-link">+ Plan New &nbsp;&#8250;</a>
         </div>
         <div id="tableSpinner" style="padding:20px;text-align:center;"><div class="spinner" style="margin:0 auto;"></div></div>
@@ -143,7 +152,8 @@
               <tr>
                 <th>Date</th>
                 <th>Who to Meet</th>
-                <th>Action Points</th>
+                <th>Purpose</th>
+                <th>Status</th>
                 <th>Doc</th>
                 <th>Action</th>
               </tr>
@@ -156,6 +166,17 @@
     </div>
   </div>
 
+  <!-- Action Sheet -->
+  <div class="action-sheet hidden" id="actionSheet">
+    <div class="action-sheet-inner">
+      <div style="font-size:16px;font-weight:700;margin-bottom:4px;" id="actionSheetTitle"></div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:18px;" id="actionSheetMeta"></div>
+      <button class="btn btn-success" style="margin-bottom:10px;" onclick="confirmAction(true)">&#10003; Meeting Conducted</button>
+      <button class="btn btn-danger" style="margin-bottom:10px;" onclick="confirmAction(false)">&#10007; Meeting Not Conducted</button>
+      <button class="btn btn-outline" onclick="closeActionSheet()">Cancel</button>
+    </div>
+  </div>
+
   <script src="common.js"></script>
   <script>
     var session = requireAuth();
@@ -165,7 +186,6 @@
     document.getElementById('greetLabel').textContent = h < 12 ? 'Good Morning,' : h < 17 ? 'Good Afternoon,' : 'Good Evening,';
     document.getElementById('greetName').textContent = session.full_name ? session.full_name.split(' ')[0] : (session.email || 'there');
     document.getElementById('greetDate').textContent = new Date().toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
-
     var chips = [];
     if (session.designation) chips.push(session.designation);
     if (session.district) chips.push(session.district);
@@ -173,83 +193,123 @@
       return '<span class="welcome-chip" style="margin-left:4px;">' + esc(c) + '</span>';
     }).join('');
 
+    var activePlanId = '';
+    var _cache = [];
+
     fetch(APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getPlannedMeetings', token: grToken() }) })
-      .then(function (r) { return r.json(); }).then(function (res) {
+      .then(function(r) { return r.json(); }).then(function(res) {
         document.getElementById('tableSpinner').classList.add('hidden');
         document.getElementById('tableWrap').style.display = '';
         if (!res.success) {
-          document.getElementById('dashTbody').innerHTML = '<tr class="empty-row"><td colspan="5">Could not load meetings.</td></tr>';
+          document.getElementById('dashTbody').innerHTML = '<tr class="empty-row"><td colspan="6">Could not load meetings.</td></tr>';
           return;
         }
         var meetings = res.data || [];
+        _cache = meetings;
         var today = new Date(); today.setHours(0, 0, 0, 0);
 
-        var planned = 0, conducted = 0, upcoming = 0, overdue = 0;
-        meetings.forEach(function (m) {
-          planned++;
+        var total = 0, conducted = 0, notDone = 0, upcoming = 0, overdue = 0;
+        meetings.forEach(function(m) {
+          total++;
           if (m.status === 'conducted') { conducted++; return; }
-          if (m.status === 'not_conducted') return;
+          if (m.status === 'not_conducted') { notDone++; return; }
           var d = m.meeting_date ? new Date(m.meeting_date) : null;
           if (d) d.setHours(0, 0, 0, 0);
           if (d && d < today) overdue++; else upcoming++;
         });
-        document.getElementById('sPlanned').textContent = planned;
+        document.getElementById('sTotal').textContent = total;
         document.getElementById('sConducted').textContent = conducted;
+        document.getElementById('sNotDone').textContent = notDone;
         document.getElementById('sUpcoming').textContent = upcoming;
         document.getElementById('sOverdue').textContent = overdue;
+        document.getElementById('sPending').textContent = upcoming + overdue;
 
-        window._meetingsCache = meetings;
-        var pending = meetings.filter(function (m) {
-          return m.status !== 'conducted' && m.status !== 'not_conducted';
-        });
-        pending.sort(function (a, b) { return new Date(a.meeting_date || 0) - new Date(b.meeting_date || 0); });
-
-        if (pending.length === 0) {
-          document.getElementById('dashTbody').innerHTML = '<tr class="empty-row"><td colspan="5">No pending meetings. <a href="planner.html" style="color:var(--primary);">Plan one now</a></td></tr>';
+        if (meetings.length === 0) {
+          document.getElementById('dashTbody').innerHTML = '<tr class="empty-row"><td colspan="6">No meetings planned yet. <a href="planner.html" style="color:var(--primary);">Plan one now</a></td></tr>';
           return;
         }
 
+        // Sort: overdue first → upcoming → conducted/not_conducted (recent first)
+        var grpOverdue = [], grpUpcoming = [], grpDone = [];
+        meetings.forEach(function(m) {
+          var d = m.meeting_date ? new Date(m.meeting_date) : null;
+          if (d) d.setHours(0, 0, 0, 0);
+          if (m.status === 'conducted' || m.status === 'not_conducted') { grpDone.push(m); }
+          else if (d && d < today) { grpOverdue.push(m); }
+          else { grpUpcoming.push(m); }
+        });
+        grpOverdue.sort(function(a,b) { return new Date(a.meeting_date||0) - new Date(b.meeting_date||0); });
+        grpUpcoming.sort(function(a,b) { return new Date(a.meeting_date||0) - new Date(b.meeting_date||0); });
+        grpDone.sort(function(a,b) { return new Date(b.meeting_date||0) - new Date(a.meeting_date||0); });
+        var sorted = grpOverdue.concat(grpUpcoming).concat(grpDone);
+
         var html = '';
-        pending.forEach(function (m) {
-          var dt = m.meeting_date ? new Date(m.meeting_date) : null;
-          if (dt) dt.setHours(0, 0, 0, 0);
-          var isOverdue = dt && dt < today;
+        sorted.forEach(function(m) {
+          var d = m.meeting_date ? new Date(m.meeting_date) : null;
+          if (d) d.setHours(0, 0, 0, 0);
+          var isPending = m.status !== 'conducted' && m.status !== 'not_conducted';
+          var isOverdue = isPending && d && d < today;
+
+          var statusHtml;
+          if (m.status === 'conducted') statusHtml = '<span class="st-conducted">&#10003; Done</span>';
+          else if (m.status === 'not_conducted') statusHtml = '<span class="st-not-conducted">&#10007; Not Done</span>';
+          else if (isOverdue) statusHtml = '<span class="st-overdue">Overdue</span>';
+          else statusHtml = '<span class="st-upcoming">Upcoming</span>';
+
+          var actionHtml;
+          if (isPending) {
+            actionHtml = '<div class="btn-actions">'
+              + '<button class="mbtn-yes" onclick="doAction(\'' + m.plan_id + '\', true)">Done</button>'
+              + '<button class="mbtn-no" onclick="doAction(\'' + m.plan_id + '\', false)">Not Done</button>'
+              + '</div>';
+          } else {
+            actionHtml = '<span style="color:#d1d5db;font-size:12px;">—</span>';
+          }
+
           var docHtml = m.document_link
             ? '<a href="' + esc(m.document_link) + '" target="_blank" class="doc-link">PDF</a>'
             : '<span style="color:#d1d5db;">—</span>';
-          var notes = (m.notes || '').trim();
-          var notesHtml = notes ? esc(notes.length > 70 ? notes.substring(0, 70) + '…' : notes) : '<span style="color:#d1d5db;">—</span>';
+
           html += '<tr>'
-            + '<td style="white-space:nowrap;">'
-              + '<div style="font-weight:600;font-size:12px;">' + fmtDate(m.meeting_date) + '</div>'
-              + (isOverdue ? '<div class="m-overdue">Overdue</div>' : '')
-            + '</td>'
-            + '<td>'
-              + '<div class="mstk-name">' + esc(m.stakeholder_name || '') + '</div>'
-              + '<div class="mstk-type">' + esc(m.stakeholder_type || '') + '</div>'
-            + '</td>'
-            + '<td><div class="mact-pts">' + notesHtml + '</div></td>'
+            + '<td><div class="date-line">' + fmtDate(m.meeting_date) + '</div>'
+              + (isOverdue ? '<div class="overdue-tag">Overdue</div>' : '') + '</td>'
+            + '<td><div class="mstk-name">' + esc(m.stakeholder_name || '') + '</div>'
+              + '<div class="mstk-type">' + esc(m.stakeholder_type || '') + '</div></td>'
+            + '<td><div class="mpurpose">' + esc(m.meeting_purpose || '') + '</div></td>'
+            + '<td>' + statusHtml + '</td>'
             + '<td>' + docHtml + '</td>'
-            + '<td><div class="btn-actions">'
-              + '<button class="mbtn-yes" onclick="doAction(\'' + m.plan_id + '\', true)">Done</button>'
-              + '<button class="mbtn-no" onclick="doAction(\'' + m.plan_id + '\', false)">Not Done</button>'
-            + '</div></td>'
+            + '<td>' + actionHtml + '</td>'
             + '</tr>';
         });
         document.getElementById('dashTbody').innerHTML = html;
-      }).catch(function () {
+      }).catch(function() {
         document.getElementById('tableSpinner').classList.add('hidden');
         document.getElementById('tableWrap').style.display = '';
-        ['sPlanned', 'sConducted', 'sUpcoming', 'sOverdue'].forEach(function (id) {
+        ['sTotal','sConducted','sNotDone','sUpcoming','sOverdue','sPending'].forEach(function(id) {
           document.getElementById(id).textContent = '0';
         });
-        document.getElementById('dashTbody').innerHTML = '<tr class="empty-row"><td colspan="5">Network error. Please refresh.</td></tr>';
+        document.getElementById('dashTbody').innerHTML = '<tr class="empty-row"><td colspan="6">Network error. Please refresh.</td></tr>';
       });
 
     function doAction(planId, conducted) {
-      var m = (window._meetingsCache || []).find(function (x) { return x.plan_id === planId; });
+      var m = _cache.find(function(x) { return x.plan_id === planId; });
       if (m) sessionStorage.setItem('activePlan', JSON.stringify(m));
       window.location.href = (conducted ? 'formA.html' : 'formB.html') + '?plan_id=' + planId;
+    }
+
+    function openActionSheetFromDash(planId) {
+      var m = _cache.find(function(x) { return x.plan_id === planId; });
+      if (!m) return;
+      activePlanId = planId;
+      sessionStorage.setItem('activePlan', JSON.stringify(m));
+      document.getElementById('actionSheetTitle').textContent = m.stakeholder_name || '';
+      document.getElementById('actionSheetMeta').textContent = fmtDate(m.meeting_date) + ' · ' + (m.meeting_purpose || '');
+      document.getElementById('actionSheet').classList.remove('hidden');
+    }
+    function closeActionSheet() { document.getElementById('actionSheet').classList.add('hidden'); activePlanId = ''; }
+    function confirmAction(conducted) {
+      closeActionSheet();
+      window.location.href = (conducted ? 'formA.html' : 'formB.html') + '?plan_id=' + activePlanId;
     }
   </script>
 </body>

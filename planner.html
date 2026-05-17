@@ -151,8 +151,13 @@
       <div class="form-group"><label class="form-label">Action Points / Notes</label><textarea id="plan_notes" class="form-control" placeholder="Key discussion points, what to ask, what to present..."></textarea></div>
       <div class="form-group">
         <label class="form-label">Reference Document (optional)</label>
-        <input type="url" id="plan_doc_link" class="form-control" placeholder="Google Drive link to any PDF/doc">
-        <div style="font-size:12px;color:var(--muted);margin-top:4px;">Shareable Google Drive link to background document</div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+          <button type="button" class="btn btn-outline btn-sm" id="uploadFileBtn" onclick="document.getElementById('planFileInput').click()" style="white-space:nowrap;">&#128206; Upload File</button>
+          <span id="uploadStatus" style="font-size:12px;color:var(--muted);">PDF, Word, Image (max 5MB)</span>
+        </div>
+        <input type="file" id="planFileInput" accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png" style="display:none;" onchange="handleFileUpload(this)">
+        <div id="uploadProgress" class="hidden" style="font-size:12px;color:var(--primary);margin-bottom:6px;">&#8593; Uploading to Drive...</div>
+        <input type="url" id="plan_doc_link" class="form-control" placeholder="Or paste Google Drive link directly">
       </div>
 
       <button class="btn btn-primary" id="savePlanBtn" onclick="savePlan()">Save Meeting Plan</button>
@@ -304,8 +309,52 @@
       if (v === 'list') renderAll();
     }
 
+    function handleFileUpload(input) {
+      var file = input.files[0];
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) {
+        document.getElementById('uploadStatus').textContent = 'File too large (max 5MB). Please upload to Drive manually and paste link.';
+        document.getElementById('uploadStatus').style.color = 'var(--danger)';
+        return;
+      }
+      document.getElementById('uploadFileBtn').disabled = true;
+      document.getElementById('uploadProgress').classList.remove('hidden');
+      document.getElementById('uploadStatus').textContent = file.name;
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        var base64 = e.target.result.split(',')[1];
+        fetch(APP_URL, { method: 'POST', body: JSON.stringify({
+          action: 'uploadFile', token: grToken(),
+          fileName: file.name, mimeType: file.type, fileData: base64
+        })})
+        .then(function(r) { return r.json(); }).then(function(res) {
+          document.getElementById('uploadFileBtn').disabled = false;
+          document.getElementById('uploadProgress').classList.add('hidden');
+          if (res.success) {
+            document.getElementById('plan_doc_link').value = res.url;
+            document.getElementById('uploadStatus').textContent = '✓ ' + file.name + ' — uploaded';
+            document.getElementById('uploadStatus').style.color = 'var(--success)';
+          } else {
+            document.getElementById('uploadStatus').textContent = 'Upload failed. Paste Drive link manually.';
+            document.getElementById('uploadStatus').style.color = 'var(--danger)';
+          }
+        }).catch(function() {
+          document.getElementById('uploadFileBtn').disabled = false;
+          document.getElementById('uploadProgress').classList.add('hidden');
+          document.getElementById('uploadStatus').textContent = 'Upload failed. Paste Drive link manually.';
+          document.getElementById('uploadStatus').style.color = 'var(--danger)';
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+
     function openPlanModal() { document.getElementById('plan_date').value = new Date().toISOString().split('T')[0]; document.getElementById('planAlertBox').innerHTML = ''; document.getElementById('planModal').classList.remove('hidden'); }
-    function closePlanModal() { document.getElementById('planModal').classList.add('hidden'); }
+    function closePlanModal() {
+      document.getElementById('planModal').classList.add('hidden');
+      document.getElementById('uploadStatus').textContent = 'PDF, Word, Image (max 5MB)';
+      document.getElementById('uploadStatus').style.color = '';
+      document.getElementById('planFileInput').value = '';
+    }
 
     function savePlan() {
       var date = document.getElementById('plan_date').value, stype = document.getElementById('plan_stakeholder_type').value;
