@@ -54,7 +54,7 @@ function renderSidebar(activePage) {
     : '<div class="sidebar-initials">' + initials + '</div>';
 
   var navItems = [
-    { href: 'dashboard.html', label: 'Dashboard', key: 'dashboard' },
+    { href: 'dashboard.html', label: 'Home', key: 'dashboard' },
     { href: 'planner.html', label: 'Meeting Planner', key: 'planner' },
     { href: 'gantt.html', label: 'Meeting Gantt', key: 'gantt' },
     { href: 'myentries.html', label: 'My Entries', key: 'myentries' },
