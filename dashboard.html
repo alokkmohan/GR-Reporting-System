@@ -144,13 +144,6 @@
         <div id="tableSpinner" style="padding:20px;text-align:center;"><div class="spinner" style="margin:0 auto;"></div></div>
         <div id="tableWrap" style="display:none;">
 
-          <!-- Donut + legend -->
-          <div class="donut-row" id="donutRow" style="display:none;">
-            <div id="donutSvg" style="flex-shrink:0;"></div>
-            <div class="donut-legend" id="donutLegend"></div>
-          </div>
-          <div style="border-top:1px solid var(--border);"></div>
-
           <div class="table-wrap">
             <table class="dtable">
               <thead>
@@ -244,19 +237,6 @@
       document.getElementById('sOverdue').textContent=overdue;
 
       var donutTotal=conducted+notDone+upcoming+overdue;
-      var segs=[
-        {v:conducted, c:'#059669', label:'Conducted'},
-        {v:notDone,   c:'#e67e22', label:'Not Done'},
-        {v:upcoming,  c:'#2563eb', label:'Upcoming'},
-        {v:overdue,   c:'#dc2626', label:'Overdue'}
-      ];
-      if(donutTotal>0){
-        document.getElementById('donutSvg').innerHTML=buildDonut(segs,donutTotal);
-        document.getElementById('donutLegend').innerHTML=segs.filter(function(s){return s.v;}).map(function(s){
-          return '<div class="dl-item"><div class="dl-dot" style="background:'+s.c+';"></div>'+s.label+': <b>'+s.v+'</b></div>';
-        }).join('');
-        document.getElementById('donutRow').style.display='flex';
-      }
 
       var grpOverdue=[], grpUpcoming=[];
       planData.forEach(function(m){
