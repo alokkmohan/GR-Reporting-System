@@ -3,188 +3,153 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Meeting Not Conducted GR Reporting</title>
+  <title>Meeting Nahi Hui</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    .plan-banner { background: linear-gradient(135deg,#7c1818 0%,#a93226 100%); color:#fff; border-radius: var(--radius); padding: 14px 16px; margin-bottom:16px; }
+    .plan-banner-label { font-size:11px; opacity:0.8; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; }
+    .plan-banner-name { font-size:18px; font-weight:800; margin-top:3px; }
+    .plan-banner-meta { font-size:12px; opacity:0.82; margin-top:3px; }
+    .reason-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
+    .reason-card { border:2px solid var(--border); border-radius:10px; padding:12px 8px; text-align:center; cursor:pointer; font-size:13px; font-weight:700; transition:all 0.15s; background:#fff; }
+    .reason-card:hover { border-color:var(--primary); background:#fdf4f4; }
+    .reason-card.selected { border-color:var(--danger); background:#fef2f2; color:var(--danger); }
+    .postpone-box { background:#fffbeb; border:1.5px solid #fcd34d; border-radius:10px; padding:14px; margin-top:14px; }
+    .postpone-box-title { font-size:13px; font-weight:800; color:#92400e; margin-bottom:10px; }
+  </style>
 </head>
 <body>
   <nav class="navbar">
     <button class="hamburger-btn" onclick="toggleSidebar()">&#9776;</button>
-    <span class="logo">Not Conducted</span>
+    <span class="logo">Meeting Nahi Hui</span>
     <span class="nav-user" id="navUser"></span>
   </nav>
   <div class="app-layout">
   <div id="sidebarMount"></div>
   <div class="main-content">
+
     <div id="successScreen" class="hidden">
       <div class="card success-screen">
-        <div class="success-icon">Saved</div>
+        <div class="success-icon">&#10003;</div>
         <div class="card-title">Record Saved!</div>
-        <p class="text-muted mt-8">Entry has been recorded.</p>
-        <div class="success-id" id="submissionIdBox"></div>
+        <p class="text-muted mt-8" id="successMsg">Entry recorded.</p>
         <button class="btn btn-primary mt-16" onclick="window.location.href='planner.html'">Back to Planner</button>
-        <button class="btn btn-outline mt-8" onclick="location.reload()">Submit Another</button>
       </div>
     </div>
+
     <div id="formContainer">
       <div id="alertBox"></div>
-      <div id="planInfoCard" class="hidden"><div class="alert alert-warning" id="planInfoText"></div></div>
-      <div class="card" style="border-left:4px solid var(--warning);background:#fffbeb;margin-bottom:12px;">
-        <div style="font-size:14px;color:#92400e;">Note: Use this form when a planned meeting could <strong>not</strong> be conducted.</div>
+      <div class="plan-banner" id="planBanner" style="display:none;">
+        <div class="plan-banner-label">&#128197; Planned Meeting</div>
+        <div class="plan-banner-name" id="bannerName"></div>
+        <div class="plan-banner-meta" id="bannerMeta"></div>
       </div>
       <div class="card">
-        <div class="section-header">Identification</div>
+        <div class="section-header">Meeting Kyun Nahi Hui?</div>
         <div class="form-group">
-          <label class="form-label">Date <span class="required">*</span></label>
-          <input type="date" id="date" class="form-control" onchange="updateMonth()">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Reporting Month</label>
-          <input type="text" id="reporting_month" class="form-control" readonly>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Unit <span class="required">*</span></label>
-          <select id="unit" class="form-control">
-            <option value="">-- Select Unit --</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">District</label>
-          <input type="text" id="district" class="form-control" readonly>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Block / Cluster</label>
-          <input type="text" id="block_cluster" class="form-control" placeholder="Optional">
+          <label class="form-label">Reason <span class="required">*</span></label>
+          <div class="reason-grid">
+            <div class="reason-card" onclick="selectReason(this,'Not Available')">&#128683; Not Available</div>
+            <div class="reason-card" onclick="selectReason(this,'Refused')">&#10007; Refused</div>
+            <div class="reason-card" onclick="selectReason(this,'Postponed')">&#128337; Postponed</div>
+            <div class="reason-card" onclick="selectReason(this,'Travel Issue')">&#128663; Travel Issue</div>
+            <div class="reason-card" onclick="selectReason(this,'Other')">&#8230; Other</div>
+          </div>
         </div>
 
-        <div class="section-header" style="margin-top:8px;">Meeting Details</div>
-        <div class="form-group">
-          <label class="form-label">Staff Name <span class="required">*</span></label>
-          <input type="text" id="staff_name" class="form-control" placeholder="Full name">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Level of Meeting <span class="required">*</span></label>
-          <select id="level_of_meeting" class="form-control">
-            <option value="">-- Select --</option>
-            <option>State</option><option>District</option><option>Block</option>
-            <option>Cluster</option><option>School</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Any Other Participants</label>
-          <input type="text" id="other_participants" class="form-control" placeholder="Optional">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Stakeholder Name <span class="required">*</span></label>
-          <input type="text" id="stakeholder_name" class="form-control" placeholder="Person who was to be met">
+        <div class="postpone-box hidden" id="postponeBox">
+          <div class="postpone-box-title">&#128197; Agle Meeting ki Date Set Karo</div>
+          <div class="form-group" style="margin-bottom:10px;">
+            <label class="form-label">Next Meeting Date <span class="required">*</span></label>
+            <input type="date" id="next_date" class="form-control">
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Kisse Milna Hai?</label>
+            <input type="text" id="next_stakeholder" class="form-control" placeholder="Same person ya koi aur (optional)">
+          </div>
         </div>
 
-        <div class="section-header" style="margin-top:8px;">Follow-up</div>
-        <div class="form-group">
-          <label class="form-label">Next Planned Date <span class="required">*</span></label>
-          <input type="date" id="followup_date" class="form-control">
+        <div class="form-group" style="margin-top:14px;">
+          <label class="form-label">Note (optional)</label>
+          <textarea id="note" class="form-control" rows="2" placeholder="Koi zaruri baat likhni ho to..."></textarea>
         </div>
-        <div class="form-group">
-          <label class="form-label">Reason for Not Conducting <span class="required">*</span></label>
-          <select id="reason_not_conducted" class="form-control">
-            <option value="">-- Select Reason --</option>
-            <option>Not Available</option><option>Refused</option>
-            <option>Travel Issue</option><option>Other</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Remark</label>
-          <input type="text" id="remark" class="form-control" placeholder="Optional note">
-        </div>
-        <button class="btn btn-primary" id="submitBtn" onclick="submitForm()">Submit Record</button>
+
+        <button class="btn btn-primary" id="submitBtn" onclick="submitForm()" style="width:100%;margin-top:4px;">Save Record</button>
       </div>
     </div>
-  </div>
-  </div>
 
+  </div>
+  </div>
   <script src="common.js"></script>
   <script>
     var session = requireAuth();
-    renderSidebar('formA');
+    renderSidebar('planner');
     var token = grToken();
     var planId = new URLSearchParams(window.location.search).get('plan_id') || '';
-
-    // Auto-fill from session
-    document.getElementById('district').value = session.district || '';
-    if (session.full_name) document.getElementById('staff_name').value = session.full_name;
-
-    // Load units dynamically and pre-select from session
-    fetch(APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getDropdowns' }) })
-      .then(function(r) { return r.json(); }).then(function(res) {
-        if (res.success) {
-          var sel = document.getElementById('unit');
-          sel.innerHTML = '<option value="">-- Select Unit --</option>';
-          (res.units || []).forEach(function(v) {
-            var o = document.createElement('option'); o.value = v; o.textContent = v;
-            if (v === session.unit) o.selected = true;
-            sel.appendChild(o);
-          });
-        }
-      }).catch(function() {
-        var sel = document.getElementById('unit');
-        sel.innerHTML = '<option value="">-- Select Unit --</option><option>TAU</option><option>TST</option><option>Vidhaya</option><option>Pragatai</option><option>Other</option>';
-        if (session.unit) sel.value = session.unit;
-      });
+    var selectedReason = '';
 
     var planData = null;
     try { planData = JSON.parse(sessionStorage.getItem('activePlan') || 'null'); } catch(e) {}
-    if (planData && planData.plan_id === planId) {
-      document.getElementById('planInfoCard').classList.remove('hidden');
-      document.getElementById('planInfoText').textContent = 'Planned meeting with ' + planData.stakeholder_name + ' on ' + planData.meeting_date + ' - marking as not conducted.';
-      document.getElementById('stakeholder_name').value = planData.stakeholder_name || '';
-      document.getElementById('level_of_meeting').value = planData.level_of_meeting || '';
-      document.getElementById('block_cluster').value = planData.block_cluster || '';
-      if (planData.meeting_date) { document.getElementById('date').value = planData.meeting_date.toString().substring(0,10); updateMonth(); }
+    if (planData) {
+      document.getElementById('planBanner').style.display = '';
+      document.getElementById('bannerName').textContent = (planData.stakeholder_type ? planData.stakeholder_type + ' — ' : '') + (planData.stakeholder_name || '');
+      document.getElementById('bannerMeta').textContent = fmtDate(planData.meeting_date) + (planData.meeting_purpose ? '  ·  ' + planData.meeting_purpose : '');
+      document.getElementById('next_stakeholder').value = planData.stakeholder_name || '';
     }
 
-    if (!document.getElementById('date').value) { document.getElementById('date').value = new Date().toISOString().split('T')[0]; updateMonth(); }
-
-    function updateMonth() {
-      var d = document.getElementById('date').value; if (!d) return;
-      var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-      document.getElementById('reporting_month').value = months[new Date(d).getMonth()] + ' ' + new Date(d).getFullYear();
+    function selectReason(el, r) {
+      selectedReason = r;
+      document.querySelectorAll('.reason-card').forEach(function(c) { c.classList.remove('selected'); });
+      el.classList.add('selected');
+      document.getElementById('postponeBox').classList.toggle('hidden', r !== 'Postponed');
+      document.getElementById('alertBox').innerHTML = '';
     }
-    function showAlert(msg) { document.getElementById('alertBox').innerHTML = '<div class="alert alert-error">' + msg + '</div>'; window.scrollTo(0,0); }
+
     function submitForm() {
-      var date = document.getElementById('date').value, unit = document.getElementById('unit').value;
-      var staff = document.getElementById('staff_name').value.trim(), level = document.getElementById('level_of_meeting').value;
-      var stakeholder = document.getElementById('stakeholder_name').value.trim();
-      var followup = document.getElementById('followup_date').value, reason = document.getElementById('reason_not_conducted').value;
-      if (!date || !unit || !staff || !level || !stakeholder || !followup || !reason) { showAlert('Please fill all required fields.'); return; }
+      if (!selectedReason) { document.getElementById('alertBox').innerHTML = '<div class="alert alert-error">Reason select karo.</div>'; window.scrollTo(0,0); return; }
+      if (selectedReason === 'Postponed' && !document.getElementById('next_date').value) {
+        document.getElementById('alertBox').innerHTML = '<div class="alert alert-error">Postponed ke liye next date bharo.</div>'; return;
+      }
       document.getElementById('submitBtn').disabled = true;
-      document.getElementById('submitBtn').textContent = 'Submitting...';
-      fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'submitMeeting', token: token, plan_id: planId, formData: {
-        meeting_conducted:'NO',
-        date: date, unit: unit,
-        district: document.getElementById('district').value,
-        block_cluster: document.getElementById('block_cluster').value,
-        staff_name: staff, level_of_meeting: level,
-        other_participants: document.getElementById('other_participants').value,
-        stakeholder_name: stakeholder,
-        followup_date: followup, reason_not_conducted: reason,
-        remark: document.getElementById('remark').value
-      }})})
-      .then(function(r) { return r.json(); }).then(function(res) {
-        if (res.success) {
-          sessionStorage.removeItem('activePlan');
-          document.getElementById('formContainer').classList.add('hidden');
-          document.getElementById('successScreen').classList.remove('hidden');
-          document.getElementById('submissionIdBox').textContent = 'ID: ' + res.submission_id;
-          window.scrollTo(0,0);
-        } else {
-          showAlert(res.message || 'Submission failed.');
-          document.getElementById('submitBtn').disabled = false;
-          document.getElementById('submitBtn').textContent = 'Submit Record';
-        }
-      }).catch(function() {
-        showAlert('Network error.');
-        document.getElementById('submitBtn').disabled = false;
-        document.getElementById('submitBtn').textContent = 'Submit Record';
-      });
+      document.getElementById('submitBtn').textContent = 'Saving...';
+
+      var fd = {
+        meeting_conducted: 'NO',
+        date: planData ? (planData.meeting_date || '').toString().substring(0,10) : new Date().toISOString().split('T')[0],
+        unit: session.unit || '',
+        district: session.district || '',
+        staff_name: session.full_name || '',
+        conducted_by: session.designation || '',
+        stakeholder_name: planData ? (planData.stakeholder_name || '') : '',
+        stakeholder_type: planData ? (planData.stakeholder_type || '') : '',
+        level_of_meeting: planData ? (planData.level_of_meeting || '') : '',
+        block_cluster: planData ? (planData.block_cluster || '') : '',
+        meeting_purpose: planData ? (planData.meeting_purpose || '') : '',
+        reason_not_conducted: selectedReason,
+        followup_date: document.getElementById('next_date').value,
+        followup_stakeholder_name: document.getElementById('next_stakeholder').value.trim(),
+        followup_notes: document.getElementById('note').value.trim()
+      };
+
+      fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'submitMeeting', token: token, plan_id: planId, formData: fd }) })
+        .then(function(r) { return r.json(); }).then(function(res) {
+          if (res.success) {
+            sessionStorage.removeItem('activePlan');
+            document.getElementById('formContainer').classList.add('hidden');
+            document.getElementById('successScreen').classList.remove('hidden');
+            var msg = 'Record saved.';
+            if (selectedReason === 'Postponed' && res.next_plan_id) {
+              msg = 'Record saved. Next meeting automatically planned for ' + fmtDate(fd.followup_date) + '.';
+            }
+            document.getElementById('successMsg').textContent = msg;
+          } else {
+            document.getElementById('alertBox').innerHTML = '<div class="alert alert-error">' + esc(res.message || 'Error') + '</div>';
+            document.getElementById('submitBtn').disabled = false; document.getElementById('submitBtn').textContent = 'Save Record';
+          }
+        }).catch(function() {
+          document.getElementById('alertBox').innerHTML = '<div class="alert alert-error">Network error. Please retry.</div>';
+          document.getElementById('submitBtn').disabled = false; document.getElementById('submitBtn').textContent = 'Save Record';
+        });
     }
   </script>
 </body>

@@ -148,7 +148,30 @@ function doPost(e) {
         var newStatus = params.formData.meeting_conducted === 'YES' ? 'conducted' : 'not_conducted';
         updatePlanStatus(params.plan_id, newStatus, submissionId);
       }
-      return respond({ success: true, submission_id: submissionId });
+      var nextPlanId = null;
+      var fd = params.formData;
+      var needsFollowUp = (fd.meeting_conducted === 'YES' && fd.meeting_status === 'follow_up_required' && fd.followup_date)
+                       || (fd.meeting_conducted === 'NO'  && fd.reason_not_conducted === 'Postponed'    && fd.followup_date);
+      if (needsFollowUp && params.plan_id) {
+        nextPlanId = createFollowUpPlan(params.plan_id, fd, session.email, fd.district || '');
+      }
+      return respond({ success: true, submission_id: submissionId, next_plan_id: nextPlanId });
+    }
+
+    if (action === 'getMeetingTimeline') {
+      if (!session || session.status !== 'active') return respond({ success: false, message: 'Not authorized.' });
+      var plan = getPlannedMeetingById(params.plan_id);
+      if (!plan) return respond({ success: false, message: 'Plan not found.' });
+      var chainId = plan.chain_id || params.plan_id;
+      var chainPlans = getChainMeetings(chainId);
+      var allMtgs = getAllMeetings();
+      var timeline = chainPlans.map(function(p) {
+        var linked = p.linked_submission_id
+          ? allMtgs.find(function(m) { return m.submission_id === p.linked_submission_id; }) || null
+          : null;
+        return { plan: p, meeting: linked };
+      });
+      return respond({ success: true, data: timeline, chain_id: chainId });
     }
 
     if (action === 'getMyProfile') {
