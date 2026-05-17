@@ -8,53 +8,98 @@
 </head>
 <body>
   <nav class="navbar">
+    <button class="hamburger-btn" onclick="toggleSidebar()">&#9776;</button>
     <span class="logo">GR Reporting</span>
     <span class="nav-user" id="navUser"></span>
   </nav>
-  <div class="container">
-    <div class="card" style="margin-top:16px">
-      <div class="card-title" id="greetingText">Welcome!</div>
-      <div class="text-muted" id="greetingMeta"></div>
+  <div class="app-layout">
+    <div id="sidebarMount"></div>
+    <div class="main-content">
+
+      <div id="greetCard" class="card" style="margin-top:4px;">
+        <div class="card-title" id="greetText">Welcome!</div>
+        <div class="text-muted" id="greetMeta"></div>
+      </div>
+
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card"><div class="stat-number" id="sPlanned">...</div><div class="stat-label">Total Planned</div></div>
+        <div class="stat-card green"><div class="stat-number" id="sConducted">...</div><div class="stat-label">Conducted</div></div>
+        <div class="stat-card orange"><div class="stat-number" id="sUpcoming">...</div><div class="stat-label">Upcoming</div></div>
+        <div class="stat-card red"><div class="stat-number" id="sOverdue">...</div><div class="stat-label">Overdue</div></div>
+      </div>
+
+      <div class="card-title mb-8">Quick Actions</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;">
+        <button class="btn btn-primary" style="padding:18px 10px;" onclick="window.location.href='formA.html'">
+          <span style="font-size:12px;font-weight:600;display:block;">Meeting<br>Conducted</span>
+        </button>
+        <button class="btn btn-outline" style="padding:18px 10px;" onclick="window.location.href='formB.html'">
+          <span style="font-size:12px;font-weight:600;display:block;">Not<br>Conducted</span>
+        </button>
+      </div>
+
+      <div class="card-title mb-8">Upcoming Meetings</div>
+      <div id="upcomingSpinner"><div class="spinner"></div></div>
+      <div id="upcomingList"></div>
+
     </div>
-    <div class="card-title mb-8">Log a Meeting</div>
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;">
-      <button class="btn btn-primary" style="padding:20px 12px;" onclick="window.location.href='formA.html'">
-        <span style="font-size:13px; font-weight:500; display:block;">Meeting<br>Conducted</span>
-      </button>
-      <button class="btn btn-outline" style="padding:20px 12px;" onclick="window.location.href='formB.html'">
-        <span style="font-size:13px; font-weight:500; display:block;">Not<br>Conducted</span>
-      </button>
-    </div>
-    <div class="card-title mb-8">My Work</div>
-    <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px;">
-      <button class="btn btn-outline" style="text-align:left; padding:14px 16px;" onclick="window.location.href='planner.html'">Meeting Planner</button>
-      <button class="btn btn-outline" style="text-align:left; padding:14px 16px;" onclick="window.location.href='myentries.html'">My Past Entries</button>
-      <button class="btn btn-outline" id="adminBtn" style="text-align:left; padding:14px 16px; display:none;" onclick="window.location.href='admin.html'">Admin Panel</button>
-    </div>
-    <hr class="divider">
-    <button class="btn btn-outline" style="color:#c0392b; border-color:#c0392b;" onclick="logout()">Logout</button>
   </div>
+
+  <script src="common.js"></script>
   <script>
-    var APP_URL = 'https://script.google.com/macros/s/AKfycbxEIOaI_Zt48oMxVVOE_x-D58pNVFLKzz2G6xMEVxDVROYAKmNEt2dFELxQRbUY9igt/exec';
-    var token = new URLSearchParams(window.location.search).get('token') || localStorage.getItem('grToken') || '';
-    var session = JSON.parse(localStorage.getItem('grSession') || 'null');
-    if (token) localStorage.setItem('grToken', token);
-    if (!session || session.status !== 'active') { window.location.href = 'index.html'; }
+    var session = requireAuth();
+    renderSidebar('dashboard');
 
-    document.getElementById('navUser').textContent = session.email || '';
     var h = new Date().getHours();
-    document.getElementById('greetingText').textContent = (h < 12 ? 'Good Morning' : h < 17 ? 'Good Afternoon' : 'Good Evening') + '!';
-    document.getElementById('greetingMeta').textContent = 'Role: ' + (session.role || '').toUpperCase();
-    if (session.role === 'admin') document.getElementById('adminBtn').style.display = 'block';
+    document.getElementById('greetText').textContent = (h < 12 ? 'Good Morning' : h < 17 ? 'Good Afternoon' : 'Good Evening') + ', ' + (session.full_name ? session.full_name.split(' ')[0] : 'there') + '!';
+    document.getElementById('greetMeta').textContent = session.email + '  |  Role: ' + (session.role || 'field').toUpperCase();
 
-    function logout() {
-      fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'logout', token: token }) })
-        .finally(function() {
-          localStorage.removeItem('grToken');
-          localStorage.removeItem('grSession');
-          window.location.href = 'index.html';
+    fetch(APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getPlannedMeetings', token: grToken() }) })
+      .then(function (r) { return r.json(); }).then(function (res) {
+        document.getElementById('upcomingSpinner').classList.add('hidden');
+        if (!res.success) return;
+        var meetings = res.data || [];
+        var today = new Date(); today.setHours(0, 0, 0, 0);
+        var planned = 0, conducted = 0, upcoming = 0, overdue = 0;
+        meetings.forEach(function (m) {
+          planned++;
+          if (m.status === 'conducted') { conducted++; return; }
+          if (m.status === 'not_conducted') return;
+          var d = m.meeting_date ? new Date(m.meeting_date) : null;
+          if (d && d < today) overdue++;
+          else upcoming++;
         });
-    }
+        document.getElementById('sPlanned').textContent = planned;
+        document.getElementById('sConducted').textContent = conducted;
+        document.getElementById('sUpcoming').textContent = upcoming;
+        document.getElementById('sOverdue').textContent = overdue;
+
+        var future = meetings.filter(function (m) {
+          if (m.status === 'conducted' || m.status === 'not_conducted') return false;
+          return m.meeting_date && new Date(m.meeting_date) >= today;
+        });
+        future.sort(function (a, b) { return new Date(a.meeting_date) - new Date(b.meeting_date); });
+        future = future.slice(0, 5);
+
+        if (future.length === 0) {
+          document.getElementById('upcomingList').innerHTML = '<div class="card text-center" style="padding:24px;"><p class="text-muted">No upcoming meetings. <a href="planner.html" style="color:var(--primary);">Plan one now</a></p></div>';
+          return;
+        }
+        var html = '';
+        future.forEach(function (m) {
+          html += '<div class="entry-card" style="cursor:pointer;" onclick="window.location.href=\'planner.html\'">'
+            + '<div style="display:flex;justify-content:space-between;align-items:flex-start;">'
+            + '<div class="entry-title">' + esc(m.stakeholder_name || '') + '</div>'
+            + '<span class="badge badge-pending">' + fmtDate(m.meeting_date) + '</span>'
+            + '</div>'
+            + '<div class="entry-meta">' + esc(m.meeting_purpose || '') + (m.level_of_meeting ? ' &nbsp;&middot;&nbsp; ' + m.level_of_meeting : '') + '</div>'
+            + '</div>';
+        });
+        document.getElementById('upcomingList').innerHTML = html;
+      }).catch(function () {
+        document.getElementById('upcomingSpinner').classList.add('hidden');
+        ['sPlanned', 'sConducted', 'sUpcoming', 'sOverdue'].forEach(function (id) { document.getElementById(id).textContent = '0'; });
+      });
   </script>
 </body>
 </html>

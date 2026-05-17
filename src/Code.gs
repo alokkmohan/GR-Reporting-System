@@ -83,13 +83,28 @@ function doPost(e) {
       addUser({
         email: params.email,
         full_name: params.full_name,
+        posting_level: params.posting_level,
         district: params.district,
-        zone: params.zone,
+        unit: params.unit,
         designation: params.designation
       });
       destroySession(token);
       var newToken = createSession(params.email, 'field', 'active');
-      return respond({ success: true, token: newToken, status: 'active' });
+      var newUser = getUserByEmail(params.email);
+      return respond({ success: true, token: newToken, status: 'active', user: newUser });
+    }
+
+    // ── PROFILE UPDATE ────────────────────────────────────
+    if (action === 'updateProfile') {
+      if (!session || session.status !== 'active') return respond({ success: false, message: 'Not authorized.' });
+      updateUserProfile(session.email, {
+        full_name: params.full_name,
+        unit: params.unit,
+        designation: params.designation,
+        photo_url: params.photo_url || ''
+      });
+      var updatedUser = getUserByEmail(session.email);
+      return respond({ success: true, user: updatedUser });
     }
 
     // ── PLANNED MEETINGS ──────────────────────────────────

@@ -8,12 +8,13 @@
 </head>
 <body>
   <nav class="navbar">
-    <a href="planner.html">Back</a>
+    <button class="hamburger-btn" onclick="toggleSidebar()">&#9776;</button>
     <span class="logo">Admin Panel</span>
-    <span></span>
+    <span class="nav-user" id="navUser"></span>
   </nav>
-
-  <div class="container">
+  <div class="app-layout">
+  <div id="sidebarMount"></div>
+  <div class="main-content">
     <div id="alertBox"></div>
 
     <div style="display:flex; gap:8px; margin-bottom:16px;">
@@ -39,13 +40,13 @@
     </div>
   </div>
 
+  </div></div>
+  <script src="common.js"></script>
   <script>
-    var APP_URL = 'https://script.google.com/macros/s/AKfycbxEIOaI_Zt48oMxVVOE_x-D58pNVFLKzz2G6xMEVxDVROYAKmNEt2dFELxQRbUY9igt/exec';
-    var token = localStorage.getItem('grToken') || '';
-    var session = JSON.parse(localStorage.getItem('grSession') || 'null');
-    if (!session || session.status !== 'active' || session.role !== 'admin') {
-      window.location.href = 'index.html';
-    }
+    var session = requireAuth();
+    if (session.role !== 'admin') { window.location.href = 'index.html'; }
+    renderSidebar('admin');
+    var token = grToken();
 
     function showAlert(msg, type) {
       document.getElementById('alertBox').innerHTML = '<div class="alert alert-' + type + '">' + msg + '</div>';

@@ -75,6 +75,29 @@ function updateUserStatus(email, status) {
   return false;
 }
 
+function updateUserProfile(email, data) {
+  var sheet = getSheet('Users');
+  var range = sheet.getDataRange();
+  var vals = range.getValues();
+  var headers = vals[0];
+  if (headers.indexOf('photo_url') === -1) {
+    sheet.getRange(1, headers.length + 1).setValue('photo_url');
+    headers.push('photo_url');
+  }
+  for (var i = 1; i < vals.length; i++) {
+    if (vals[i][headers.indexOf('email')] === email) {
+      ['full_name', 'unit', 'designation', 'photo_url'].forEach(function(field) {
+        if (data[field] !== undefined && data[field] !== null) {
+          var col = headers.indexOf(field);
+          if (col >= 0) sheet.getRange(i + 1, col + 1).setValue(data[field]);
+        }
+      });
+      return true;
+    }
+  }
+  return false;
+}
+
 function updateUserRole(email, role) {
   var sheet = getSheet('Users');
   var data = sheet.getDataRange().getValues();

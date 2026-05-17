@@ -180,7 +180,7 @@
             if (res.status === 'active') {
               var sess = res.user ? { email: res.user.email, role: res.user.role, status: 'active', full_name: res.user.full_name || '', district: res.user.district || '' } : { email: currentEmail, role: res.role || 'field', status: 'active' };
               localStorage.setItem('grSession', JSON.stringify(sess));
-              window.location.href = 'planner.html';
+              window.location.href = 'dashboard.html';
               return;
             }
             if (res.status === 'pending') { window.location.href = 'pending.html?token=' + res.token; return; }
@@ -208,7 +208,7 @@
             localStorage.setItem('grSession', JSON.stringify({ email: currentEmail, role: 'field', status: 'active', district: district || '', full_name: full_name }));
             document.getElementById('stepProfile').classList.add('hidden');
             document.getElementById('stepSuccess').classList.remove('hidden');
-            setTimeout(function() { window.location.href = 'planner.html'; }, 2500);
+            setTimeout(function() { window.location.href = 'dashboard.html'; }, 2500);
           } else showAlert('alertBox3', res.message || 'Registration failed.', 'error');
         }).catch(function() { setLoading(false); showAlert('alertBox3', 'Network error.', 'error'); });
     }

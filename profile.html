@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My Profile GR Reporting System</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <button class="hamburger-btn" onclick="toggleSidebar()">&#9776;</button>
+    <span class="logo">My Profile</span>
+    <span class="nav-user" id="navUser"></span>
+  </nav>
+  <div class="app-layout">
+    <div id="sidebarMount"></div>
+    <div class="main-content">
+
+      <!-- Profile header -->
+      <div class="profile-header">
+        <div id="profileAvatar"></div>
+        <div>
+          <div class="profile-info-name" id="pName"></div>
+          <div class="profile-info-email" id="pEmail"></div>
+          <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;">
+            <span class="role-badge" id="pRole"></span>
+            <span class="badge badge-active" id="pStatus"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid" id="profileStats">
+        <div class="stat-card"><div class="stat-number" id="psTotal">...</div><div class="stat-label">Total Planned</div></div>
+        <div class="stat-card green"><div class="stat-number" id="psConducted">...</div><div class="stat-label">Conducted</div></div>
+        <div class="stat-card orange"><div class="stat-number" id="psUpcoming">...</div><div class="stat-label">Upcoming</div></div>
+        <div class="stat-card red"><div class="stat-number" id="psOverdue">...</div><div class="stat-label">Overdue</div></div>
+      </div>
+
+      <!-- Edit Profile -->
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <div class="card-title" style="margin:0;">Profile Information</div>
+          <button class="btn btn-outline btn-sm" id="editBtn" onclick="toggleEdit()">Edit</button>
+        </div>
+        <div id="alertProfile"></div>
+
+        <div id="viewMode">
+          <div class="info-row"><span class="info-label">Full Name</span><span id="v_name"></span></div>
+          <div class="info-row"><span class="info-label">Posting Level</span><span id="v_posting_level"></span></div>
+          <div class="info-row"><span class="info-label">District</span><span id="v_district"></span></div>
+          <div class="info-row"><span class="info-label">Unit</span><span id="v_unit"></span></div>
+          <div class="info-row"><span class="info-label">Designation</span><span id="v_designation"></span></div>
+          <div class="info-row"><span class="info-label">Photo URL</span><span id="v_photo_url" style="font-size:12px;word-break:break-all;color:var(--muted);">Not set</span></div>
+        </div>
+
+        <div id="editMode" style="display:none;">
+          <div class="form-group">
+            <label class="form-label">Full Name <span class="required">*</span></label>
+            <input type="text" id="e_name" class="form-control">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Unit</label>
+            <select id="e_unit" class="form-control">
+              <option value="">-- Select Unit --</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Designation</label>
+            <select id="e_designation" class="form-control">
+              <option value="">-- Select Designation --</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Profile Photo URL</label>
+            <input type="url" id="e_photo_url" class="form-control" placeholder="https://drive.google.com/...">
+            <div style="font-size:12px;color:var(--muted);margin-top:4px;">Paste a public Google Drive image link</div>
+          </div>
+          <div style="display:flex;gap:10px;">
+            <button class="btn btn-primary" id="saveBtn" onclick="saveProfile()">Save Changes</button>
+            <button class="btn btn-outline" onclick="toggleEdit()">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Meeting Table -->
+      <div class="card-title mb-8">My Planned Meetings</div>
+      <div id="meetingTableSpinner"><div class="spinner"></div></div>
+      <div id="meetingTableWrap"></div>
+
+    </div>
+  </div>
+
+  <style>
+  .info-row { display:flex; justify-content:space-between; align-items:flex-start; padding:10px 0; border-bottom:1px solid var(--border); font-size:14px; }
+  .info-row:last-child { border-bottom:none; }
+  .info-label { color:var(--muted); font-size:13px; min-width:120px; }
+  </style>
+
+  <script src="common.js"></script>
+  <script>
+    var session = requireAuth();
+    renderSidebar('profile');
+
+    var s = session;
+
+    // Render avatar
+    var words = (s.full_name || s.email || 'U').split(' ');
+    var initials = (words[0].charAt(0) + (words[1] ? words[1].charAt(0) : '')).toUpperCase();
+    var avatarHtml = s.photo_url
+      ? '<img src="' + s.photo_url + '" class="profile-photo" onerror="this.style.display=\'none\'">'
+      : '<div class="profile-photo-placeholder">' + initials + '</div>';
+    document.getElementById('profileAvatar').innerHTML = avatarHtml;
+
+    document.getElementById('pName').textContent = s.full_name || '';
+    document.getElementById('pEmail').textContent = s.email || '';
+    document.getElementById('pRole').textContent = s.role || 'field';
+    document.getElementById('pStatus').textContent = s.status || 'active';
+
+    function fillView() {
+      var s = grSession();
+      document.getElementById('v_name').textContent = s.full_name || '';
+      document.getElementById('v_posting_level').textContent = s.posting_level || '';
+      document.getElementById('v_district').textContent = s.district || '';
+      document.getElementById('v_unit').textContent = s.unit || '';
+      document.getElementById('v_designation').textContent = s.designation || '';
+      document.getElementById('v_photo_url').textContent = s.photo_url || 'Not set';
+    }
+    fillView();
+
+    var editing = false;
+    function toggleEdit() {
+      editing = !editing;
+      document.getElementById('viewMode').style.display = editing ? 'none' : 'block';
+      document.getElementById('editMode').style.display = editing ? 'block' : 'none';
+      document.getElementById('editBtn').textContent = editing ? 'Cancel' : 'Edit';
+      if (editing) {
+        var s = grSession();
+        document.getElementById('e_name').value = s.full_name || '';
+        document.getElementById('e_photo_url').value = s.photo_url || '';
+        // Fill dropdowns
+        fetch(APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getDropdowns' }) })
+          .then(function (r) { return r.json(); }).then(function (res) {
+            if (!res.success) return;
+            function fillSel(id, items, current) {
+              var sel = document.getElementById(id);
+              sel.innerHTML = '<option value="">-- Select --</option>';
+              (items || []).forEach(function (v) {
+                var o = document.createElement('option'); o.value = v; o.textContent = v;
+                if (v === current) o.selected = true;
+                sel.appendChild(o);
+              });
+            }
+            fillSel('e_unit', res.units, grSession().unit);
+            fillSel('e_designation', res.designations, grSession().designation);
+          });
+      }
+    }
+
+    function saveProfile() {
+      var name = document.getElementById('e_name').value.trim();
+      if (!name) { document.getElementById('alertProfile').innerHTML = '<div class="alert alert-error">Full name is required.</div>'; return; }
+      document.getElementById('saveBtn').disabled = true;
+      document.getElementById('saveBtn').textContent = 'Saving...';
+      fetch(APP_URL, { method: 'POST', body: JSON.stringify({
+        action: 'updateProfile', token: grToken(),
+        full_name: name,
+        unit: document.getElementById('e_unit').value,
+        designation: document.getElementById('e_designation').value,
+        photo_url: document.getElementById('e_photo_url').value.trim()
+      })})
+      .then(function (r) { return r.json(); }).then(function (res) {
+        document.getElementById('saveBtn').disabled = false;
+        document.getElementById('saveBtn').textContent = 'Save Changes';
+        if (res.success) {
+          var s = grSession();
+          s.full_name = res.user.full_name || name;
+          s.unit = res.user.unit || document.getElementById('e_unit').value;
+          s.designation = res.user.designation || document.getElementById('e_designation').value;
+          s.photo_url = res.user.photo_url || document.getElementById('e_photo_url').value.trim();
+          localStorage.setItem('grSession', JSON.stringify(s));
+          document.getElementById('alertProfile').innerHTML = '<div class="alert alert-success">Profile updated successfully.</div>';
+          fillView();
+          document.getElementById('pName').textContent = s.full_name;
+          renderSidebar('profile');
+          editing = false;
+          document.getElementById('viewMode').style.display = 'block';
+          document.getElementById('editMode').style.display = 'none';
+          document.getElementById('editBtn').textContent = 'Edit';
+          setTimeout(function () { document.getElementById('alertProfile').innerHTML = ''; }, 3000);
+        } else {
+          document.getElementById('alertProfile').innerHTML = '<div class="alert alert-error">' + (res.message || 'Update failed.') + '</div>';
+        }
+      }).catch(function () {
+        document.getElementById('saveBtn').disabled = false;
+        document.getElementById('saveBtn').textContent = 'Save Changes';
+        document.getElementById('alertProfile').innerHTML = '<div class="alert alert-error">Network error.</div>';
+      });
+    }
+
+    // Load planned meetings for table
+    fetch(APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getPlannedMeetings', token: grToken() }) })
+      .then(function (r) { return r.json(); }).then(function (res) {
+        document.getElementById('meetingTableSpinner').classList.add('hidden');
+        if (!res.success) return;
+        var meetings = res.data || [];
+        var today = new Date(); today.setHours(0, 0, 0, 0);
+        var total = meetings.length, conducted = 0, upcoming = 0, overdue = 0;
+        meetings.forEach(function (m) {
+          if (m.status === 'conducted') { conducted++; return; }
+          if (m.status === 'not_conducted') return;
+          var d = m.meeting_date ? new Date(m.meeting_date) : null;
+          if (d && d < today) overdue++; else upcoming++;
+        });
+        document.getElementById('psTotal').textContent = total;
+        document.getElementById('psConducted').textContent = conducted;
+        document.getElementById('psUpcoming').textContent = upcoming;
+        document.getElementById('psOverdue').textContent = overdue;
+
+        if (meetings.length === 0) {
+          document.getElementById('meetingTableWrap').innerHTML = '<div class="card text-center" style="padding:24px;"><p class="text-muted">No meetings planned yet.</p></div>';
+          return;
+        }
+        meetings.sort(function (a, b) { return new Date(b.meeting_date || 0) - new Date(a.meeting_date || 0); });
+        var statusLabel = { planned: 'Planned', conducted: 'Done', not_conducted: 'Not Done' };
+        var statusBadge = { planned: 'badge-pending', conducted: 'badge-active', not_conducted: 'badge-suspended' };
+        var html = '<div class="table-wrap"><table><thead><tr><th>Date</th><th>Stakeholder</th><th>Purpose</th><th>Status</th><th>Action</th></tr></thead><tbody>';
+        meetings.forEach(function (m) {
+          var isOverdue = m.status === 'planned' && m.meeting_date && new Date(m.meeting_date) < today;
+          var st = isOverdue ? 'overdue' : (m.status || 'planned');
+          var badgeCls = st === 'overdue' ? 'badge-suspended' : (statusBadge[st] || 'badge-pending');
+          var label = st === 'overdue' ? 'Overdue' : (statusLabel[st] || st);
+          html += '<tr>'
+            + '<td style="white-space:nowrap;">' + fmtDate(m.meeting_date) + '</td>'
+            + '<td>' + esc(m.stakeholder_name || '') + '</td>'
+            + '<td>' + esc(m.meeting_purpose || '') + '</td>'
+            + '<td><span class="badge ' + badgeCls + '">' + label + '</span></td>'
+            + '<td>';
+          if (st === 'planned' || st === 'overdue') {
+            html += '<button class="btn btn-primary btn-sm" onclick="doAction(\'' + m.plan_id + '\')">Action</button>';
+          } else {
+            html += '<span style="color:var(--muted);font-size:13px;">Done</span>';
+          }
+          html += '</td></tr>';
+        });
+        html += '</tbody></table></div>';
+        document.getElementById('meetingTableWrap').innerHTML = html;
+      }).catch(function () {
+        document.getElementById('meetingTableSpinner').classList.add('hidden');
+        ['psTotal','psConducted','psUpcoming','psOverdue'].forEach(function (id) { document.getElementById(id).textContent = '0'; });
+      });
+
+    function doAction(planId) {
+      sessionStorage.setItem('redirectPlanId', planId);
+      window.location.href = 'planner.html';
+    }
+  </script>
+</body>
+</html>

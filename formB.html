@@ -8,11 +8,13 @@
 </head>
 <body>
   <nav class="navbar">
-    <a href="planner.html">Back</a>
+    <button class="hamburger-btn" onclick="toggleSidebar()">&#9776;</button>
     <span class="logo">Not Conducted</span>
-    <span></span>
+    <span class="nav-user" id="navUser"></span>
   </nav>
-  <div class="container">
+  <div class="app-layout">
+  <div id="sidebarMount"></div>
+  <div class="main-content">
     <div id="successScreen" class="hidden">
       <div class="card success-screen">
         <div class="success-icon">Saved</div>
@@ -61,11 +63,12 @@
     </div>
   </div>
 
+  </div></div>
+  <script src="common.js"></script>
   <script>
-    var APP_URL = 'https://script.google.com/macros/s/AKfycbxEIOaI_Zt48oMxVVOE_x-D58pNVFLKzz2G6xMEVxDVROYAKmNEt2dFELxQRbUY9igt/exec';
-    var token = localStorage.getItem('grToken') || '';
-    var session = JSON.parse(localStorage.getItem('grSession') || 'null');
-    if (!session || session.status !== 'active') { window.location.href = 'index.html'; }
+    var session = requireAuth();
+    renderSidebar('formA');
+    var token = grToken();
 
     var planId = new URLSearchParams(window.location.search).get('plan_id') || '';
 
