@@ -90,10 +90,11 @@ function updateUserProfile(email, data) {
   for (var i = 1; i < vals.length; i++) {
     if (vals[i][headers.indexOf('email')] === email) {
       ['full_name', 'unit', 'designation', 'photo_url'].forEach(function(field) {
-        if (data[field] !== undefined && data[field] !== null) {
-          var col = headers.indexOf(field);
-          if (col >= 0) sheet.getRange(i + 1, col + 1).setValue(data[field]);
-        }
+        if (data[field] === undefined || data[field] === null) return;
+        // Don't overwrite full_name with an empty value
+        if (field === 'full_name' && data[field] === '') return;
+        var col = headers.indexOf(field);
+        if (col >= 0) sheet.getRange(i + 1, col + 1).setValue(data[field]);
       });
       return true;
     }

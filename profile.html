@@ -231,10 +231,11 @@
           if (res.success) {
             var s = grSession(); s.photo_url = res.url;
             localStorage.setItem('grSession', JSON.stringify(s));
-            // Save to profile too
+            // Save photo_url to profile (only pass full_name if it has a value)
             fetch(APP_URL, { method:'POST', body: JSON.stringify({
               action:'updateProfile', token: grToken(),
-              full_name: s.full_name, unit: s.unit, designation: s.designation, photo_url: res.url
+              full_name: s.full_name || '',
+              unit: s.unit || '', designation: s.designation || '', photo_url: res.url
             })});
             fillHeader(s);
           } else { alert('Photo upload failed. Try again.'); renderPhoto(grSession()); }
