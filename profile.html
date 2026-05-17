@@ -114,7 +114,7 @@
 
     document.getElementById('pName').textContent = s.full_name || '';
     document.getElementById('pEmail').textContent = s.email || '';
-    document.getElementById('pRole').textContent = s.role || 'field';
+    document.getElementById('pRole').textContent = s.designation || s.role || 'field';
     document.getElementById('pStatus').textContent = s.status || 'active';
 
     function fillView() {

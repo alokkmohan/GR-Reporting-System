@@ -111,7 +111,8 @@
         <select id="plan_level" class="form-control"><option value="">-- Select --</option><option>State</option><option>District</option><option>Block</option><option>Cluster</option><option>School</option></select>
       </div>
       <div class="form-group"><label class="form-label">Block / Cluster</label><input type="text" id="plan_block" class="form-control" placeholder="Optional"></div>
-      <div class="form-group"><label class="form-label">Notes</label><textarea id="plan_notes" class="form-control" placeholder="Preparation notes..."></textarea></div>
+      <div class="form-group"><label class="form-label">Action Points / Notes</label><textarea id="plan_notes" class="form-control" placeholder="Key points to discuss, preparation notes..."></textarea></div>
+      <div class="form-group"><label class="form-label">Document Link</label><input type="url" id="plan_doc_link" class="form-control" placeholder="Google Drive PDF link (optional)"><div style="font-size:12px;color:var(--muted);margin-top:4px;">Paste a shareable Google Drive link to any relevant document</div></div>
       <button class="btn btn-primary" id="savePlanBtn" onclick="savePlan()">Save Meeting Plan</button>
     </div>
   </div>
@@ -258,13 +259,14 @@
         stakeholder_type: stype, stakeholder_name: sname, meeting_purpose: purpose,
         level_of_meeting: document.getElementById('plan_level').value,
         block_cluster: document.getElementById('plan_block').value,
-        notes: document.getElementById('plan_notes').value
+        notes: document.getElementById('plan_notes').value,
+        document_link: document.getElementById('plan_doc_link').value.trim()
       }})})
       .then(function (r) { return r.json(); }).then(function (res) {
         document.getElementById('savePlanBtn').disabled = false; document.getElementById('savePlanBtn').textContent = 'Save Meeting Plan';
         if (res.success) {
           closePlanModal();
-          ['plan_time','plan_stakeholder_name','plan_block','plan_notes'].forEach(function (id) { document.getElementById(id).value = ''; });
+          ['plan_time','plan_stakeholder_name','plan_block','plan_notes','plan_doc_link'].forEach(function (id) { document.getElementById(id).value = ''; });
           ['plan_stakeholder_type','plan_purpose','plan_level'].forEach(function (id) { document.getElementById(id).value = ''; });
           loadMeetings();
         } else { document.getElementById('planAlertBox').innerHTML = '<div class="alert alert-error">' + (res.message || 'Error') + '</div>'; }

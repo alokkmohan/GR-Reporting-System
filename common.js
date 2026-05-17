@@ -59,7 +59,7 @@ function renderSidebar(activePage) {
     + '<div class="sidebar-avatar-wrap">' + avatarHtml + '</div>'
     + '<div class="sidebar-name">' + (s.full_name || '') + '</div>'
     + '<div class="sidebar-email">' + (s.email || '') + '</div>'
-    + '<span class="role-badge">' + (s.role || 'field') + '</span>'
+    + '<span class="role-badge">' + esc(s.designation || s.role || 'Field') + '</span>'
     + '</div>'
     + '<nav class="sidebar-nav">' + navHtml + '</nav>'
     + '<div class="sidebar-footer">'

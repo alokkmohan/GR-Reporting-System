@@ -1,5 +1,13 @@
 function planMeeting(data, userEmail, district) {
   var sheet = getSheet('PlannedMeetings');
+  // Ensure document_link column header exists
+  var lastCol = sheet.getLastColumn();
+  if (lastCol > 0) {
+    var headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+    if (headers.indexOf('document_link') === -1) {
+      sheet.getRange(1, lastCol + 1).setValue('document_link');
+    }
+  }
   var id = generateUUID();
   var ts = formatTimestamp(new Date());
   sheet.appendRow([
@@ -13,7 +21,8 @@ function planMeeting(data, userEmail, district) {
     data.meeting_purpose || '',
     data.notes || '',
     'planned',
-    ''
+    '',
+    data.document_link || ''
   ]);
   return id;
 }

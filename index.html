@@ -133,7 +133,7 @@
           clearInterval(resendTimer);
           localStorage.setItem('grToken', res.token);
           if (res.status === 'active') {
-            var sess = res.user ? { email: res.user.email, role: res.user.role, status: 'active', full_name: res.user.full_name || '', district: res.user.district || '' } : { email: currentEmail, role: res.role || 'field', status: 'active' };
+            var sess = res.user ? { email: res.user.email, role: res.user.role, status: 'active', full_name: res.user.full_name || '', district: res.user.district || '', designation: res.user.designation || '' } : { email: currentEmail, role: res.role || 'field', status: 'active' };
             localStorage.setItem('grSession', JSON.stringify(sess));
             window.location.href = 'dashboard.html';
           } else if (res.status === 'unregistered') {

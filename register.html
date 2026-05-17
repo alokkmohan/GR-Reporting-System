@@ -178,7 +178,7 @@
             sessionToken = res.token;
             localStorage.setItem('grToken', res.token);
             if (res.status === 'active') {
-              var sess = res.user ? { email: res.user.email, role: res.user.role, status: 'active', full_name: res.user.full_name || '', district: res.user.district || '' } : { email: currentEmail, role: res.role || 'field', status: 'active' };
+              var sess = res.user ? { email: res.user.email, role: res.user.role, status: 'active', full_name: res.user.full_name || '', district: res.user.district || '', designation: res.user.designation || '' } : { email: currentEmail, role: res.role || 'field', status: 'active' };
               localStorage.setItem('grSession', JSON.stringify(sess));
               window.location.href = 'dashboard.html';
               return;
@@ -205,7 +205,7 @@
           setLoading(false);
           if (res.success) {
             localStorage.setItem('grToken', res.token);
-            localStorage.setItem('grSession', JSON.stringify({ email: currentEmail, role: 'field', status: 'active', district: district || '', full_name: full_name }));
+            localStorage.setItem('grSession', JSON.stringify({ email: currentEmail, role: 'field', status: 'active', district: district || '', full_name: full_name, designation: designation || '' }));
             document.getElementById('stepProfile').classList.add('hidden');
             document.getElementById('stepSuccess').classList.remove('hidden');
             setTimeout(function() { window.location.href = 'dashboard.html'; }, 2500);

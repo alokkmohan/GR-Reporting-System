@@ -203,6 +203,7 @@ tr:hover td { background: #f9fafb; }
 /* STATS CARDS */
 .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px; }
 .stat-card { background: #fff; border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); text-align: center; }
+.stat-icon { font-size: 18px; color: var(--muted); margin-bottom: 4px; }
 .stat-number { font-size: 28px; font-weight: 800; color: var(--primary); line-height: 1; }
 .stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
 .stat-card.green .stat-number { color: var(--success); }
