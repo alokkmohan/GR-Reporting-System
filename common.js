@@ -6,6 +6,21 @@ function grToken() { return localStorage.getItem('grToken') || ''; }
 function requireAuth() {
   var s = grSession();
   if (!s || s.status !== 'active') { window.location.href = 'index.html'; return null; }
+  if (!s.designation) {
+    fetch(APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getMyProfile', token: grToken() }) })
+      .then(function(r) { return r.json(); }).then(function(res) {
+        if (res.success && res.user) {
+          var sess = grSession();
+          sess.designation = res.user.designation || '';
+          sess.unit = res.user.unit || '';
+          sess.full_name = res.user.full_name || sess.full_name || '';
+          sess.district = res.user.district || sess.district || '';
+          localStorage.setItem('grSession', JSON.stringify(sess));
+          var badge = document.querySelector('.role-badge');
+          if (badge) badge.textContent = sess.designation || sess.role || 'Field';
+        }
+      }).catch(function() {});
+  }
   return s;
 }
 

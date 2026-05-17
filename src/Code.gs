@@ -151,6 +151,12 @@ function doPost(e) {
       return respond({ success: true, submission_id: submissionId });
     }
 
+    if (action === 'getMyProfile') {
+      if (!session || session.status !== 'active') return respond({ success: false, message: 'Not authorized.' });
+      var user = getUserByEmail(session.email);
+      return respond({ success: true, user: user });
+    }
+
     if (action === 'getMyMeetings') {
       if (!session || session.status !== 'active') return respond({ success: false, message: 'Not authorized.' });
       var data;
