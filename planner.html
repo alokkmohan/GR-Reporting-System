@@ -6,6 +6,7 @@
   <title>Meeting Planner GR Reporting System</title>
   <link rel="stylesheet" href="style.css">
   <style>
+  /* Calendar */
   .cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
   .cal-nav{background:none;border:none;font-size:22px;cursor:pointer;color:var(--primary);padding:4px 10px}
   .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
@@ -19,9 +20,13 @@
   .cal-cell.has-conducted::after{background:var(--success)}
   .cal-cell.has-overdue::after{background:var(--danger)}
   .cal-date{font-size:13px;text-align:center}
+
+  /* Tabs */
   .view-tabs{display:flex;gap:6px;margin-bottom:12px}
   .view-tab{flex:1;padding:8px;border:1.5px solid var(--border);border-radius:8px;background:#fff;font-size:13px;cursor:pointer;text-align:center;font-weight:600}
   .view-tab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+
+  /* Card rows for calendar / all views */
   .meeting-row{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#fff;border-radius:8px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,0.08);border-left:4px solid var(--border);gap:8px}
   .meeting-row.status-planned{border-left-color:var(--primary)}
   .meeting-row.status-conducted{border-left-color:var(--success)}
@@ -33,11 +38,38 @@
   .action-btn{white-space:nowrap;padding:8px 14px;font-size:13px;border-radius:6px;border:none;cursor:pointer;font-weight:700}
   .action-btn.primary{background:var(--primary);color:#fff}
   .action-btn.muted{background:#f1f3f4;color:var(--muted);cursor:default}
+
+  /* Upcoming table */
+  .section-card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:14px}
+  .utable{width:100%;border-collapse:collapse;font-size:13px}
+  .utable th{background:#f9fafb;padding:9px 10px;text-align:left;font-weight:700;border-bottom:2px solid var(--border);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;white-space:nowrap}
+  .utable td{padding:10px 10px;border-bottom:1px solid #f3f4f6;vertical-align:middle}
+  .utable tr:last-child td{border-bottom:none}
+  .utable tr:hover td{background:#fafafa}
+  .ut-name{font-weight:700;font-size:13px}
+  .ut-type{font-size:11px;color:var(--muted)}
+  .ut-date{font-size:12px;font-weight:700;white-space:nowrap}
+  .ut-overdue-tag{background:#fef2f2;color:var(--danger);font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px;display:inline-block;margin-top:2px}
+  .ut-purpose{font-size:12px;color:#374151;font-weight:600}
+  .ut-notes{font-size:11px;color:var(--muted);margin-top:2px}
+  .ut-action{white-space:nowrap;padding:6px 12px;font-size:12px;border-radius:6px;border:none;cursor:pointer;font-weight:700;background:var(--primary);color:#fff}
+  .ut-done-tag{font-size:11px;color:var(--muted);font-style:italic}
+
+  /* Plan modal */
   .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:flex;align-items:flex-end;justify-content:center}
   .modal-overlay.hidden{display:none}
-  .modal{background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;padding:24px 20px 32px}
-  .modal-title{font-size:18px;font-weight:700;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}
-  .modal-close{background:none;border:none;font-size:18px;cursor:pointer;color:var(--muted);font-weight:700}
+  .modal{background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;padding:0 0 32px}
+  .modal-head{background:linear-gradient(135deg,#922b21 0%,#c0392b 100%);color:#fff;padding:18px 20px 16px;border-radius:16px 16px 0 0;display:flex;align-items:center;justify-content:space-between}
+  .modal-head-title{font-size:17px;font-weight:800}
+  .modal-head-sub{font-size:12px;opacity:0.82;margin-top:2px}
+  .modal-close{background:rgba(255,255,255,0.2);border:none;font-size:16px;cursor:pointer;color:#fff;font-weight:700;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center}
+  .modal-body{padding:20px 20px 0}
+  .plan-section{background:#f9fafb;border-radius:10px;padding:14px 14px 8px;margin-bottom:14px;border:1px solid var(--border)}
+  .plan-section-title{font-size:11px;font-weight:800;color:var(--primary);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+  .plan-row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .modal-footer{padding:0 20px}
+
+  /* Action sheet */
   .action-sheet{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;display:flex;align-items:flex-end;justify-content:center}
   .action-sheet.hidden{display:none}
   .action-sheet-inner{background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:600px;padding:24px 20px 32px}
@@ -65,13 +97,25 @@
       <!-- Upcoming view -->
       <div id="upcomingView">
         <div id="loadingSpinner"><div class="spinner"></div></div>
-        <div id="upcomingList"></div>
         <div id="emptyUpcoming" class="hidden">
           <div class="card text-center" style="padding:32px;">
             <div class="card-title">No Upcoming Meetings</div>
             <p class="text-muted mt-8">Aage koi meeting plan nahi hai.</p>
             <button class="btn btn-primary mt-16" onclick="openPlanModal()">+ Plan New Meeting</button>
           </div>
+        </div>
+        <div class="section-card" id="upcomingTableWrap" style="display:none;">
+          <table class="utable">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Kiske Saath</th>
+                <th>Agenda</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="upcomingTbody"></tbody>
+          </table>
         </div>
       </div>
 
@@ -107,60 +151,84 @@
 
   <div class="modal-overlay hidden" id="planModal">
     <div class="modal">
-      <div class="modal-title">Plan a Meeting <button class="modal-close" onclick="closePlanModal()">&times;</button></div>
-      <div id="planAlertBox"></div>
-
-      <div class="section-header">When &amp; Where</div>
-      <div class="form-group"><label class="form-label">Meeting Date <span class="required">*</span></label><input type="date" id="plan_date" class="form-control"></div>
-      <div class="form-group"><label class="form-label">Time (optional)</label><input type="time" id="plan_time" class="form-control"></div>
-      <div class="form-group">
-        <label class="form-label">Level of Meeting <span class="required">*</span></label>
-        <select id="plan_level" class="form-control">
-          <option value="">-- Select Level --</option>
-          <option>State</option><option>District</option><option>Block</option><option>Cluster</option><option>School</option>
-        </select>
-      </div>
-      <div class="form-group"><label class="form-label">Block / Cluster</label><input type="text" id="plan_block" class="form-control" placeholder="Specify block or cluster (optional)"></div>
-
-      <div class="section-header">Kisse Milna Hai (Who to Meet)</div>
-      <div class="form-group">
-        <label class="form-label">Stakeholder Type <span class="required">*</span></label>
-        <select id="plan_stakeholder_type" class="form-control">
-          <option value="">-- Select Type --</option>
-          <option>ACS</option><option>DGSE</option><option>UIC</option><option>SPD</option><option>ASPD</option><option>JD</option>
-          <option>BSA</option><option>CDO</option><option>District Collector</option><option>DIET Principal</option>
-          <option>ABSA</option><option>ARP</option><option>DC- Gender</option><option>DC-Training</option>
-          <option>DC- MIS</option><option>DC- Community</option><option>DC-IED</option>
-          <option>Head Teacher</option><option>Teacher</option>
-          <option>Development Partner Cell</option><option>Other Department</option>
-        </select>
-      </div>
-      <div class="form-group"><label class="form-label">Stakeholder Name <span class="required">*</span></label><input type="text" id="plan_stakeholder_name" class="form-control" placeholder="Full name of official to meet"></div>
-
-      <div class="section-header">Kya Karna Hai (Purpose &amp; Agenda)</div>
-      <div class="form-group">
-        <label class="form-label">Meeting Purpose <span class="required">*</span></label>
-        <select id="plan_purpose" class="form-control">
-          <option value="">-- Select Purpose --</option>
-          <option>Introductory Meeting</option><option>Enrollment</option><option>Retention</option>
-          <option>Learning</option><option>Invitation</option><option>Review Meeting</option>
-          <option>MPR Submission</option><option>DTF</option><option>School Liasioning</option>
-          <option>Courtesy Meeting</option><option>Other</option>
-        </select>
-      </div>
-      <div class="form-group"><label class="form-label">Action Points / Notes</label><textarea id="plan_notes" class="form-control" placeholder="Key discussion points, what to ask, what to present..."></textarea></div>
-      <div class="form-group">
-        <label class="form-label">Reference Document (optional)</label>
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-          <button type="button" class="btn btn-outline btn-sm" id="uploadFileBtn" onclick="document.getElementById('planFileInput').click()" style="white-space:nowrap;">&#128206; Upload File</button>
-          <span id="uploadStatus" style="font-size:12px;color:var(--muted);">PDF, Word, Image (max 5MB)</span>
+      <div class="modal-head">
+        <div>
+          <div class="modal-head-title">&#128197; Plan a Meeting</div>
+          <div class="modal-head-sub">Kab, kisse aur kyu milna hai — sab bharo</div>
         </div>
-        <input type="file" id="planFileInput" accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png" style="display:none;" onchange="handleFileUpload(this)">
-        <div id="uploadProgress" class="hidden" style="font-size:12px;color:var(--primary);margin-bottom:6px;">&#8593; Uploading to Drive...</div>
-        <input type="url" id="plan_doc_link" class="form-control" placeholder="Or paste Google Drive link directly">
+        <button class="modal-close" onclick="closePlanModal()">&times;</button>
       </div>
+      <div class="modal-body">
+        <div id="planAlertBox"></div>
 
-      <button class="btn btn-primary" id="savePlanBtn" onclick="savePlan()">Save Meeting Plan</button>
+        <!-- Section 1: When & Where -->
+        <div class="plan-section">
+          <div class="plan-section-title">&#128205; Kab Aur Kahan (When &amp; Where)</div>
+          <div class="plan-row-2">
+            <div class="form-group" style="margin-bottom:10px;"><label class="form-label">Date <span class="required">*</span></label><input type="date" id="plan_date" class="form-control"></div>
+            <div class="form-group" style="margin-bottom:10px;"><label class="form-label">Time (optional)</label><input type="time" id="plan_time" class="form-control"></div>
+          </div>
+          <div class="plan-row-2">
+            <div class="form-group" style="margin-bottom:4px;">
+              <label class="form-label">Level <span class="required">*</span></label>
+              <select id="plan_level" class="form-control">
+                <option value="">-- Select --</option>
+                <option>State</option><option>District</option><option>Block</option><option>Cluster</option><option>School</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:4px;"><label class="form-label">Block / Cluster</label><input type="text" id="plan_block" class="form-control" placeholder="Block ya cluster (optional)"></div>
+          </div>
+        </div>
+
+        <!-- Section 2: Who to Meet -->
+        <div class="plan-section">
+          <div class="plan-section-title">&#128100; Kisse Milna Hai (Who to Meet)</div>
+          <div class="form-group" style="margin-bottom:10px;">
+            <label class="form-label">Stakeholder Type <span class="required">*</span></label>
+            <select id="plan_stakeholder_type" class="form-control">
+              <option value="">-- Select Type --</option>
+              <option>ACS</option><option>DGSE</option><option>UIC</option><option>SPD</option><option>ASPD</option><option>JD</option>
+              <option>BSA</option><option>CDO</option><option>District Collector</option><option>DIET Principal</option>
+              <option>ABSA</option><option>ARP</option><option>DC- Gender</option><option>DC-Training</option>
+              <option>DC- MIS</option><option>DC- Community</option><option>DC-IED</option>
+              <option>Head Teacher</option><option>Teacher</option>
+              <option>Development Partner Cell</option><option>Other Department</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:4px;"><label class="form-label">Name of Official <span class="required">*</span></label><input type="text" id="plan_stakeholder_name" class="form-control" placeholder="Adhikari ka poora naam"></div>
+        </div>
+
+        <!-- Section 3: Purpose & Agenda -->
+        <div class="plan-section">
+          <div class="plan-section-title">&#128203; Kya Karna Hai (Purpose &amp; Agenda)</div>
+          <div class="form-group" style="margin-bottom:10px;">
+            <label class="form-label">Meeting Purpose <span class="required">*</span></label>
+            <select id="plan_purpose" class="form-control">
+              <option value="">-- Select Purpose --</option>
+              <option>Introductory Meeting</option><option>Enrollment</option><option>Retention</option>
+              <option>Learning</option><option>Invitation</option><option>Review Meeting</option>
+              <option>MPR Submission</option><option>DTF</option><option>School Liasioning</option>
+              <option>Courtesy Meeting</option><option>Other</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:4px;"><label class="form-label">Notes / Key Points</label><textarea id="plan_notes" class="form-control" rows="3" placeholder="Kya discuss karna hai, kya leke jaana hai..."></textarea></div>
+        </div>
+
+        <!-- Section 4: Reference Document -->
+        <div class="plan-section" style="margin-bottom:16px;">
+          <div class="plan-section-title">&#128196; Reference Document (optional)</div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <button type="button" class="btn btn-outline btn-sm" id="uploadFileBtn" onclick="document.getElementById('planFileInput').click()" style="white-space:nowrap;">&#128206; Upload File</button>
+            <span id="uploadStatus" style="font-size:12px;color:var(--muted);">PDF, Word, Image (max 5MB)</span>
+          </div>
+          <input type="file" id="planFileInput" accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png" style="display:none;" onchange="handleFileUpload(this)">
+          <div id="uploadProgress" class="hidden" style="font-size:12px;color:var(--primary);margin-bottom:6px;">&#8593; Uploading to Drive...</div>
+          <input type="url" id="plan_doc_link" class="form-control" placeholder="Ya Google Drive link paste karo">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" id="savePlanBtn" onclick="savePlan()" style="width:100%;">Save Meeting Plan</button>
+      </div>
     </div>
   </div>
 
@@ -214,12 +282,29 @@
       upcoming.sort(function(a, b) { return new Date(a.meeting_date) - new Date(b.meeting_date); });
 
       if (upcoming.length === 0) {
-        document.getElementById('upcomingList').innerHTML = '';
+        document.getElementById('upcomingTableWrap').style.display = 'none';
         document.getElementById('emptyUpcoming').classList.remove('hidden');
         return;
       }
       document.getElementById('emptyUpcoming').classList.add('hidden');
-      document.getElementById('upcomingList').innerHTML = buildMeetingRows(upcoming);
+      document.getElementById('upcomingTableWrap').style.display = '';
+      var html = '';
+      upcoming.forEach(function(m) {
+        var d = m.meeting_date ? new Date(m.meeting_date) : null;
+        if (d) d.setHours(0,0,0,0);
+        var isOverdue = d && d < today;
+        html += '<tr>'
+          + '<td><div class="ut-date">' + fmtDate(m.meeting_date) + '</div>'
+          + (m.meeting_time ? '<div class="ut-type">' + m.meeting_time + '</div>' : '')
+          + (isOverdue ? '<div class="ut-overdue-tag">Overdue</div>' : '') + '</td>'
+          + '<td><div class="ut-name">' + esc(m.stakeholder_name || '') + '</div>'
+          + '<div class="ut-type">' + esc(m.stakeholder_type || '') + (m.level_of_meeting ? ' &middot; ' + esc(m.level_of_meeting) : '') + '</div></td>'
+          + '<td><div class="ut-purpose">' + esc(m.meeting_purpose || '') + '</div>'
+          + (m.notes ? '<div class="ut-notes">' + esc(m.notes) + '</div>' : '') + '</td>'
+          + '<td><button class="ut-action" onclick="openActionSheet(\'' + m.plan_id + '\')">Log</button></td>'
+          + '</tr>';
+      });
+      document.getElementById('upcomingTbody').innerHTML = html;
     }
 
     function buildMeetingRows(meetings) {
