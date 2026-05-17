@@ -54,6 +54,22 @@
     .tl-tab{flex:1;padding:8px;border:1.5px solid var(--border);border-radius:8px;background:#fff;font-size:13px;cursor:pointer;text-align:center;font-weight:600;}
     .tl-tab.active{background:#1a2a4a;color:#fff;border-color:#1a2a4a;}
 
+    /* Click-to-expand */
+    .tl-card { cursor:pointer; }
+    .tl-card-head { position:relative; }
+    .tl-expand-icon { font-size:16px; color:var(--muted); transition:transform 0.2s; line-height:1; }
+    .tl-details { display:none; border-top:1px dashed #e5e7eb; padding-top:10px; margin-top:8px; }
+    .tl-details.open { display:block; }
+    .tl-expand-icon.open { transform: rotate(180deg); }
+    .tl-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+
+    /* MoM button */
+    .mom-btn { display:inline-flex; align-items:center; gap:6px; background:#1a2a4a; color:#fff; border:none; border-radius:7px; padding:7px 12px; font-size:12px; font-weight:700; cursor:pointer; margin-top:10px; text-decoration:none; transition:background 0.2s; }
+    .mom-btn:hover { background:#243352; }
+    .mom-btn-open { background:#059669; }
+    .mom-btn-open:hover { background:#047857; }
+    .mom-btn-loading { opacity:0.7; cursor:not-allowed; }
+
     /* Action Items tab */
     .ai-tab-table{width:100%;border-collapse:collapse;font-size:13px;background:#fff;border-radius:var(--radius);box-shadow:0 1px 6px rgba(0,0,0,0.07);overflow:hidden;}
     .ai-tab-table th{background:#f9fafb;padding:9px 10px;text-align:left;font-weight:700;border-bottom:2px solid var(--border);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;white-space:nowrap;}
@@ -225,6 +241,38 @@
         + '</div>';
     }
 
+    function toggleNode(nodeId) {
+      var details = document.getElementById('det-' + nodeId);
+      var icon    = document.getElementById('ico-' + nodeId);
+      if (!details) return;
+      var open = details.classList.toggle('open');
+      if (icon) icon.classList.toggle('open', open);
+    }
+
+    function createMoM(submissionId, btnId) {
+      var btn = document.getElementById(btnId);
+      if (!btn || btn.disabled) return;
+      btn.disabled = true;
+      btn.textContent = 'Creating...';
+      btn.classList.add('mom-btn-loading');
+      fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'createMeetingDoc', token: grToken(), submission_id: submissionId }) })
+        .then(function(r) { return r.json(); }).then(function(res) {
+          if (res.success && res.url) {
+            btn.outerHTML = '<a href="' + esc(res.url) + '" target="_blank" class="mom-btn mom-btn-open">'
+              + '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'
+              + 'Open Minutes Doc</a>';
+          } else {
+            btn.disabled = false; btn.textContent = 'Create Minutes Doc';
+            btn.classList.remove('mom-btn-loading');
+            alert(res.message || 'Failed to create document.');
+          }
+        }).catch(function() {
+          btn.disabled = false; btn.textContent = 'Create Minutes Doc';
+          btn.classList.remove('mom-btn-loading');
+          alert('Network error. Please try again.');
+        });
+    }
+
     function renderTimeline(data) {
       var first = data[0].plan;
       document.getElementById('tlHeader').innerHTML =
@@ -238,26 +286,38 @@
         var plan = item.plan;
         var mtg = item.meeting;
         var status = plan.status;
+        var nodeId = 'n' + idx;
         var dotClass = status === 'conducted' ? 'conducted' : status === 'not_conducted' ? 'not-done' : status === 'planned' ? 'planned' : 'pending';
-        var dotIcon = status === 'conducted' ? 'Done' : status === 'not_conducted' ? 'No' : (idx + 1);
+        var dotIcon = status === 'conducted' ? '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+          : status === 'not_conducted' ? '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
+          : (idx + 1);
+
+        var badgeClass = status === 'conducted' ? 'tl-badge-done' : status === 'not_conducted' ? 'tl-badge-notdone' : 'tl-badge-pending';
+        var badgeLabel = status === 'conducted' ? 'Conducted' : status === 'not_conducted' ? 'Not Conducted' : 'Planned';
 
         html += '<div class="tl-node">';
         html += '<div class="tl-dot ' + dotClass + '">' + dotIcon + '</div>';
-        html += '<div class="tl-card">';
+        html += '<div class="tl-card" onclick="toggleNode(\'' + nodeId + '\')">';
 
-        // Card head: date + badge
-        var badgeClass = status === 'conducted' ? 'tl-badge-done' : status === 'not_conducted' ? 'tl-badge-notdone' : status === 'planned' ? 'tl-badge-pending' : 'tl-badge-pending';
-        var badgeLabel = status === 'conducted' ? 'Done Conducted' : status === 'not_conducted' ? 'No Not Conducted' : ' Planned';
+        // Card head: date + badge + expand icon
         html += '<div class="tl-card-head">';
         html += '<span class="tl-date">' + fmtDate(plan.meeting_date) + (plan.meeting_time ? '  ' + plan.meeting_time : '') + '</span>';
+        html += '<div style="display:flex;align-items:center;gap:8px;">';
         html += '<span class="' + badgeClass + '">' + badgeLabel + '</span>';
+        html += '<span class="tl-expand-icon" id="ico-' + nodeId + '">v</span>';
+        html += '</div>';
         html += '</div>';
 
-        // Card body
+        // Card body — always visible: who + purpose
         html += '<div class="tl-card-body">';
         html += '<div class="tl-who">' + esc(plan.stakeholder_name || '') + '</div>';
         html += '<div class="tl-purpose">' + esc(plan.stakeholder_type || '') + (plan.meeting_purpose ? '  -  ' + esc(plan.meeting_purpose) : '') + '</div>';
         if (plan.level_of_meeting) html += '<div class="tl-purpose">' + esc(plan.level_of_meeting) + (plan.block_cluster ? ' - ' + esc(plan.block_cluster) : '') + '</div>';
+        if (plan.location) html += '<div class="tl-purpose" style="color:#2563eb;">Location: ' + esc(plan.location) + '</div>';
+        if (plan.meeting_mode === 'online' && plan.meet_link) html += '<div class="tl-purpose"><a href="' + esc(plan.meet_link) + '" target="_blank" style="color:#2563eb;font-size:11px;">Join Online Meeting</a></div>';
+
+        // Expandable details section
+        html += '<div class="tl-details" id="det-' + nodeId + '" onclick="event.stopPropagation()">';
 
         if (plan.notes) {
           html += '<div class="tl-section"><div class="tl-section-label">Plan Notes</div><div class="tl-section-text">' + esc(plan.notes) + '</div></div>';
@@ -266,31 +326,40 @@
         // Meeting details (if conducted or not conducted)
         if (mtg) {
           if (mtg.meeting_conducted === 'YES') {
-            // Who attended
             if (mtg.attendee_type === 'alternate' && mtg.actual_attendee_name) {
               html += '<div class="tl-attendee-alt">' + esc(mtg.actual_attendee_name) + ' (on behalf of planned stakeholder)</div>';
             }
-            // Key points
             if (mtg.key_discussion_points) {
               html += '<div class="tl-section"><div class="tl-section-label">Key Discussion Points</div><div class="tl-section-text">' + esc(mtg.key_discussion_points) + '</div></div>';
             }
-            // Outcome
             if (mtg.outcome) {
               html += '<div class="tl-section"><div class="tl-section-label">Outcome</div><div class="tl-section-text">' + esc(mtg.outcome) + '</div></div>';
             }
-            // Relationship
-            if (mtg.remark) {
-              html += '<span class="rel-tag rel-' + mtg.remark.replace(' ','') + '">' + esc(mtg.remark) + '</span>';
+            if (mtg.next_action) {
+              html += '<div class="tl-section"><div class="tl-section-label">Next Action</div><div class="tl-section-text">' + esc(mtg.next_action) + (mtg.responsible_person ? ' — ' + esc(mtg.responsible_person) : '') + '</div></div>';
             }
-            // Meeting status
+            if (mtg.remark) {
+              html += '<br><span class="rel-tag rel-' + mtg.remark.replace(' ','') + '">' + esc(mtg.remark) + '</span>';
+            }
             if (mtg.meeting_status === 'completed') {
-              html += '<div class="tl-outcome-done">Done: Meeting chain completed at this point.</div>';
+              html += '<div class="tl-outcome-done" style="margin-top:8px;">Meeting chain completed at this point.</div>';
             } else if (mtg.meeting_status === 'follow_up_required') {
-              html += '<div class="tl-outcome-fu">Follow-up required - next meeting planned for ' + fmtDate(mtg.followup_date) + '</div>';
+              html += '<div class="tl-outcome-fu" style="margin-top:8px;">Follow-up required - next planned: ' + fmtDate(mtg.followup_date) + '</div>';
+            }
+            // MoM button
+            var momBtnId = 'mom-' + nodeId;
+            if (mtg.mom_doc_link) {
+              html += '<a href="' + esc(mtg.mom_doc_link) + '" target="_blank" class="mom-btn mom-btn-open">'
+                + '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'
+                + 'Open Minutes Doc</a>';
+            } else {
+              html += '<button id="' + momBtnId + '" class="mom-btn" onclick="createMoM(\'' + esc(mtg.submission_id) + '\',\'' + momBtnId + '\')">'
+                + '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>'
+                + 'Create Minutes Doc</button>';
             }
           } else if (mtg.meeting_conducted === 'NO') {
             var reason = mtg.reason_not_conducted || 'Not specified';
-            html += '<div class="tl-not-done-box">No: ' + esc(reason);
+            html += '<div class="tl-not-done-box">Not conducted: ' + esc(reason);
             if (mtg.followup_date) html += ' - Rescheduled to ' + fmtDate(mtg.followup_date);
             html += '</div>';
             if (mtg.followup_notes) {
@@ -299,7 +368,7 @@
           }
         }
 
-        html += '</div></div></div>';
+        html += '</div></div></div></div>';
 
         // Connector arrow between nodes
         if (idx < data.length - 1) {

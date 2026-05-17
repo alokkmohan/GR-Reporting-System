@@ -193,6 +193,30 @@ function submitMeeting(formData) {
   return id;
 }
 
+function getMeetingById(submissionId) {
+  var rows = sheetToObjects(getSheet('Meetings'));
+  return rows.find(function(r) { return r.submission_id === submissionId; }) || null;
+}
+
+function updateMeetingDocLink(submissionId, docUrl) {
+  var sheet = getSheet('Meetings');
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0];
+  if (headers.indexOf('mom_doc_link') === -1) {
+    sheet.getRange(1, headers.length + 1).setValue('mom_doc_link');
+    headers.push('mom_doc_link');
+  }
+  var idCol = headers.indexOf('submission_id');
+  var docCol = headers.indexOf('mom_doc_link') + 1;
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][idCol] === submissionId) {
+      sheet.getRange(i + 1, docCol).setValue(docUrl);
+      return true;
+    }
+  }
+  return false;
+}
+
 function getMeetingsByEmail(email) {
   return sheetToObjects(getSheet('Meetings')).filter(function(r) {
     return r.user_email === email;

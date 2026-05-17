@@ -121,10 +121,37 @@ function doPost(e) {
         var blob = Utilities.newBlob(Utilities.base64Decode(params.fileData), params.mimeType || 'application/octet-stream', params.fileName || 'document');
         var file = DriveApp.createFile(blob);
         file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-        return respond({ success: true, url: 'https://drive.google.com/file/d/' + file.getId() + '/view', name: file.getName() });
+        var isImage = (params.mimeType || '').indexOf('image/') === 0;
+        var url = isImage
+          ? 'https://drive.google.com/uc?export=view&id=' + file.getId()
+          : 'https://drive.google.com/file/d/' + file.getId() + '/view';
+        return respond({ success: true, url: url, name: file.getName() });
       } catch(e) {
         return respond({ success: false, message: 'Upload failed: ' + e.toString() });
       }
+    }
+
+    // ── USER LOOKUP + INVITE ──────────────────────────────
+    if (action === 'lookupUser') {
+      if (!session || session.status !== 'active') return respond({ success: false, message: 'Not authorized.' });
+      var email = (params.email || '').toLowerCase().trim();
+      var found = getUserByEmail(email);
+      if (found) return respond({ success: true, found: true, user: { full_name: found.full_name, designation: found.designation, district: found.district, unit: found.unit } });
+      return respond({ success: true, found: false });
+    }
+
+    if (action === 'sendInvite') {
+      if (!session || session.status !== 'active') return respond({ success: false, message: 'Not authorized.' });
+      var toEmail = (params.email || '').toLowerCase().trim();
+      if (!toEmail.endsWith('@' + ALLOWED_DOMAIN)) return respond({ success: false, message: 'Only @' + ALLOWED_DOMAIN + ' emails can be invited.' });
+      var inviter = getUserByEmail(session.email);
+      var inviterName = inviter ? (inviter.full_name || session.email) : session.email;
+      MailApp.sendEmail({
+        to: toEmail,
+        subject: 'Invitation to join GR Reporting System',
+        body: 'Hi,\n\n' + inviterName + ' has invited you to join the GR Reporting System used by Educate Girls for logging stakeholder meeting records.\n\nClick the link below to create your account:\n' + WEB_APP_URL + '?page=register\n\nThis portal is for authorized Educate Girls team members only.\n\nEducate Girls'
+      });
+      return respond({ success: true });
     }
 
     // ── PLANNED MEETINGS ──────────────────────────────────
@@ -180,6 +207,51 @@ function doPost(e) {
         });
       }
       return respond({ success: true, submission_id: submissionId, next_plan_id: nextPlanId });
+    }
+
+    if (action === 'createMeetingDoc') {
+      if (!session || session.status !== 'active') return respond({ success: false, message: 'Not authorized.' });
+      var meeting = getMeetingById(params.submission_id);
+      if (!meeting) return respond({ success: false, message: 'Meeting not found.' });
+      try {
+        var title = 'Minutes: ' + (meeting.stakeholder_name || 'Meeting') + ' - ' + (meeting.date || '');
+        var doc = DocumentApp.create(title);
+        var body = doc.getBody();
+        var h1Style = {}; h1Style[DocumentApp.Attribute.HEADING] = DocumentApp.ParagraphHeading.HEADING1;
+        var h2Style = {}; h2Style[DocumentApp.Attribute.HEADING] = DocumentApp.ParagraphHeading.HEADING2;
+        body.appendParagraph('MINUTES OF MEETING').setAttributes(h1Style);
+        body.appendParagraph('');
+        body.appendParagraph('Date: ' + (meeting.date || ''));
+        body.appendParagraph('Stakeholder: ' + (meeting.stakeholder_name || ''));
+        body.appendParagraph('Department: ' + (meeting.department_organisation || ''));
+        body.appendParagraph('Purpose: ' + (meeting.meeting_purpose || ''));
+        body.appendParagraph('Level: ' + (meeting.level_of_meeting || ''));
+        body.appendParagraph('Conducted By: ' + (meeting.conducted_by || ''));
+        body.appendParagraph('District: ' + (meeting.district || ''));
+        body.appendParagraph('');
+        body.appendParagraph('KEY DISCUSSION POINTS').setAttributes(h2Style);
+        body.appendParagraph(meeting.key_discussion_points || '(Not recorded)');
+        body.appendParagraph('');
+        body.appendParagraph('OUTCOME').setAttributes(h2Style);
+        body.appendParagraph(meeting.outcome || '(Not recorded)');
+        body.appendParagraph('');
+        body.appendParagraph('NEXT ACTION').setAttributes(h2Style);
+        body.appendParagraph((meeting.next_action || '(Not recorded)') + (meeting.responsible_person ? '\nResponsible: ' + meeting.responsible_person : ''));
+        body.appendParagraph('');
+        body.appendParagraph('SENIOR COMMENTS AND FEEDBACK').setAttributes(h2Style);
+        body.appendParagraph('(Seniors: please add your comments and feedback below this line)');
+        body.appendParagraph('');
+        body.appendParagraph('---');
+        body.appendParagraph('Generated by GR Reporting System | ' + session.email + ' | ' + Utilities.formatDate(new Date(), 'Asia/Kolkata', 'dd-MM-yyyy HH:mm'));
+        var file = DriveApp.getFileById(doc.getId());
+        file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.COMMENT);
+        var docUrl = 'https://docs.google.com/document/d/' + doc.getId() + '/edit';
+        updateMeetingDocLink(params.submission_id, docUrl);
+        doc.saveAndClose();
+        return respond({ success: true, url: docUrl });
+      } catch(e) {
+        return respond({ success: false, message: 'Failed to create document: ' + e.toString() });
+      }
     }
 
     if (action === 'getMeetingTimeline') {
