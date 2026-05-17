@@ -175,9 +175,9 @@
         if (res.success) {
           var s = grSession();
           s.full_name = res.user.full_name || name;
-          s.unit = res.user.unit || document.getElementById('e_unit').value;
-          s.designation = res.user.designation || document.getElementById('e_designation').value;
-          s.photo_url = res.user.photo_url || document.getElementById('e_photo_url').value.trim();
+          s.unit = res.user.unit || document.getElementById('e_unit').value || '';
+          s.designation = res.user.designation || document.getElementById('e_designation').value || '';
+          s.photo_url = res.user.photo_url || document.getElementById('e_photo_url').value.trim() || '';
           localStorage.setItem('grSession', JSON.stringify(s));
           document.getElementById('alertProfile').innerHTML = '<div class="alert alert-success">Profile updated successfully.</div>';
           fillView();
