@@ -91,7 +91,7 @@
           <button class="view-tab" id="tabMonth" onclick="switchView('month')">Calendar</button>
           <button class="view-tab" id="tabList" onclick="switchView('list')">All</button>
         </div>
-        <a href="gantt.html" class="btn btn-outline btn-sm" style="margin-left:6px;white-space:nowrap;">&#128200; Gantt</a>
+        <a href="gantt.html" class="btn btn-outline btn-sm" style="margin-left:6px;white-space:nowrap;">Gantt</a>
         <button class="btn btn-primary btn-sm" onclick="openPlanModal()" style="margin-left:6px;white-space:nowrap;">+ Plan</button>
       </div>
 
@@ -101,7 +101,7 @@
         <div id="emptyUpcoming" class="hidden">
           <div class="card text-center" style="padding:32px;">
             <div class="card-title">No Upcoming Meetings</div>
-            <p class="text-muted mt-8">Aage koi meeting plan nahi hai.</p>
+            <p class="text-muted mt-8">No upcoming meetings planned.</p>
             <button class="btn btn-primary mt-16" onclick="openPlanModal()">+ Plan New Meeting</button>
           </div>
         </div>
@@ -110,7 +110,7 @@
             <thead>
               <tr>
                 <th>Date</th>
-                <th>Kiske Saath</th>
+                <th>Who to Meet</th>
                 <th>Agenda</th>
                 <th>Action</th>
               </tr>
@@ -134,7 +134,7 @@
         <div id="meetingsList"></div>
         <div id="emptyMeetings" class="hidden">
           <div class="card text-center" style="padding:24px;">
-            <p class="text-muted">Is mahine koi meeting nahi.</p>
+            <p class="text-muted">No meetings this month.</p>
           </div>
         </div>
       </div>
@@ -144,7 +144,7 @@
         <div class="card-title mb-8">All Meetings</div>
         <div id="allMeetingsList"></div>
         <div id="emptyAll" class="hidden">
-          <div class="card text-center" style="padding:24px;"><p class="text-muted">Koi meeting nahi mili.</p></div>
+          <div class="card text-center" style="padding:24px;"><p class="text-muted">No meetings found.</p></div>
         </div>
       </div>
     </div>
@@ -154,8 +154,8 @@
     <div class="modal">
       <div class="modal-head">
         <div>
-          <div class="modal-head-title">&#128197; Plan a Meeting</div>
-          <div class="modal-head-sub">Kab, kisse aur kyu milna hai — sab bharo</div>
+          <div class="modal-head-title">Plan a Meeting</div>
+          <div class="modal-head-sub">Fill in meeting details</div>
         </div>
         <button class="modal-close" onclick="closePlanModal()">&times;</button>
       </div>
@@ -164,7 +164,7 @@
 
         <!-- Section 1: When & Where -->
         <div class="plan-section">
-          <div class="plan-section-title">&#128205; Kab Aur Kahan (When &amp; Where)</div>
+          <div class="plan-section-title">When &amp; Where</div>
           <div class="plan-row-2">
             <div class="form-group" style="margin-bottom:10px;"><label class="form-label">Date <span class="required">*</span></label><input type="date" id="plan_date" class="form-control"></div>
             <div class="form-group" style="margin-bottom:10px;"><label class="form-label">Time (optional)</label><input type="time" id="plan_time" class="form-control"></div>
@@ -177,7 +177,7 @@
                 <option>State</option><option>District</option><option>Block</option><option>Cluster</option><option>School</option>
               </select>
             </div>
-            <div class="form-group" style="margin-bottom:10px;"><label class="form-label">Block / Cluster</label><input type="text" id="plan_block" class="form-control" placeholder="Block ya cluster (optional)"></div>
+            <div class="form-group" style="margin-bottom:10px;"><label class="form-label">Block / Cluster</label><input type="text" id="plan_block" class="form-control" placeholder="Block or cluster (optional)"></div>
           </div>
           <div class="form-group" style="margin-bottom:10px;">
             <label class="form-label">Meeting Mode <span class="required">*</span></label>
@@ -190,7 +190,7 @@
             <div class="form-group" style="margin-bottom:4px;">
               <label class="form-label">Meeting Link</label>
               <div style="display:flex;gap:8px;align-items:center;">
-                <input type="text" id="plan_meet_link" class="form-control" placeholder="Link generate karo ya paste karo" style="flex:1;">
+                <input type="text" id="plan_meet_link" class="form-control" placeholder="Generate or paste a link" style="flex:1;">
                 <button type="button" onclick="generateJitsiLink()" style="white-space:nowrap;background:var(--primary);color:#fff;border:none;border-radius:8px;padding:11px 14px;font-size:13px;font-weight:700;cursor:pointer;">Generate</button>
               </div>
               <div id="meetLinkCopy" style="display:none;margin-top:6px;font-size:12px;color:var(--success);">Link ready — share it with participants</div>
@@ -204,7 +204,7 @@
 
         <!-- Section 2: Who to Meet -->
         <div class="plan-section">
-          <div class="plan-section-title">&#128100; Kisse Milna Hai (Who to Meet)</div>
+          <div class="plan-section-title">Who to Meet</div>
           <div class="form-group" style="margin-bottom:10px;">
             <label class="form-label">Stakeholder Type <span class="required">*</span></label>
             <select id="plan_stakeholder_type" class="form-control">
@@ -217,12 +217,12 @@
               <option>Development Partner Cell</option><option>Other Department</option>
             </select>
           </div>
-          <div class="form-group" style="margin-bottom:4px;"><label class="form-label">Name of Official <span class="required">*</span></label><input type="text" id="plan_stakeholder_name" class="form-control" placeholder="Adhikari ka poora naam"></div>
+          <div class="form-group" style="margin-bottom:4px;"><label class="form-label">Name of Official <span class="required">*</span></label><input type="text" id="plan_stakeholder_name" class="form-control" placeholder="Full name of official"></div>
         </div>
 
         <!-- Section 3: Purpose & Agenda -->
         <div class="plan-section">
-          <div class="plan-section-title">&#128203; Kya Karna Hai (Purpose &amp; Agenda)</div>
+          <div class="plan-section-title">Purpose &amp; Agenda</div>
           <div class="form-group" style="margin-bottom:10px;">
             <label class="form-label">Meeting Purpose <span class="required">*</span></label>
             <select id="plan_purpose" class="form-control">
@@ -233,12 +233,12 @@
               <option>Courtesy Meeting</option><option>Other</option>
             </select>
           </div>
-          <div class="form-group" style="margin-bottom:4px;"><label class="form-label">Notes / Key Points</label><textarea id="plan_notes" class="form-control" rows="3" placeholder="Kya discuss karna hai, kya leke jaana hai..."></textarea></div>
+          <div class="form-group" style="margin-bottom:4px;"><label class="form-label">Notes / Key Points</label><textarea id="plan_notes" class="form-control" rows="3" placeholder="Key points to discuss..."></textarea></div>
         </div>
 
         <!-- Section 3b: Colleague -->
         <div class="plan-section">
-          <div class="plan-section-title">&#128101; Saath Kaun Jayega (Colleague)</div>
+          <div class="plan-section-title">Colleague</div>
           <div class="form-group" style="margin-bottom:6px;">
             <label class="form-label">Colleague Email (optional)</label>
             <div style="display:flex;gap:8px;">
@@ -251,21 +251,21 @@
 
         <!-- Section 4: Agenda Items -->
         <div class="plan-section">
-          <div class="plan-section-title">&#128203; Agenda — Kya Discuss Karna Hai</div>
+          <div class="plan-section-title">Agenda Items</div>
           <div id="agendaList"></div>
           <button type="button" onclick="addAgenda()" style="background:none;border:1.5px dashed var(--border);border-radius:8px;padding:8px;width:100%;text-align:center;font-size:12px;font-weight:700;color:var(--primary);cursor:pointer;margin-top:4px;">+ Add Topic</button>
         </div>
 
         <!-- Section 5: Reference Document -->
         <div class="plan-section" style="margin-bottom:16px;">
-          <div class="plan-section-title">&#128196; Reference Document (optional)</div>
+          <div class="plan-section-title">Reference Document (optional)</div>
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-            <button type="button" class="btn btn-outline btn-sm" id="uploadFileBtn" onclick="document.getElementById('planFileInput').click()" style="white-space:nowrap;">&#128206; Upload File</button>
+            <button type="button" class="btn btn-outline btn-sm" id="uploadFileBtn" onclick="document.getElementById('planFileInput').click()" style="white-space:nowrap;">Upload File</button>
             <span id="uploadStatus" style="font-size:12px;color:var(--muted);">PDF, Word, Image (max 5MB)</span>
           </div>
           <input type="file" id="planFileInput" accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png" style="display:none;" onchange="handleFileUpload(this)">
-          <div id="uploadProgress" class="hidden" style="font-size:12px;color:var(--primary);margin-bottom:6px;">&#8593; Uploading to Drive...</div>
-          <input type="url" id="plan_doc_link" class="form-control" placeholder="Ya Google Drive link paste karo">
+          <div id="uploadProgress" class="hidden" style="font-size:12px;color:var(--primary);margin-bottom:6px;">Uploading to Drive...</div>
+          <input type="url" id="plan_doc_link" class="form-control" placeholder="Or paste a Google Drive link">
         </div>
       </div>
       <div class="modal-footer">

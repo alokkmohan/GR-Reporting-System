@@ -55,9 +55,9 @@
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
         <div class="filter-tabs" id="filterTabs">
           <div class="ftab active" onclick="setFilter('all',this)">All</div>
-          <div class="ftab" onclick="setFilter('conducted',this)">&#10003; Conducted</div>
-          <div class="ftab" onclick="setFilter('not_conducted',this)">&#10007; Not Done</div>
-          <div class="ftab" onclick="setFilter('actions',this)">&#128203; Has Actions</div>
+          <div class="ftab" onclick="setFilter('conducted',this)">Conducted</div>
+          <div class="ftab" onclick="setFilter('not_conducted',this)">Not Done</div>
+          <div class="ftab" onclick="setFilter('actions',this)">Has Actions</div>
         </div>
         <span id="countBadge" style="font-size:12px;font-weight:700;color:var(--muted);white-space:nowrap;"></span>
       </div>
@@ -80,7 +80,7 @@
 
     <div id="emptyState" class="hidden">
       <div class="card text-center" style="padding:40px 20px;">
-        <div style="font-size:36px;margin-bottom:8px;">&#128197;</div>
+        <div style="font-size:36px;margin-bottom:8px;"></div>
         <div class="card-title">No Entries Yet</div>
         <p class="text-muted mt-8">No meeting records found.</p>
         <button class="btn btn-primary mt-16" onclick="window.location.href='planner.html'">Go to Planner</button>
@@ -148,9 +148,9 @@
           + '<td><div class="sname">' + esc(e.stakeholder_name || e.stakeholder_type || '—') + '</div>'
           + '<div class="stype">' + esc(e.stakeholder_type || '') + '</div></td>'
           + '<td><div class="purpose-col">' + esc(e.meeting_purpose || (conducted ? '' : (e.reason_not_conducted || ''))) + '</div>'
-          + (aiItems.length ? '<div class="ai-badge">&#128203; ' + aiItems.length + ' action' + (aiItems.length > 1 ? 's' : '') + '</div>' : '') + '</td>'
-          + '<td>' + (conducted ? '<span class="st-conducted">&#10003; Conducted</span>' : '<span class="st-not-done">&#10007; Not Done</span>') + '</td>'
-          + '<td><button class="view-btn">&#8964;</button></td>'
+          + (aiItems.length ? '<div class="ai-badge">' + aiItems.length + ' action' + (aiItems.length > 1 ? 's' : '') + '</div>' : '') + '</td>'
+          + '<td>' + (conducted ? '<span class="st-conducted">Conducted</span>' : '<span class="st-not-done">Not Done</span>') + '</td>'
+          + '<td><button class="view-btn">View</button></td>'
           + '</tr>';
 
         // Detail panel row
@@ -159,14 +159,14 @@
           html += '<div class="detail-grid" style="margin-bottom:10px;">';
           if (e.staff_name) html += '<div class="detail-item"><label>Conducted By</label><span>' + esc(e.staff_name) + (e.conducted_by ? ' (' + esc(e.conducted_by) + ')' : '') + '</span></div>';
           if (e.level_of_meeting) html += '<div class="detail-item"><label>Level</label><span>' + esc(e.level_of_meeting) + '</span></div>';
-          if (e.attendee_type === 'alternate' && e.actual_attendee_name) html += '<div class="detail-item" style="grid-column:1/-1;"><label>Who Attended</label><span>&#8645; ' + esc(e.actual_attendee_name) + ' (on behalf)</span></div>';
+          if (e.attendee_type === 'alternate' && e.actual_attendee_name) html += '<div class="detail-item" style="grid-column:1/-1;"><label>Who Attended</label><span>' + esc(e.actual_attendee_name) + ' (on behalf)</span></div>';
           if (e.key_discussion_points) html += '<div class="detail-item" style="grid-column:1/-1;"><label>Key Discussion Points</label><span>' + esc(e.key_discussion_points) + '</span></div>';
           if (e.outcome) html += '<div class="detail-item" style="grid-column:1/-1;"><label>Outcome</label><span>' + esc(e.outcome) + '</span></div>';
           if (e.remark) html += '<div class="detail-item"><label>Relationship</label><span>' + esc(e.remark) + '</span></div>';
-          if (e.meeting_status) html += '<div class="detail-item"><label>Meeting Status</label><span>' + (e.meeting_status === 'completed' ? '&#9989; Completed' : '&#128337; Follow-up Required') + '</span></div>';
+          if (e.meeting_status) html += '<div class="detail-item"><label>Meeting Status</label><span>' + (e.meeting_status === 'completed' ? 'Completed' : 'Follow-up Required') + '</span></div>';
           html += '</div>';
           if (aiItems.length) {
-            html += '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;color:var(--muted);margin-bottom:6px;">&#128203; Action Items</div>';
+            html += '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;color:var(--muted);margin-bottom:6px;">Action Items</div>';
             html += '<table class="ai-row-table"><thead><tr><th>#</th><th>Action</th><th>Owner</th><th>Due Date</th></tr></thead><tbody>';
             aiItems.forEach(function(ai, i) {
               var today = new Date(); today.setHours(0,0,0,0);
@@ -189,7 +189,7 @@
           html += '</div>';
         }
         if (e.plan_id) {
-          html += '<button class="btn btn-outline btn-sm" style="margin-top:10px;" onclick="window.location.href=\'timeline.html?plan_id=' + esc(e.plan_id) + '\'">&#128336; View Timeline</button>';
+          html += '<button class="btn btn-outline btn-sm" style="margin-top:10px;" onclick="window.location.href=\'timeline.html?plan_id=' + esc(e.plan_id) + '\'">View Timeline</button>';
         }
         html += '</div></td></tr>';
       });

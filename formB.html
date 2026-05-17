@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Meeting Nahi Hui</title>
+  <title>Meeting Not Conducted</title>
   <link rel="stylesheet" href="style.css">
   <style>
     .plan-banner { background: linear-gradient(135deg,#7c1818 0%,#a93226 100%); color:#fff; border-radius: var(--radius); padding: 14px 16px; margin-bottom:16px; }
@@ -21,7 +21,7 @@
 <body>
   <nav class="navbar">
     <button class="hamburger-btn" onclick="toggleSidebar()">&#9776;</button>
-    <span class="logo">Meeting Nahi Hui</span>
+    <span class="logo">Meeting Not Conducted</span>
     <span class="nav-user" id="navUser"></span>
   </nav>
   <div class="app-layout">
@@ -40,38 +40,38 @@
     <div id="formContainer">
       <div id="alertBox"></div>
       <div class="plan-banner" id="planBanner" style="display:none;">
-        <div class="plan-banner-label">&#128197; Planned Meeting</div>
+        <div class="plan-banner-label">Planned Meeting</div>
         <div class="plan-banner-name" id="bannerName"></div>
         <div class="plan-banner-meta" id="bannerMeta"></div>
       </div>
       <div class="card">
-        <div class="section-header">Meeting Kyun Nahi Hui?</div>
+        <div class="section-header">Why Was the Meeting Not Conducted?</div>
         <div class="form-group">
           <label class="form-label">Reason <span class="required">*</span></label>
           <div class="reason-grid">
-            <div class="reason-card" onclick="selectReason(this,'Not Available')">&#128683; Not Available</div>
-            <div class="reason-card" onclick="selectReason(this,'Refused')">&#10007; Refused</div>
-            <div class="reason-card" onclick="selectReason(this,'Postponed')">&#128337; Postponed</div>
-            <div class="reason-card" onclick="selectReason(this,'Travel Issue')">&#128663; Travel Issue</div>
-            <div class="reason-card" onclick="selectReason(this,'Other')">&#8230; Other</div>
+            <div class="reason-card" onclick="selectReason(this,'Not Available')">Not Available</div>
+            <div class="reason-card" onclick="selectReason(this,'Refused')">Refused</div>
+            <div class="reason-card" onclick="selectReason(this,'Postponed')">Postponed</div>
+            <div class="reason-card" onclick="selectReason(this,'Travel Issue')">Travel Issue</div>
+            <div class="reason-card" onclick="selectReason(this,'Other')">Other</div>
           </div>
         </div>
 
         <div class="postpone-box hidden" id="postponeBox">
-          <div class="postpone-box-title">&#128197; Agle Meeting ki Date Set Karo</div>
+          <div class="postpone-box-title">Set Next Meeting Date</div>
           <div class="form-group" style="margin-bottom:10px;">
             <label class="form-label">Next Meeting Date <span class="required">*</span></label>
             <input type="date" id="next_date" class="form-control">
           </div>
           <div class="form-group" style="margin-bottom:0;">
-            <label class="form-label">Kisse Milna Hai?</label>
-            <input type="text" id="next_stakeholder" class="form-control" placeholder="Same person ya koi aur (optional)">
+            <label class="form-label">Who to Meet?</label>
+            <input type="text" id="next_stakeholder" class="form-control" placeholder="Same person or someone else (optional)">
           </div>
         </div>
 
         <div class="form-group" style="margin-top:14px;">
           <label class="form-label">Note (optional)</label>
-          <textarea id="note" class="form-control" rows="2" placeholder="Koi zaruri baat likhni ho to..."></textarea>
+          <textarea id="note" class="form-control" rows="2" placeholder="Any additional notes..."></textarea>
         </div>
 
         <button class="btn btn-primary" id="submitBtn" onclick="submitForm()" style="width:100%;margin-top:4px;">Save Record</button>
@@ -106,9 +106,9 @@
     }
 
     function submitForm() {
-      if (!selectedReason) { document.getElementById('alertBox').innerHTML = '<div class="alert alert-error">Reason select karo.</div>'; window.scrollTo(0,0); return; }
+      if (!selectedReason) { document.getElementById('alertBox').innerHTML = '<div class="alert alert-error">Please select a reason.</div>'; window.scrollTo(0,0); return; }
       if (selectedReason === 'Postponed' && !document.getElementById('next_date').value) {
-        document.getElementById('alertBox').innerHTML = '<div class="alert alert-error">Postponed ke liye next date bharo.</div>'; return;
+        document.getElementById('alertBox').innerHTML = '<div class="alert alert-error">Please enter a next date for the postponed meeting.</div>'; return;
       }
       document.getElementById('submitBtn').disabled = true;
       document.getElementById('submitBtn').textContent = 'Saving...';

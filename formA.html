@@ -62,7 +62,7 @@
         <div class="card-title">Meeting Logged!</div>
         <p class="text-muted mt-8" id="successMsg">Record saved successfully.</p>
         <div class="success-id" id="submissionIdBox"></div>
-        <button class="btn btn-primary mt-16" id="timelineBtn" style="display:none;" onclick="viewTimeline()">&#128336; View Timeline</button>
+        <button class="btn btn-primary mt-16" id="timelineBtn" style="display:none;" onclick="viewTimeline()">View Timeline</button>
         <button class="btn btn-outline mt-8" onclick="window.location.href='planner.html'">Back to Planner</button>
       </div>
     </div>
@@ -72,7 +72,7 @@
 
       <!-- Plan banner -->
       <div class="plan-banner" id="planBanner" style="display:none;">
-        <div class="plan-banner-label">&#128197; Planned Meeting</div>
+        <div class="plan-banner-label">Planned Meeting</div>
         <div class="plan-banner-name" id="bannerName"></div>
         <div class="plan-banner-meta" id="bannerMeta"></div>
       </div>
@@ -87,21 +87,21 @@
 
       <!-- Step 1: Kaun Mila? -->
       <div class="card" id="step1">
-        <div class="section-header">&#128100; Kaun Mila? (Who met?)</div>
+        <div class="section-header">Who Met?</div>
         <div class="form-group">
           <label class="form-label">Meeting Date <span class="required">*</span></label>
           <input type="date" id="meet_date" class="form-control">
         </div>
         <div class="form-group">
-          <label class="form-label">Kya Yahi Person Mila? <span class="required">*</span></label>
+          <label class="form-label">Did This Person Attend? <span class="required">*</span></label>
           <div id="plannedPersonLabel" style="font-size:13px;font-weight:700;color:#374151;background:#f9fafb;border-radius:8px;padding:8px 12px;margin-bottom:8px;border:1px solid var(--border);"></div>
           <div class="attendee-toggle">
-            <div class="att-btn" id="sameYes" onclick="setAttendee(true)">&#10003; Haan, yahi mila</div>
-            <div class="att-btn" id="sameNo" onclick="setAttendee(false)">&#8645; Koi aur aaya</div>
+            <div class="att-btn" id="sameYes" onclick="setAttendee(true)">Yes, Same Person</div>
+            <div class="att-btn" id="sameNo" onclick="setAttendee(false)">Different Person</div>
           </div>
         </div>
         <div class="form-group hidden" id="altAttendeeGroup">
-          <label class="form-label">Kaun Aaya? <span class="required">*</span></label>
+          <label class="form-label">Who Attended? <span class="required">*</span></label>
           <input type="text" id="actual_attendee_name" class="form-control" placeholder="e.g. ADM on behalf of DM, Assistant BSA...">
         </div>
         <div class="form-group">
@@ -114,89 +114,89 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label">&#128101; Co-Attendee from Team (optional)</label>
-          <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">Agar aapke saath koi aur team member bhi gaya ho to unka email daalo — record unke profile mein bhi add ho jayega</div>
+          <label class="form-label">Co-Attendee from Team (optional)</label>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">If another team member attended this meeting, add their email</div>
           <div id="coAttendeeList"></div>
           <button type="button" class="add-ai-btn" onclick="addCoAttendee()">+ Add Team Member</button>
         </div>
 
         <div class="step-nav">
-          <button class="btn btn-primary" style="flex:1;" onclick="goStep(1,2)">Next &#8594;</button>
+          <button class="btn btn-primary" style="flex:1;" onclick="goStep(1,2)">Next</button>
         </div>
       </div>
 
       <!-- Step 2: Kya Hua? -->
       <div class="card hidden" id="step2">
-        <div class="section-header">&#128221; Kya Hua? (What happened?)</div>
+        <div class="section-header">Meeting Details</div>
         <div class="form-group">
           <label class="form-label">Key Discussion Points <span class="required">*</span></label>
-          <textarea id="key_points" class="form-control" rows="4" placeholder="Meeting mein kya baat hui? Important points likhein..."></textarea>
+          <textarea id="key_points" class="form-control" rows="4" placeholder="What was discussed? List key points..."></textarea>
         </div>
         <div class="form-group">
           <label class="form-label">Outcome / Result <span class="required">*</span></label>
-          <textarea id="outcome" class="form-control" rows="3" placeholder="Meeting se kya hasil hua? Kya commitment mili?"></textarea>
+          <textarea id="outcome" class="form-control" rows="3" placeholder="What was the outcome? Any commitments made?"></textarea>
         </div>
         <div class="form-group">
           <label class="form-label">Relationship Status</label>
           <div class="rel-pills">
-            <div class="rel-pill" onclick="setRel(this,'Positive','active-pos')">&#128077; Positive</div>
-            <div class="rel-pill" onclick="setRel(this,'Neutral','active-neu')">&#128528; Neutral</div>
-            <div class="rel-pill" onclick="setRel(this,'Cold','active-cold')">&#10052; Cold</div>
-            <div class="rel-pill" onclick="setRel(this,'Not Reachable','active-nr')">&#128683; Not Reachable</div>
+            <div class="rel-pill" onclick="setRel(this,'Positive','active-pos')">Positive</div>
+            <div class="rel-pill" onclick="setRel(this,'Neutral','active-neu')">Neutral</div>
+            <div class="rel-pill" onclick="setRel(this,'Cold','active-cold')">Cold</div>
+            <div class="rel-pill" onclick="setRel(this,'Not Reachable','active-nr')">Not Reachable</div>
           </div>
         </div>
         <div class="step-nav">
-          <button class="btn btn-outline" onclick="goStep(2,1)">&#8592; Back</button>
-          <button class="btn btn-primary" style="flex:1;" onclick="goStep(2,3)">Next &#8594;</button>
+          <button class="btn btn-outline" onclick="goStep(2,1)">Back</button>
+          <button class="btn btn-primary" style="flex:1;" onclick="goStep(2,3)">Next</button>
         </div>
       </div>
 
       <!-- Step 3: Aage Kya? -->
       <div class="card hidden" id="step3">
-        <div class="section-header">&#128336; Aage Kya? (What's next?)</div>
+        <div class="section-header">Next Steps</div>
         <div class="form-group">
           <label class="form-label">Meeting Status <span class="required">*</span></label>
           <div class="status-toggle">
             <div class="status-btn" id="stDone" onclick="setStatus('completed')">
-              <div class="st-icon">&#9989;</div>
+              <div class="st-icon"></div>
               <div>Meeting Completed</div>
-              <div style="font-size:11px;font-weight:400;margin-top:2px;opacity:0.7;">Kaam ho gaya</div>
+              <div style="font-size:11px;font-weight:400;margin-top:2px;opacity:0.7;">Done</div>
             </div>
             <div class="status-btn" id="stFollowup" onclick="setStatus('follow_up_required')">
-              <div class="st-icon">&#128337;</div>
+              <div class="st-icon"></div>
               <div>Follow-up Required</div>
-              <div style="font-size:11px;font-weight:400;margin-top:2px;opacity:0.7;">Aur meeting chahiye</div>
+              <div style="font-size:11px;font-weight:400;margin-top:2px;opacity:0.7;">Needs follow-up</div>
             </div>
           </div>
         </div>
 
         <div class="followup-box hidden" id="followupBox">
-          <div class="followup-box-title">&#128197; Next Meeting Plan Karo</div>
+          <div class="followup-box-title">Plan Next Meeting</div>
           <div class="form-group" style="margin-bottom:10px;">
             <label class="form-label">Next Meeting Date <span class="required">*</span></label>
             <input type="date" id="followup_date" class="form-control">
           </div>
           <div class="form-group" style="margin-bottom:10px;">
-            <label class="form-label">Kisse Milna Hai?</label>
+            <label class="form-label">Who to Meet Next?</label>
             <div class="with-toggle">
-              <div class="with-btn sel" id="withSame" onclick="setWith('same')">&#10003; Same Person</div>
-              <div class="with-btn" id="withOther" onclick="setWith('other')">&#8645; Koi Aur</div>
+              <div class="with-btn sel" id="withSame" onclick="setWith('same')">Same Person</div>
+              <div class="with-btn" id="withOther" onclick="setWith('other')">Different Person</div>
             </div>
           </div>
           <div class="form-group hidden" id="otherPersonGroup" style="margin-bottom:10px;">
             <label class="form-label">Stakeholder Name</label>
-            <input type="text" id="followup_stakeholder_name" class="form-control" placeholder="Next meeting mein kaun milega?">
+            <input type="text" id="followup_stakeholder_name" class="form-control" placeholder="Name of stakeholder for next meeting">
           </div>
           <div class="form-group" style="margin-bottom:0;">
             <label class="form-label">Follow-up Notes</label>
-            <textarea id="followup_notes" class="form-control" rows="2" placeholder="Kya discuss karna hai agli baar?"></textarea>
+            <textarea id="followup_notes" class="form-control" rows="2" placeholder="What to discuss next time?"></textarea>
           </div>
         </div>
 
         <!-- Action Items (like Quixy Actions-Add) -->
         <div style="margin-top:16px;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-            <label class="form-label" style="margin:0;">&#128203; Action Items</label>
+            <label class="form-label" style="margin:0;">Action Items</label>
             <span style="font-size:11px;color:var(--muted);">Who will do what, by when</span>
           </div>
           <table class="ai-table" id="aiTable">
@@ -219,8 +219,8 @@
         </div>
 
         <div class="step-nav">
-          <button class="btn btn-outline" onclick="goStep(3,2)">&#8592; Back</button>
-          <button class="btn btn-success" id="submitBtn" style="flex:1;" onclick="submitForm()">&#10003; Submit Meeting Log</button>
+          <button class="btn btn-outline" onclick="goStep(3,2)">Back</button>
+          <button class="btn btn-success" id="submitBtn" style="flex:1;" onclick="submitForm()">Submit</button>
         </div>
       </div>
     </div>
@@ -275,8 +275,8 @@
       var html = '';
       aiItems.forEach(function(item, idx) {
         html += '<tr>'
-          + '<td><input type="text" class="ai-input" id="ai_a' + idx + '" placeholder="Kya karna hai?" value=""></td>'
-          + '<td><input type="text" class="ai-input" id="ai_o' + idx + '" placeholder="Kaun karega?" value=""></td>'
+          + '<td><input type="text" class="ai-input" id="ai_a' + idx + '" placeholder="What to do?" value=""></td>'
+          + '<td><input type="text" class="ai-input" id="ai_o' + idx + '" placeholder="Who will do it?" value=""></td>'
           + '<td><input type="date" class="ai-input" id="ai_d' + idx + '" value=""></td>'
           + '<td><button class="ai-del-btn" onclick="removeAI(' + idx + ')">&#128465;</button></td>'
           + '</tr>';
@@ -368,22 +368,22 @@
     function validateStep(s) {
       document.getElementById('alertBox').innerHTML = '';
       if (s === 1) {
-        if (!document.getElementById('meet_date').value) { showAlert('Meeting date bharo.'); return false; }
-        if (attendeeSame === null) { showAlert('Batao ki same person mila ya koi aur.'); return false; }
-        if (!attendeeSame && !document.getElementById('actual_attendee_name').value.trim()) { showAlert('Alternate attendee ka naam bharo.'); return false; }
+        if (!document.getElementById('meet_date').value) { showAlert('Please enter meeting date.'); return false; }
+        if (attendeeSame === null) { showAlert('Please select if same person attended or different.'); return false; }
+        if (!attendeeSame && !document.getElementById('actual_attendee_name').value.trim()) { showAlert('Please enter the name of the alternate attendee.'); return false; }
       }
       if (s === 2) {
-        if (!document.getElementById('key_points').value.trim()) { showAlert('Key discussion points bharo.'); return false; }
-        if (!document.getElementById('outcome').value.trim()) { showAlert('Outcome/result bharo.'); return false; }
+        if (!document.getElementById('key_points').value.trim()) { showAlert('Please enter key discussion points.'); return false; }
+        if (!document.getElementById('outcome').value.trim()) { showAlert('Please enter the meeting outcome.'); return false; }
       }
       return true;
     }
 
     function submitForm() {
       document.getElementById('alertBox').innerHTML = '';
-      if (!meetingStatus) { showAlert('Meeting status select karo (Completed ya Follow-up Required).'); return; }
+      if (!meetingStatus) { showAlert('Please select meeting status.'); return; }
       if (meetingStatus === 'follow_up_required' && !document.getElementById('followup_date').value) {
-        showAlert('Follow-up ke liye next date bharo.'); return;
+        showAlert('Please enter follow-up date.'); return;
       }
 
       document.getElementById('submitBtn').disabled = true;
@@ -442,11 +442,11 @@
             window.scrollTo(0,0);
           } else {
             showAlert(res.message || 'Submission failed.');
-            document.getElementById('submitBtn').disabled = false; document.getElementById('submitBtn').textContent = '✓ Submit Meeting Log';
+            document.getElementById('submitBtn').disabled = false; document.getElementById('submitBtn').textContent = 'Submit';
           }
         }).catch(function() {
           showAlert('Network error. Please retry.');
-          document.getElementById('submitBtn').disabled = false; document.getElementById('submitBtn').textContent = '✓ Submit Meeting Log';
+          document.getElementById('submitBtn').disabled = false; document.getElementById('submitBtn').textContent = 'Submit';
         });
     }
   </script>
