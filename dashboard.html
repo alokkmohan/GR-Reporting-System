@@ -178,150 +178,156 @@
       return '<span class="welcome-chip" style="margin-left:4px;">' + esc(c) + '</span>';
     }).join('');
 
-    fetch(APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getPlannedMeetings', token: grToken() }) })
-      .then(function(r) { return r.json(); }).then(function(res) {
-        document.getElementById('tableSpinner').classList.add('hidden');
-        document.getElementById('tableWrap').style.display = '';
-        if (!res.success) {
-          document.getElementById('dashTbody').innerHTML = '<tr class="empty-row"><td colspan="5">Could not load meetings.</td></tr>';
-          return;
-        }
-        var meetings = res.data || [];
-        var today = new Date(); today.setHours(0, 0, 0, 0);
+    var today = new Date(); today.setHours(0,0,0,0);
+    var planData = null, meetData = null;
 
-        var total = 0, conducted = 0, upcoming = 0, overdue = 0, notDone = 0;
-        meetings.forEach(function(m) {
-          total++;
-          if (m.status === 'conducted') { conducted++; return; }
-          if (m.status === 'not_conducted') { notDone++; return; }
-          var d = m.meeting_date ? new Date(m.meeting_date) : null;
-          if (d) d.setHours(0, 0, 0, 0);
-          if (d && d < today) overdue++; else upcoming++;
-        });
-        document.getElementById('sTotal').textContent = total;
-        document.getElementById('sConducted').textContent = conducted;
-        document.getElementById('sUpcoming').textContent = upcoming;
-        document.getElementById('sOverdue').textContent = overdue;
+    function buildDonut(segs, tot) {
+      var cx=55,cy=55,r=40,sw=14,circ=2*Math.PI*r;
+      var svg='<svg width="110" height="110" viewBox="0 0 110 110">';
+      svg+='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="#f1f5f9" stroke-width="'+sw+'"/>';
+      var angle=-90;
+      segs.forEach(function(s){
+        if(!s.v)return;
+        var pct=s.v/tot,dash=pct*circ;
+        svg+='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="'+s.c+'" stroke-width="'+sw+'" stroke-dasharray="'+dash.toFixed(1)+' '+circ.toFixed(1)+'" transform="rotate('+angle+' '+cx+' '+cy+')" stroke-linecap="butt"/>';
+        angle+=pct*360;
+      });
+      svg+='<text x="'+cx+'" y="'+(cy+6)+'" text-anchor="middle" font-size="20" font-weight="800" fill="#1a1a2e">'+tot+'</text>';
+      svg+='</svg>';
+      return svg;
+    }
 
-        // Build donut chart
-        function buildDonut(segs, tot) {
-          var cx=55,cy=55,r=40,sw=14,circ=2*Math.PI*r;
-          var svg='<svg width="110" height="110" viewBox="0 0 110 110">';
-          svg+='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="#f1f5f9" stroke-width="'+sw+'"/>';
-          var angle=-90;
-          segs.forEach(function(s){
-            if(!s.v)return;
-            var pct=s.v/tot,dash=pct*circ;
-            svg+='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="'+s.c+'" stroke-width="'+sw+'" stroke-dasharray="'+dash.toFixed(1)+' '+circ.toFixed(1)+'" transform="rotate('+angle+' '+cx+' '+cy+')" stroke-linecap="butt"/>';
-            angle+=pct*360;
-          });
-          svg+='<text x="'+cx+'" y="'+(cy+6)+'" text-anchor="middle" font-size="20" font-weight="800" fill="#1a1a2e">'+tot+'</text>';
-          svg+='</svg>';
-          return svg;
-        }
-        var donutSegs = [
-          {v: conducted, c: '#27ae60', label: 'Conducted'},
-          {v: upcoming,  c: '#3498db', label: 'Upcoming'},
-          {v: overdue,   c: '#e74c3c', label: 'Overdue'},
-          {v: notDone,   c: '#95a5a6', label: 'Not Done'}
-        ];
-        if (total > 0) document.getElementById('donutSvg').innerHTML = buildDonut(donutSegs, total);
-        // Legend
-        var legendHtml = '';
-        donutSegs.forEach(function(s) {
-          if (!s.v) return;
-          legendHtml += '<div class="donut-legend-item"><div class="donut-legend-dot" style="background:'+s.c+';"></div>'+s.label+': '+s.v+'</div>';
-        });
-        document.getElementById('donutLegend').innerHTML = legendHtml;
+    // Called when both fetches complete
+    function renderDashboard() {
+      if (!planData || !meetData) return;
 
-        // Filter: only upcoming and overdue (not already conducted / not_conducted)
-        var grpOverdue = [], grpUpcoming = [];
-        meetings.forEach(function(m) {
-          if (m.status === 'conducted' || m.status === 'not_conducted') return;
-          var d = m.meeting_date ? new Date(m.meeting_date) : null;
-          if (d) d.setHours(0, 0, 0, 0);
-          if (d && d < today) grpOverdue.push(m);
-          else grpUpcoming.push(m);
-        });
-        grpOverdue.sort(function(a,b) { return new Date(a.meeting_date||0) - new Date(b.meeting_date||0); });
-        grpUpcoming.sort(function(a,b) { return new Date(a.meeting_date||0) - new Date(b.meeting_date||0); });
-        var sorted = grpOverdue.concat(grpUpcoming);
+      document.getElementById('tableSpinner').classList.add('hidden');
+      document.getElementById('tableWrap').style.display = '';
 
-        if (sorted.length === 0) {
-          document.getElementById('dashTbody').innerHTML = '<tr class="empty-row"><td colspan="5">Koi upcoming meeting nahi hai. <a href="planner.html" style="color:var(--primary);">Plan karo</a></td></tr>';
-          return;
-        }
+      // ── Counts ──────────────────────────────────────────
+      // Conducted / Not Done → from actual meeting submissions (Meetings sheet)
+      var conducted = 0, notDone = 0;
+      meetData.forEach(function(m) {
+        if (m.meeting_conducted === 'YES') conducted++;
+        else if (m.meeting_conducted === 'NO') notDone++;
+      });
 
+      // Upcoming / Overdue → from pending plans (PlannedMeetings sheet)
+      var upcoming = 0, overdue = 0;
+      planData.forEach(function(m) {
+        if (m.status === 'conducted' || m.status === 'not_conducted') return;
+        var d = m.meeting_date ? new Date(m.meeting_date) : null;
+        if (d) d.setHours(0,0,0,0);
+        if (d && d < today) overdue++; else upcoming++;
+      });
+
+      var total = conducted + notDone;
+      document.getElementById('sTotal').textContent = total;
+      document.getElementById('sConducted').textContent = conducted;
+      document.getElementById('sUpcoming').textContent = upcoming;
+      document.getElementById('sOverdue').textContent = overdue;
+
+      // ── Donut ────────────────────────────────────────────
+      var donutTotal = conducted + notDone + upcoming + overdue;
+      var segs = [
+        {v: conducted, c: '#27ae60', label: 'Conducted'},
+        {v: notDone,   c: '#e67e22', label: 'Not Done'},
+        {v: upcoming,  c: '#3498db', label: 'Upcoming'},
+        {v: overdue,   c: '#e74c3c', label: 'Overdue'}
+      ];
+      if (donutTotal > 0) document.getElementById('donutSvg').innerHTML = buildDonut(segs, donutTotal);
+      var legendHtml = '';
+      segs.forEach(function(s) {
+        if (!s.v) return;
+        legendHtml += '<div class="donut-legend-item"><div class="donut-legend-dot" style="background:'+s.c+';"></div>'+s.label+': '+s.v+'</div>';
+      });
+      document.getElementById('donutLegend').innerHTML = legendHtml;
+
+      // ── Upcoming meetings table (pending plans only) ─────
+      var grpOverdue = [], grpUpcoming = [];
+      planData.forEach(function(m) {
+        if (m.status === 'conducted' || m.status === 'not_conducted') return;
+        var d = m.meeting_date ? new Date(m.meeting_date) : null;
+        if (d) d.setHours(0,0,0,0);
+        if (d && d < today) grpOverdue.push(m); else grpUpcoming.push(m);
+      });
+      grpOverdue.sort(function(a,b) { return new Date(a.meeting_date||0)-new Date(b.meeting_date||0); });
+      grpUpcoming.sort(function(a,b) { return new Date(a.meeting_date||0)-new Date(b.meeting_date||0); });
+      var sorted = grpOverdue.concat(grpUpcoming);
+
+      if (!sorted.length) {
+        document.getElementById('dashTbody').innerHTML = '<tr class="empty-row"><td colspan="5">Koi upcoming meeting nahi hai. <a href="planner.html" style="color:var(--primary);">Plan karo</a></td></tr>';
+      } else {
         var html = '';
         sorted.forEach(function(m) {
           var d = m.meeting_date ? new Date(m.meeting_date) : null;
-          if (d) d.setHours(0, 0, 0, 0);
-          var isPending = m.status !== 'conducted' && m.status !== 'not_conducted';
-          var isOverdue = isPending && d && d < today;
-
-          var statusHtml;
-          if (m.status === 'conducted') statusHtml = '<span class="st-conducted">&#10003; Done</span>';
-          else if (m.status === 'not_conducted') statusHtml = '<span class="st-not-done">&#10007; Not Done</span>';
-          else if (isOverdue) statusHtml = '<span class="st-overdue">Overdue</span>';
-          else statusHtml = '<span class="st-upcoming">Upcoming</span>';
-
+          if (d) d.setHours(0,0,0,0);
+          var isOverdue = d && d < today;
+          var statusHtml = isOverdue
+            ? '<span class="st-overdue">Overdue</span>'
+            : '<span class="st-upcoming">Upcoming</span>';
           var docHtml = m.document_link
-            ? '<a href="' + esc(m.document_link) + '" target="_blank" class="doc-link">PDF</a>'
+            ? '<a href="'+esc(m.document_link)+'" target="_blank" class="doc-link">PDF</a>'
             : '<span style="color:#d1d5db;">—</span>';
-
           html += '<tr>'
-            + '<td><div class="date-line">' + fmtDate(m.meeting_date) + '</div>'
-              + (isOverdue ? '<div class="overdue-tag">Overdue</div>' : '') + '</td>'
-            + '<td><div class="mstk-name">' + esc(m.stakeholder_name || '') + '</div>'
-              + '<div class="mstk-type">' + esc(m.stakeholder_type || '') + '</div></td>'
-            + '<td><div class="mpurpose">' + esc(m.meeting_purpose || '') + '</div></td>'
-            + '<td>' + statusHtml + '</td>'
-            + '<td>' + docHtml + '</td>'
+            + '<td><div class="date-line">'+fmtDate(m.meeting_date)+'</div>'
+              + (isOverdue ? '<div class="overdue-tag">Overdue</div>' : '')+'</td>'
+            + '<td><div class="mstk-name">'+esc(m.stakeholder_name||'')+'</div>'
+              + '<div class="mstk-type">'+esc(m.stakeholder_type||'')+'</div></td>'
+            + '<td><div class="mpurpose">'+esc(m.meeting_purpose||'')+'</div></td>'
+            + '<td>'+statusHtml+'</td>'
+            + '<td>'+docHtml+'</td>'
             + '</tr>';
         });
         document.getElementById('dashTbody').innerHTML = html;
+      }
 
-        // Load outstanding action items from logged meetings
-        fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'getMyMeetings', token: grToken() }) })
-          .then(function(r) { return r.json(); }).then(function(mr) {
-            if (!mr.success) return;
-            var today = new Date(); today.setHours(0,0,0,0);
-            var pending = [];
-            (mr.data || []).forEach(function(m) {
-              if (m.meeting_conducted !== 'YES') return;
-              var items = [];
-              try { items = JSON.parse(m.action_items || '[]'); } catch(e) {}
-              items.forEach(function(ai) {
-                if (ai.action) pending.push({ ai: ai, meeting: m });
-              });
-            });
-            if (!pending.length) return;
-            // Sort by due date ascending
-            pending.sort(function(a,b) { return new Date(a.ai.due_date||'9999') - new Date(b.ai.due_date||'9999'); });
-            var top = pending.slice(0, 5);
-            var ahtml = '';
-            top.forEach(function(p) {
-              var due = p.ai.due_date ? new Date(p.ai.due_date) : null;
-              if (due) due.setHours(0,0,0,0);
-              var overdue = due && due < today;
-              var dueStr = p.ai.due_date ? fmtDate(p.ai.due_date) : '—';
-              ahtml += '<tr>'
-                + '<td style="font-size:12px;">' + esc(p.ai.action) + '</td>'
-                + '<td style="font-size:12px;">' + esc(p.ai.owner || '—') + '</td>'
-                + '<td><span style="font-size:11px;font-weight:700;' + (overdue ? 'color:var(--danger);' : 'color:#374151;') + '">' + dueStr + (overdue ? ' &#9888;' : '') + '</span></td>'
-                + '<td style="font-size:11px;color:var(--muted);">' + esc(p.meeting.stakeholder_name || '') + '</td>'
-                + '</tr>';
-            });
-            document.getElementById('actionsTbody').innerHTML = ahtml;
-            document.getElementById('actionsCard').style.display = '';
-          }).catch(function() {});
-      }).catch(function() {
-        document.getElementById('tableSpinner').classList.add('hidden');
-        document.getElementById('tableWrap').style.display = '';
-        ['sTotal','sConducted','sUpcoming','sOverdue'].forEach(function(id) {
-          document.getElementById(id).textContent = '0';
+      // ── Outstanding action items (from meetings) ─────────
+      var pending = [];
+      meetData.forEach(function(m) {
+        if (m.meeting_conducted !== 'YES') return;
+        var items = [];
+        try { items = JSON.parse(m.action_items || '[]'); } catch(e) {}
+        items.forEach(function(ai) { if (ai.action) pending.push({ ai:ai, meeting:m }); });
+      });
+      if (pending.length) {
+        pending.sort(function(a,b) { return new Date(a.ai.due_date||'9999')-new Date(b.ai.due_date||'9999'); });
+        var ahtml = '';
+        pending.slice(0,5).forEach(function(p) {
+          var due = p.ai.due_date ? new Date(p.ai.due_date) : null;
+          if (due) due.setHours(0,0,0,0);
+          var od = due && due < today;
+          ahtml += '<tr>'
+            + '<td style="font-size:12px;">'+esc(p.ai.action)+'</td>'
+            + '<td style="font-size:12px;">'+esc(p.ai.owner||'—')+'</td>'
+            + '<td><span style="font-size:11px;font-weight:700;'+(od?'color:var(--danger);':'color:#374151;')+'">'+
+              (p.ai.due_date?fmtDate(p.ai.due_date):'—')+(od?' &#9888;':'')+'</span></td>'
+            + '<td style="font-size:11px;color:var(--muted);">'+esc(p.meeting.stakeholder_name||'')+'</td>'
+            + '</tr>';
         });
-        document.getElementById('dashTbody').innerHTML = '<tr class="empty-row"><td colspan="5">Network error. Please refresh.</td></tr>';
+        document.getElementById('actionsTbody').innerHTML = ahtml;
+        document.getElementById('actionsCard').style.display = '';
+      }
+    }
+
+    // ── Fetch plans ───────────────────────────────────────
+    fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'getPlannedMeetings', token: grToken() }) })
+      .then(function(r) { return r.json(); }).then(function(res) {
+        planData = res.success ? (res.data || []) : [];
+        renderDashboard();
+      }).catch(function() {
+        planData = [];
+        renderDashboard();
+      });
+
+    // ── Fetch meetings (conducted / not-done counts + actions) ─
+    fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'getMyMeetings', token: grToken() }) })
+      .then(function(r) { return r.json(); }).then(function(res) {
+        meetData = res.success ? (res.data || []) : [];
+        renderDashboard();
+      }).catch(function() {
+        meetData = [];
+        renderDashboard();
       });
   </script>
 </body>
