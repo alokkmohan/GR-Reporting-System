@@ -253,7 +253,7 @@
       });
       grpOverdue.sort(function(a,b) { return new Date(a.meeting_date||0)-new Date(b.meeting_date||0); });
       grpUpcoming.sort(function(a,b) { return new Date(a.meeting_date||0)-new Date(b.meeting_date||0); });
-      var sorted = grpOverdue.concat(grpUpcoming);
+      var sorted = grpUpcoming.concat(grpOverdue);
 
       if (!sorted.length) {
         document.getElementById('dashTbody').innerHTML = '<tr class="empty-row"><td colspan="5">Koi upcoming meeting nahi hai. <a href="planner.html" style="color:var(--primary);">Plan karo</a></td></tr>';
