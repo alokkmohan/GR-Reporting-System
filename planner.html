@@ -55,6 +55,23 @@
   .ut-action{white-space:nowrap;padding:6px 12px;font-size:12px;border-radius:6px;border:none;cursor:pointer;font-weight:700;background:var(--primary);color:#fff}
   .ut-done-tag{font-size:11px;color:var(--muted);font-style:italic}
 
+  /* Event Type cards */
+  .et-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .et-btn{background:#fff;border:2px solid var(--border);border-radius:10px;padding:12px 6px 10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;transition:border-color 0.15s,background 0.15s;width:100%}
+  .et-btn.active{border-color:var(--primary);background:#fef2f2}
+  .et-icon{font-size:20px;line-height:1}
+  .et-label{font-size:11px;font-weight:700;color:var(--text);text-align:center;line-height:1.2}
+  .et-btn.active .et-label{color:var(--primary)}
+
+  /* Duration buttons */
+  .dur-group{display:flex;flex-wrap:wrap;gap:6px}
+  .dur-btn{background:#fff;border:1.5px solid var(--border);border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text);transition:all 0.15s}
+  .dur-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+
+  /* Participant tags */
+  .ptag{display:inline-flex;align-items:center;gap:5px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:20px;padding:4px 10px;font-size:12px;font-weight:600;color:#1e40af}
+  .ptag-x{background:none;border:none;cursor:pointer;color:#93c5fd;font-size:14px;line-height:1;padding:0 0 0 2px}
+
   /* Plan modal */
   .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:flex;align-items:flex-end;justify-content:center}
   .modal-overlay.hidden{display:none}
@@ -162,12 +179,34 @@
       <div class="modal-body">
         <div id="planAlertBox"></div>
 
+        <!-- Section 0: Event Type -->
+        <div class="plan-section">
+          <div class="plan-section-title">Event Type</div>
+          <div class="et-grid">
+            <button type="button" class="et-btn" id="et_one_on_one" onclick="setEventType('one_on_one')"><span class="et-icon">👤</span><span class="et-label">One-on-One</span></button>
+            <button type="button" class="et-btn" id="et_group" onclick="setEventType('group')"><span class="et-icon">👥</span><span class="et-label">Group Meeting</span></button>
+            <button type="button" class="et-btn" id="et_joint_visit" onclick="setEventType('joint_visit')"><span class="et-icon">🤝</span><span class="et-label">Joint Visit</span></button>
+            <button type="button" class="et-btn" id="et_dept_review" onclick="setEventType('dept_review')"><span class="et-icon">📋</span><span class="et-label">Dept. Review</span></button>
+            <button type="button" class="et-btn" id="et_field_visit" onclick="setEventType('field_visit')"><span class="et-icon">🌾</span><span class="et-label">Field Visit</span></button>
+          </div>
+        </div>
+
         <!-- Section 1: When & Where -->
         <div class="plan-section">
           <div class="plan-section-title">When &amp; Where</div>
           <div class="plan-row-2">
             <div class="form-group" style="margin-bottom:10px;"><label class="form-label">Date <span class="required">*</span></label><input type="date" id="plan_date" class="form-control"></div>
             <div class="form-group" style="margin-bottom:10px;"><label class="form-label">Time (optional)</label><input type="time" id="plan_time" class="form-control"></div>
+          </div>
+          <div class="form-group" style="margin-bottom:10px;">
+            <label class="form-label">Duration</label>
+            <div class="dur-group">
+              <button type="button" class="dur-btn" id="dur_30min" onclick="setDuration('30 min')">30 min</button>
+              <button type="button" class="dur-btn" id="dur_1hr" onclick="setDuration('1 hr')">1 hr</button>
+              <button type="button" class="dur-btn" id="dur_2hr" onclick="setDuration('2 hr')">2 hr</button>
+              <button type="button" class="dur-btn" id="dur_halfday" onclick="setDuration('Half Day')">Half Day</button>
+              <button type="button" class="dur-btn" id="dur_fullday" onclick="setDuration('Full Day')">Full Day</button>
+            </div>
           </div>
           <div class="plan-row-2">
             <div class="form-group" style="margin-bottom:10px;">
@@ -235,17 +274,17 @@
           </div>
         </div>
 
-        <!-- Section 3b: Colleague -->
+        <!-- Section 3b: Participants -->
         <div class="plan-section">
-          <div class="plan-section-title">Colleague</div>
+          <div class="plan-section-title">Participants (Team)</div>
+          <div id="participantTags" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;min-height:10px;"></div>
           <div class="form-group" style="margin-bottom:6px;">
-            <label class="form-label">Colleague Email (optional)</label>
             <div style="display:flex;gap:8px;">
-              <input type="email" id="plan_colleague_email" class="form-control" placeholder="colleague@educategirls.ngo" style="flex:1;" oninput="colleagueChanged()">
-              <button type="button" id="colleagueLookupBtn" onclick="lookupColleague()" style="white-space:nowrap;background:#1a2340;color:#fff;border:none;border-radius:8px;padding:11px 14px;font-size:13px;font-weight:700;cursor:pointer;">Check</button>
+              <input type="email" id="participant_input" class="form-control" placeholder="colleague@educategirls.ngo" style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();addParticipant();}" oninput="document.getElementById('participantLookupResult').style.display='none'">
+              <button type="button" id="participantAddBtn" onclick="addParticipant()" style="white-space:nowrap;background:#1a2340;color:#fff;border:none;border-radius:8px;padding:11px 14px;font-size:13px;font-weight:700;cursor:pointer;">Add</button>
             </div>
           </div>
-          <div id="colleagueResult" style="display:none;"></div>
+          <div id="participantLookupResult" style="display:none;"></div>
         </div>
 
         <!-- Section 4: Agenda Items -->
@@ -325,6 +364,26 @@
       return s.substring(0, 5);
     }
 
+    // Event type
+    var eventType = '';
+    var eventTypeIds = { one_on_one:'et_one_on_one', group:'et_group', joint_visit:'et_joint_visit', dept_review:'et_dept_review', field_visit:'et_field_visit' };
+    function setEventType(t) {
+      eventType = t;
+      Object.keys(eventTypeIds).forEach(function(k) {
+        document.getElementById(eventTypeIds[k]).className = 'et-btn' + (k === t ? ' active' : '');
+      });
+    }
+
+    // Duration
+    var meetingDuration = '';
+    var durationIds = { '30 min':'dur_30min', '1 hr':'dur_1hr', '2 hr':'dur_2hr', 'Half Day':'dur_halfday', 'Full Day':'dur_fullday' };
+    function setDuration(d) {
+      meetingDuration = d;
+      Object.keys(durationIds).forEach(function(k) {
+        document.getElementById(durationIds[k]).className = 'dur-btn' + (k === d ? ' active' : '');
+      });
+    }
+
     // Meeting mode
     var meetingMode = 'in_person';
     function setMeetingMode(mode) {
@@ -333,56 +392,70 @@
       document.getElementById('modeOnline').className = 'toggle-btn' + (mode === 'online' ? ' selected-yes' : '');
       document.getElementById('jitsiSection').style.display = mode === 'online' ? '' : 'none';
     }
-    function colleagueChanged() { document.getElementById('colleagueResult').style.display = 'none'; }
 
-    function lookupColleague() {
-      var email = document.getElementById('plan_colleague_email').value.trim().toLowerCase();
+    // Participants
+    var participants = [];
+    function renderParticipantTags() {
+      var html = participants.map(function(p, i) {
+        return '<span class="ptag">' + esc(p.name || p.email)
+          + '<button type="button" class="ptag-x" onclick="removeParticipant(' + i + ')" title="Remove">&times;</button></span>';
+      }).join('');
+      document.getElementById('participantTags').innerHTML = html;
+    }
+    function removeParticipant(i) { participants.splice(i, 1); renderParticipantTags(); }
+
+    function addParticipant() {
+      var email = document.getElementById('participant_input').value.trim().toLowerCase();
       if (!email) return;
       if (!email.endsWith('@educategirls.ngo')) {
-        document.getElementById('colleagueResult').style.display = '';
-        document.getElementById('colleagueResult').innerHTML = '<div class="alert alert-error" style="margin:0;">Only @educategirls.ngo emails allowed.</div>';
+        document.getElementById('participantLookupResult').style.display = '';
+        document.getElementById('participantLookupResult').innerHTML = '<div class="alert alert-error" style="margin:0;">Only @educategirls.ngo emails allowed.</div>';
         return;
       }
-      document.getElementById('colleagueLookupBtn').textContent = '...';
+      if (participants.find(function(p) { return p.email === email; })) {
+        document.getElementById('participant_input').value = '';
+        return;
+      }
+      document.getElementById('participantAddBtn').textContent = '...';
       fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'lookupUser', token: grToken(), email: email }) })
         .then(function(r) { return r.json(); }).then(function(res) {
-          document.getElementById('colleagueLookupBtn').textContent = 'Check';
-          var box = document.getElementById('colleagueResult');
-          box.style.display = '';
+          document.getElementById('participantAddBtn').textContent = 'Add';
+          var box = document.getElementById('participantLookupResult');
           if (res.success && res.found) {
             var u = res.user;
-            box.innerHTML = '<div style="background:#ecfdf5;border:1px solid #6ee7b7;border-radius:8px;padding:10px 12px;font-size:13px;">'
-              + '<div style="font-weight:700;color:#065f46;">' + esc(u.full_name || email) + '</div>'
-              + '<div style="color:#374151;margin-top:2px;">' + esc(u.designation || '') + (u.district ? ' &middot; ' + esc(u.district) : '') + '</div>'
-              + '</div>';
+            participants.push({ email: email, name: u.full_name || email });
+            renderParticipantTags();
+            document.getElementById('participant_input').value = '';
+            box.style.display = 'none';
           } else {
+            box.style.display = '';
             box.innerHTML = '<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;font-size:13px;">'
-              + '<div style="color:#92400e;font-weight:600;">This person is not on the app yet.</div>'
-              + '<button type="button" onclick="sendInvite()" style="margin-top:8px;background:#d97706;color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;" id="inviteBtn">Send Invite Email</button>'
+              + '<div style="color:#92400e;font-weight:600;">' + esc(email) + ' is not on the app yet.</div>'
+              + '<button type="button" id="inviteBtn" onclick="sendParticipantInvite(\'' + email + '\')" style="margin-top:8px;background:#d97706;color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;">Send Invite</button>'
               + '</div>';
           }
         }).catch(function() {
-          document.getElementById('colleagueLookupBtn').textContent = 'Check';
-          document.getElementById('colleagueResult').innerHTML = '<div class="alert alert-error" style="margin:0;">Network error.</div>';
+          document.getElementById('participantAddBtn').textContent = 'Add';
+          document.getElementById('participantLookupResult').style.display = '';
+          document.getElementById('participantLookupResult').innerHTML = '<div class="alert alert-error" style="margin:0;">Network error.</div>';
         });
     }
 
-    function sendInvite() {
-      var email = document.getElementById('plan_colleague_email').value.trim().toLowerCase();
+    function sendParticipantInvite(email) {
       document.getElementById('inviteBtn').disabled = true;
       document.getElementById('inviteBtn').textContent = 'Sending...';
       fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'sendInvite', token: grToken(), email: email }) })
         .then(function(r) { return r.json(); }).then(function(res) {
           if (res.success) {
-            document.getElementById('colleagueResult').innerHTML = '<div style="background:#ecfdf5;border:1px solid #6ee7b7;border-radius:8px;padding:10px 12px;font-size:13px;color:#065f46;font-weight:600;">Invite sent to ' + esc(email) + '</div>';
+            document.getElementById('participantLookupResult').innerHTML = '<div style="background:#ecfdf5;border:1px solid #6ee7b7;border-radius:8px;padding:10px 12px;font-size:13px;color:#065f46;font-weight:600;">Invite sent to ' + esc(email) + '</div>';
           } else {
             document.getElementById('inviteBtn').disabled = false;
-            document.getElementById('inviteBtn').textContent = 'Send Invite Email';
+            document.getElementById('inviteBtn').textContent = 'Send Invite';
             alert(res.message || 'Could not send invite.');
           }
         }).catch(function() {
           document.getElementById('inviteBtn').disabled = false;
-          document.getElementById('inviteBtn').textContent = 'Send Invite Email';
+          document.getElementById('inviteBtn').textContent = 'Send Invite';
         });
     }
 
@@ -641,12 +714,15 @@
       document.getElementById('plan_meet_link').value = '';
       document.getElementById('meetLinkCopy').style.display = 'none';
       document.getElementById('plan_location').value = '';
-      document.getElementById('plan_colleague_email').value = '';
-      document.getElementById('colleagueResult').style.display = 'none';
+      document.getElementById('participant_input').value = '';
+      document.getElementById('participantLookupResult').style.display = 'none';
       document.getElementById('plan_doc_link').value = '';
       ['plan_stakeholder_name','plan_block'].forEach(function(id){ document.getElementById(id).value=''; });
       ['plan_stakeholder_type','plan_purpose','plan_level'].forEach(function(id){ document.getElementById(id).value=''; });
       setMeetingMode('in_person');
+      eventType = ''; Object.keys(eventTypeIds).forEach(function(k){ document.getElementById(eventTypeIds[k]).className='et-btn'; });
+      meetingDuration = ''; Object.keys(durationIds).forEach(function(k){ document.getElementById(durationIds[k]).className='dur-btn'; });
+      participants = []; renderParticipantTags();
       agendaItems = [];
       renderAgenda();
     }
@@ -678,6 +754,12 @@
       var mode = m.meeting_mode || 'in_person';
       setMeetingMode(mode);
       if (mode === 'online') document.getElementById('plan_meet_link').value = m.meet_link || '';
+      if (m.event_type) setEventType(m.event_type);
+      if (m.duration) setDuration(m.duration);
+      try { participants = JSON.parse(m.participants || '[]'); } catch(e) {
+        participants = m.colleague_email ? [{ email: m.colleague_email, name: m.colleague_email }] : [];
+      }
+      renderParticipantTags();
       try { agendaItems = JSON.parse(m.agenda_items || '[]'); } catch(e) { agendaItems = []; }
       renderAgenda();
       document.getElementById('planModal').classList.remove('hidden');
@@ -709,8 +791,10 @@
 
     function collectPlanData() {
       return {
+        event_type: eventType,
         meeting_date: document.getElementById('plan_date').value,
         meeting_time: document.getElementById('plan_time').value,
+        duration: meetingDuration,
         stakeholder_type: document.getElementById('plan_stakeholder_type').value,
         stakeholder_name: document.getElementById('plan_stakeholder_name').value.trim(),
         meeting_purpose: document.getElementById('plan_purpose').value,
@@ -721,7 +805,8 @@
         meeting_mode: meetingMode,
         meet_link: meetingMode === 'online' ? document.getElementById('plan_meet_link').value.trim() : '',
         location: document.getElementById('plan_location').value.trim(),
-        colleague_email: document.getElementById('plan_colleague_email').value.trim().toLowerCase()
+        participants: JSON.stringify(participants),
+        colleague_email: participants.length ? participants[0].email : ''
       };
     }
 

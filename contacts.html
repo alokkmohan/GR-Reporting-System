@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Contacts GR Reporting System</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .search-bar { position:relative; margin-bottom:14px; }
+    .search-bar input { width:100%; box-sizing:border-box; padding:11px 14px 11px 38px; border:1.5px solid var(--border); border-radius:10px; font-size:14px; background:#fff; }
+    .search-bar input:focus { outline:none; border-color:var(--primary); }
+    .search-icon { position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--muted); pointer-events:none; }
+
+    .filter-row { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; }
+    .filter-chip { border:1.5px solid var(--border); background:#fff; border-radius:20px; padding:5px 14px; font-size:12px; font-weight:700; cursor:pointer; color:var(--text); transition:all 0.15s; }
+    .filter-chip.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+
+    .contacts-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+    @media(min-width:480px){ .contacts-grid { grid-template-columns:repeat(3,1fr); } }
+    @media(min-width:768px){ .contacts-grid { grid-template-columns:repeat(4,1fr); } }
+
+    .contact-card { background:#fff; border-radius:12px; box-shadow:0 1px 4px rgba(0,0,0,0.08); padding:16px 12px 14px; display:flex; flex-direction:column; align-items:center; text-align:center; }
+    .contact-avatar { width:52px; height:52px; border-radius:50%; background:linear-gradient(135deg,#922b21,#c0392b); display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:800; color:#fff; margin-bottom:10px; flex-shrink:0; overflow:hidden; }
+    .contact-avatar img { width:52px; height:52px; border-radius:50%; object-fit:cover; display:block; }
+    .contact-name { font-size:13px; font-weight:800; color:var(--text); margin-bottom:2px; line-height:1.2; }
+    .contact-desig { font-size:11px; color:var(--primary); font-weight:700; margin-bottom:2px; }
+    .contact-meta { font-size:11px; color:var(--muted); margin-bottom:8px; line-height:1.4; }
+    .contact-actions { display:flex; gap:6px; justify-content:center; width:100%; margin-top:auto; }
+    .ca-btn { flex:1; padding:7px 4px; border-radius:8px; border:none; font-size:11px; font-weight:700; cursor:pointer; text-decoration:none; display:flex; align-items:center; justify-content:center; gap:3px; }
+    .ca-call { background:#ecfdf5; color:#065f46; }
+    .ca-mail { background:#eff6ff; color:#1e3a8a; }
+    .ca-btn:hover { opacity:0.85; }
+
+    .empty-contacts { text-align:center; padding:40px 20px; color:var(--muted); }
+    .contact-count { font-size:12px; color:var(--muted); margin-bottom:10px; font-weight:600; }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <button class="hamburger-btn" onclick="toggleSidebar()">&#9776;</button>
+    <span class="logo">Contacts</span>
+    <span class="nav-user" id="navUser"></span>
+  </nav>
+  <div class="app-layout">
+    <div id="sidebarMount"></div>
+    <div class="main-content">
+
+      <div class="search-bar">
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="searchInput" placeholder="Search by name, designation, district..." oninput="applyFilters()">
+      </div>
+
+      <div id="filterRow" class="filter-row" style="display:none;"></div>
+
+      <div class="contact-count" id="contactCount"></div>
+
+      <div id="loadingSpinner"><div class="spinner"></div></div>
+
+      <div class="contacts-grid" id="contactsGrid" style="display:none;"></div>
+
+      <div id="emptyState" class="empty-contacts" style="display:none;">
+        <div style="font-size:32px;margin-bottom:8px;">👥</div>
+        <div style="font-weight:700;margin-bottom:4px;">No contacts found</div>
+        <div style="font-size:12px;">Try a different search</div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="common.js"></script>
+  <script>
+    var session = requireAuth();
+    renderSidebar('contacts');
+
+    var allContacts = [];
+    var activeDistrict = '';
+
+    fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'getContacts', token: grToken() }) })
+      .then(function(r) { return r.json(); }).then(function(res) {
+        document.getElementById('loadingSpinner').classList.add('hidden');
+        if (!res.success) return;
+        allContacts = (res.data || []).sort(function(a, b) {
+          return (a.full_name || '').localeCompare(b.full_name || '');
+        });
+        buildDistrictFilters();
+        applyFilters();
+        document.getElementById('contactsGrid').style.display = '';
+      }).catch(function() {
+        document.getElementById('loadingSpinner').classList.add('hidden');
+      });
+
+    function buildDistrictFilters() {
+      var s = grSession();
+      if (s && (s.role === 'state' || s.role === 'admin')) {
+        var districts = [];
+        allContacts.forEach(function(c) { if (c.district && districts.indexOf(c.district) === -1) districts.push(c.district); });
+        districts.sort();
+        if (districts.length > 1) {
+          var row = document.getElementById('filterRow');
+          row.style.display = '';
+          var html = '<button class="filter-chip active" onclick="setDistrict(\'\')">All</button>';
+          districts.forEach(function(d) {
+            html += '<button class="filter-chip" onclick="setDistrict(\'' + esc(d) + '\')">' + esc(d) + '</button>';
+          });
+          row.innerHTML = html;
+        }
+      }
+    }
+
+    function setDistrict(d) {
+      activeDistrict = d;
+      document.querySelectorAll('.filter-chip').forEach(function(btn) {
+        btn.className = 'filter-chip' + (btn.textContent === (d || 'All') ? ' active' : '');
+      });
+      applyFilters();
+    }
+
+    function applyFilters() {
+      var q = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+      var filtered = allContacts.filter(function(c) {
+        if (activeDistrict && c.district !== activeDistrict) return false;
+        if (!q) return true;
+        return (c.full_name || '').toLowerCase().indexOf(q) !== -1
+          || (c.designation || '').toLowerCase().indexOf(q) !== -1
+          || (c.district || '').toLowerCase().indexOf(q) !== -1
+          || (c.unit || '').toLowerCase().indexOf(q) !== -1
+          || (c.email || '').toLowerCase().indexOf(q) !== -1;
+      });
+      renderContacts(filtered);
+    }
+
+    function renderContacts(list) {
+      document.getElementById('contactCount').textContent = list.length + ' contact' + (list.length !== 1 ? 's' : '');
+      if (!list.length) {
+        document.getElementById('contactsGrid').innerHTML = '';
+        document.getElementById('emptyState').style.display = '';
+        return;
+      }
+      document.getElementById('emptyState').style.display = 'none';
+      var html = list.map(function(c) {
+        var words = (c.full_name || c.email || 'U').split(' ');
+        var initials = (words[0].charAt(0) + (words[1] ? words[1].charAt(0) : '')).toUpperCase();
+        var avatar = c.photo_url
+          ? '<img src="' + esc(c.photo_url) + '" onerror="this.outerHTML=\'<span>' + initials + '</span>\'">'
+          : '<span>' + initials + '</span>';
+        var meta = [c.unit, c.district].filter(Boolean).join(' · ');
+        var callBtn = c.phone
+          ? '<a href="tel:' + esc(c.phone) + '" class="ca-btn ca-call"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.36 2 2 0 0 1 3.61 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.69a16 16 0 0 0 6.29 6.29l.96-.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>Call</a>'
+          : '';
+        var mailBtn = '<a href="mailto:' + esc(c.email) + '" class="ca-btn ca-mail"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>Mail</a>';
+        return '<div class="contact-card">'
+          + '<div class="contact-avatar">' + avatar + '</div>'
+          + '<div class="contact-name">' + esc(c.full_name || c.email) + '</div>'
+          + (c.designation ? '<div class="contact-desig">' + esc(c.designation) + '</div>' : '')
+          + (meta ? '<div class="contact-meta">' + esc(meta) + '</div>' : '')
+          + '<div class="contact-actions">' + callBtn + mailBtn + '</div>'
+          + '</div>';
+      }).join('');
+      document.getElementById('contactsGrid').innerHTML = html;
+    }
+  </script>
+</body>
+</html>

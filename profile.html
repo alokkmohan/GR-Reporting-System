@@ -61,6 +61,7 @@
           <div class="info-row"><span class="info-label">Unit</span><span class="info-value" id="v_unit">-</span></div>
           <div class="info-row"><span class="info-label">Posting Level</span><span class="info-value" id="v_posting_level">-</span></div>
           <div class="info-row" id="districtRow"><span class="info-label">District</span><span class="info-value" id="v_district">-</span></div>
+          <div class="info-row"><span class="info-label">Mobile</span><span class="info-value" id="v_phone">-</span></div>
           <div class="info-row"><span class="info-label">Role</span><span class="info-value" id="v_role">-</span></div>
           <div style="padding:14px 0 8px;">
             <button class="btn btn-primary" onclick="showEdit()">Edit Profile</button>
@@ -81,6 +82,10 @@
           <div class="form-group">
             <label class="form-label">Designation</label>
             <select id="e_designation" class="form-control"><option value="">-- Select Designation --</option></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Mobile Number</label>
+            <input type="tel" id="e_phone" class="form-control" placeholder="10-digit mobile number" maxlength="10">
           </div>
           <div style="display:flex;gap:10px;margin-top:4px;">
             <button class="btn btn-primary" id="saveBtn" onclick="saveProfile()">Save Changes</button>
@@ -124,6 +129,7 @@
       document.getElementById('v_unit').textContent = s.unit || '-';
       document.getElementById('v_posting_level').textContent = s.posting_level || '-';
       document.getElementById('v_district').textContent = s.district || '-';
+      document.getElementById('v_phone').textContent = s.phone || '-';
       document.getElementById('v_role').textContent = (s.role || 'field').toUpperCase();
       document.getElementById('districtRow').style.display = s.posting_level === 'District' ? '' : 'none';
     }
@@ -140,6 +146,7 @@
             posting_level: res.user.posting_level || s.posting_level || '',
             district: res.user.district || s.district || '',
             photo_url: res.user.photo_url || s.photo_url || '',
+            phone: res.user.phone || s.phone || '',
             role: res.user.role || s.role || 'field'
           });
           localStorage.setItem('grSession', JSON.stringify(s));
@@ -154,6 +161,7 @@
       document.getElementById('editMode').style.display = 'block';
       var s = grSession();
       document.getElementById('e_name').value = s.full_name || '';
+      document.getElementById('e_phone').value = s.phone || '';
       fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'getDropdowns' }) })
         .then(function(r) { return r.json(); }).then(function(res) {
           if (!res.success) return;
@@ -186,7 +194,8 @@
         full_name: name,
         unit: document.getElementById('e_unit').value,
         designation: document.getElementById('e_designation').value,
-        photo_url: grSession().photo_url || ''
+        photo_url: grSession().photo_url || '',
+        phone: document.getElementById('e_phone').value.trim()
       })})
       .then(function(r) { return r.json(); }).then(function(res) {
         document.getElementById('saveBtn').disabled = false; document.getElementById('saveBtn').textContent = 'Save Changes';
@@ -199,6 +208,7 @@
           s.district = u.district || s.district || '';
           s.posting_level = u.posting_level || s.posting_level || '';
           s.photo_url = u.photo_url || s.photo_url || '';
+          s.phone = u.phone || document.getElementById('e_phone').value.trim() || '';
           localStorage.setItem('grSession', JSON.stringify(s));
           fillHeader(s); fillView(s);
           renderSidebar('profile');

@@ -95,6 +95,7 @@ function doPost(e) {
         unit: params.unit,
         designation: params.designation
       });
+      if (params.phone) updateUserProfile(params.email, { phone: params.phone });
       destroySession(token);
       var newToken = createSession(params.email, 'field', 'active');
       var newUser = getUserByEmail(params.email);
@@ -108,10 +109,27 @@ function doPost(e) {
         full_name: params.full_name,
         unit: params.unit,
         designation: params.designation,
-        photo_url: params.photo_url || ''
+        photo_url: params.photo_url || '',
+        phone: params.phone || ''
       });
       var updatedUser = getUserByEmail(session.email);
       return respond({ success: true, user: updatedUser });
+    }
+
+    if (action === 'getContacts') {
+      if (!session || session.status !== 'active') return respond({ success: false, message: 'Not authorized.' });
+      var allUsers = getAllUsers().filter(function(u) { return u.status === 'active'; });
+      var contacts;
+      if (session.role === 'state' || session.role === 'admin') {
+        contacts = allUsers;
+      } else {
+        var me = getUserByEmail(session.email);
+        var myDistrict = me ? me.district : '';
+        contacts = allUsers.filter(function(u) { return u.district === myDistrict; });
+      }
+      return respond({ success: true, data: contacts.map(function(u) {
+        return { email: u.email, full_name: u.full_name, designation: u.designation, unit: u.unit, district: u.district, posting_level: u.posting_level, photo_url: u.photo_url || '', phone: u.phone || '' };
+      })});
     }
 
     // ── FILE UPLOAD ───────────────────────────────────────

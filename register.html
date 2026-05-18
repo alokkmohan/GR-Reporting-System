@@ -50,6 +50,10 @@
         <input type="text" id="full_name" class="form-control" placeholder="Your full name">
       </div>
       <div class="form-group">
+        <label class="form-label">Mobile Number (optional)</label>
+        <input type="tel" id="phone" class="form-control" placeholder="10-digit mobile number" maxlength="10" pattern="[0-9]{10}">
+      </div>
+      <div class="form-group">
         <label class="form-label">Posting Level <span class="required">*</span></label>
         <select id="posting_level" class="form-control" onchange="toggleDistrict()">
           <option value="">Loading...</option>
@@ -200,7 +204,8 @@
       if (!full_name || !posting_level || !unit || !designation) { showAlert('alertBox3', 'Please fill all required fields.', 'error'); return; }
       if (posting_level === 'District' && !district) { showAlert('alertBox3', 'Please select your district.', 'error'); return; }
       setLoading(true);
-      fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'register', token: sessionToken, email: currentEmail, full_name: full_name, posting_level: posting_level, district: district, unit: unit, designation: designation }) })
+      var phone = document.getElementById('phone').value.trim();
+      fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'register', token: sessionToken, email: currentEmail, full_name: full_name, posting_level: posting_level, district: district, unit: unit, designation: designation, phone: phone }) })
         .then(function(r) { return r.json(); }).then(function(res) {
           setLoading(false);
           if (res.success) {

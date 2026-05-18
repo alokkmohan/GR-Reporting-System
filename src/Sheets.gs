@@ -81,7 +81,7 @@ function updateUserProfile(email, data) {
   var vals = range.getValues();
   var headers = vals[0];
   // Ensure all updateable columns exist in the header row
-  ['full_name', 'unit', 'designation', 'photo_url'].forEach(function(col) {
+  ['full_name', 'unit', 'designation', 'photo_url', 'phone'].forEach(function(col) {
     if (headers.indexOf(col) === -1) {
       sheet.getRange(1, headers.length + 1).setValue(col);
       headers.push(col);
@@ -89,9 +89,8 @@ function updateUserProfile(email, data) {
   });
   for (var i = 1; i < vals.length; i++) {
     if (vals[i][headers.indexOf('email')] === email) {
-      ['full_name', 'unit', 'designation', 'photo_url'].forEach(function(field) {
+      ['full_name', 'unit', 'designation', 'photo_url', 'phone'].forEach(function(field) {
         if (data[field] === undefined || data[field] === null) return;
-        // Don't overwrite full_name with an empty value
         if (field === 'full_name' && data[field] === '') return;
         var col = headers.indexOf(field);
         if (col >= 0) sheet.getRange(i + 1, col + 1).setValue(data[field]);
@@ -214,7 +213,8 @@ function updatePlannedMeeting(planId, updateData) {
   var headers = data[0];
   var idCol = headers.indexOf('plan_id');
   var fields = ['meeting_date','meeting_time','stakeholder_type','stakeholder_name','meeting_purpose',
-    'level_of_meeting','block_cluster','document_link','agenda_items','meeting_mode','meet_link','location','colleague_email'];
+    'level_of_meeting','block_cluster','document_link','agenda_items','meeting_mode','meet_link','location','colleague_email',
+    'event_type','duration','participants'];
   for (var i = 1; i < data.length; i++) {
     if (data[i][idCol] === planId) {
       fields.forEach(function(field) {
