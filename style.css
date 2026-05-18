@@ -42,7 +42,7 @@ body { font-family: 'Segoe UI', system-ui, Arial, sans-serif; background: var(--
 .login-left-feature { display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.10); border-radius: 8px; padding: 10px 14px; margin-bottom: 10px; text-align: left; }
 .login-left-feature-text .ft { font-size: 13px; font-weight: 600; }
 .login-left-feature-text .fs { font-size: 11px; opacity: 0.78; }
-.login-right { width: 420px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; padding: 36px 28px; background: #fff; overflow-y: auto; }
+.login-right { width: 420px; flex-shrink: 0; display: flex; align-items: flex-start; padding: 64px 36px 36px; background: #fff; overflow-y: auto; }
 .login-box { width: 100%; max-width: 380px; }
 .login-box h2 { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
 .login-box .login-sub { font-size: 14px; color: var(--muted); margin-bottom: 24px; }
