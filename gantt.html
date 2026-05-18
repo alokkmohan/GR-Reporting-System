@@ -100,9 +100,8 @@
           </select>
           <div class="status-pills">
             <button class="status-pill active" data-s="all" onclick="setStatusFilter(this,'all')">All</button>
-            <button class="status-pill" data-s="active" onclick="setStatusFilter(this,'active')">Active</button>
-            <button class="status-pill" data-s="completed" onclick="setStatusFilter(this,'completed')">Completed</button>
-            <button class="status-pill" data-s="overdue" onclick="setStatusFilter(this,'overdue')">Overdue</button>
+            <button class="status-pill" data-s="conducted" onclick="setStatusFilter(this,'conducted')">Conducted</button>
+            <button class="status-pill" data-s="not_conducted" onclick="setStatusFilter(this,'not_conducted')">Not Done</button>
           </div>
         </div>
         <div class="filter-meta" id="filterMeta" style="display:none;">
@@ -115,8 +114,6 @@
       <div class="gantt-legend">
         <div class="gantt-legend-item"><div class="gantt-dot conducted"></div>Conducted</div>
         <div class="gantt-legend-item"><div class="gantt-dot not-done"></div>Not Done</div>
-        <div class="gantt-legend-item"><div class="gantt-dot upcoming"></div>Upcoming</div>
-        <div class="gantt-legend-item"><div class="gantt-dot overdue"></div>Overdue</div>
       </div>
 
       <div id="ganttSpinner" style="text-align:center;padding:30px;">
@@ -240,7 +237,9 @@
 
       // Filter: status
       if (statusFilter !== 'all') {
-        chainList = chainList.filter(function(c) { return chainStatus(c) === statusFilter; });
+        chainList = chainList.filter(function(c) {
+          return c.meetings.some(function(m) { return m.status === statusFilter; });
+        });
       }
 
       chainList.sort(function(a,b){ return a.earliest - b.earliest; });
@@ -351,7 +350,9 @@
         var st = chainStatus(chain);
         var stClass = 'chain-' + st;
         var badgeClass = st === 'completed' ? 'badge-completed' : st === 'overdue' ? 'badge-overdue' : 'badge-active';
-        var badgeText = st === 'completed' ? 'Done Done' : st === 'overdue' ? '! Overdue' : '* Active';
+        var hasConducted = chain.meetings.some(function(m){ return m.status === 'conducted'; });
+        var hasNotDone   = chain.meetings.some(function(m){ return m.status === 'not_conducted'; });
+        var badgeText = hasConducted && hasNotDone ? 'Mixed' : hasConducted ? 'Conducted' : 'Not Done';
 
         var label = chain.meetings[0];
         var rowName    = (label.stakeholder_name || '-').substring(0, 22);
@@ -421,7 +422,9 @@
           document.getElementById('ganttEmpty').querySelector('div').textContent = 'No planned meetings found.';
           return;
         }
-        allData = res.data;
+        allData = res.data.filter(function(m) {
+          return m.status === 'conducted' || m.status === 'not_conducted';
+        });
         populateMonths(allData);
         applyFilters();
       }).catch(function() {
