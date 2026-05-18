@@ -414,17 +414,34 @@
     }
 
     // -- Load data --
-    fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'getPlannedMeetings', token: grToken() }) })
+    fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'getMyMeetings', token: grToken() }) })
       .then(function(r){ return r.json(); }).then(function(res) {
         document.getElementById('ganttSpinner').style.display = 'none';
         if (!res.success || !res.data || !res.data.length) {
           document.getElementById('ganttEmpty').classList.remove('hidden');
-          document.getElementById('ganttEmpty').querySelector('div').textContent = 'No planned meetings found.';
+          document.getElementById('ganttEmpty').querySelector('div').textContent = 'No meetings found.';
           return;
         }
-        allData = res.data.filter(function(m) {
-          return m.status === 'conducted' || m.status === 'not_conducted';
-        });
+        // Normalize Meetings sheet fields to match Gantt expectations
+        allData = res.data
+          .filter(function(m) { return m.meeting_conducted === 'YES' || m.meeting_conducted === 'NO'; })
+          .filter(function(m) { return m.date; })
+          .map(function(m) {
+            return {
+              meeting_date: m.date,
+              stakeholder_name: m.stakeholder_name || '',
+              stakeholder_type: m.stakeholder_type || '',
+              meeting_purpose: m.meeting_purpose || '',
+              status: m.meeting_conducted === 'YES' ? 'conducted' : 'not_conducted',
+              chain_id: (m.stakeholder_name || '').trim().toLowerCase() || m.submission_id,
+              plan_id: m.submission_id
+            };
+          });
+        if (!allData.length) {
+          document.getElementById('ganttEmpty').classList.remove('hidden');
+          document.getElementById('ganttEmpty').querySelector('div').textContent = 'No conducted meetings found.';
+          return;
+        }
         populateMonths(allData);
         applyFilters();
       }).catch(function() {
