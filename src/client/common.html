@@ -1,0 +1,142 @@
+function goTo(page) {
+  var extra = '';
+  var qs = window.location.search.replace(/^\?/, '');
+  var params = {};
+  if (qs) qs.split('&').forEach(function(p) { var kv = p.split('='); if (kv[0]) params[decodeURIComponent(kv[0])] = decodeURIComponent(kv[1] || ''); });
+  if ((page === 'formA' || page === 'formB' || page === 'timeline') && params.plan_id) {
+    extra = '&plan_id=' + encodeURIComponent(params.plan_id);
+  }
+  window.location.href = APP_URL + '?page=' + page + '&token=' + encodeURIComponent(token) + extra;
+}
+
+var APP_URL = '<?= appUrl ?>';
+var token = '<?= token ?>';
+var _session = <?= session ?>;
+
+function grSession() { return _session; }
+function grToken() { return token; }
+
+function requireAuth() {
+  var s = _session;
+  if (!s || s.status !== 'active') { window.location.href = APP_URL; return null; }
+  // Always refresh profile from server so name/photo/designation stay current
+  fetch(APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getMyProfile', token: grToken() }) })
+    .then(function(r) { return r.json(); }).then(function(res) {
+      if (!res.success || !res.user) return;
+      var sess = grSession(); if (!sess) return;
+      var u = res.user;
+      if (u.full_name)    sess.full_name    = u.full_name;
+      if (u.designation)  sess.designation  = u.designation;
+      if (u.unit)         sess.unit         = u.unit;
+      if (u.district)     sess.district     = u.district;
+      if (u.posting_level) sess.posting_level = u.posting_level;
+      if (u.photo_url)    sess.photo_url    = u.photo_url;
+            // Update sidebar DOM without full re-render
+      var words = (sess.full_name || sess.email || 'U').split(' ');
+      var initials = (words[0].charAt(0) + (words[1] ? words[1].charAt(0) : '')).toUpperCase();
+      var nameEl = document.querySelector('.sidebar-name');
+      if (nameEl) nameEl.textContent = sess.full_name || '';
+      var navUser = document.getElementById('navUser');
+      if (navUser) navUser.textContent = sess.full_name || sess.email || '';
+      var badgeEl = document.getElementById('roleBadge');
+      if (badgeEl) badgeEl.textContent = sess.designation || (sess.role || 'FIELD').toUpperCase();
+      var avatarWrap = document.querySelector('.sidebar-avatar-wrap');
+      if (avatarWrap) {
+        avatarWrap.innerHTML = sess.photo_url
+          ? '<img src="' + sess.photo_url + '" style="width:52px;height:52px;border-radius:50%;object-fit:cover;display:block;" onerror="this.outerHTML=\'<div class=\\\"sidebar-initials\\\">' + initials + '</div>\'">'
+          : '<div class="sidebar-initials">' + initials + '</div>';
+      }
+    }).catch(function() {});
+  return s;
+}
+
+function logout() {
+  var overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(30,41,59,0.92);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;';
+  overlay.innerHTML = '<div style="width:48px;height:48px;border:4px solid rgba(255,255,255,0.15);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite;"></div>'
+    + '<div style="color:#fff;font-size:14px;font-weight:600;margin-top:18px;letter-spacing:0.3px;">Signing out...</div>'
+    + '<div style="color:rgba(255,255,255,0.5);font-size:12px;margin-top:6px;">Please wait</div>';
+  document.body.appendChild(overlay);
+  fetch(APP_URL, { method: 'POST', body: JSON.stringify({ action: 'logout', token: grToken() }) })
+    .finally(function() {
+            window.location.href = APP_URL;
+    });
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+}
+
+var _sidebarIcons = {
+  dashboard: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',
+  planner:   '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
+  gantt:     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="5" x2="21" y2="5"/><rect x="3" y="9" width="7" height="2" rx="1" fill="currentColor" stroke="none"/><rect x="6" y="13" width="9" height="2" rx="1" fill="currentColor" stroke="none"/><rect x="11" y="17" width="7" height="2" rx="1" fill="currentColor" stroke="none"/></svg>',
+  myentries: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>',
+  profile:   '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+  contacts:  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+  admin:     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>',
+  logout:    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>'
+};
+
+function renderSidebar(activePage) {
+  var s = _session;
+  if (!s) return;
+
+  var words = (s.full_name || s.email || 'U').split(' ');
+  var initials = (words[0].charAt(0) + (words[1] ? words[1].charAt(0) : '')).toUpperCase();
+
+  var avatarHtml = s.photo_url
+    ? '<img src="' + s.photo_url + '" style="width:52px;height:52px;border-radius:50%;object-fit:cover;display:block;" onerror="this.outerHTML=\'<div class=\\\"sidebar-initials\\\">' + initials + '</div>\'">'
+    : '<div class="sidebar-initials">' + initials + '</div>';
+
+  var navItems = [
+    { page: 'dashboard', label: 'Home', key: 'dashboard' },
+    { href: 'planner.html',   label: 'Manage Meetings', key: 'planner' },
+    { href: 'gantt.html',     label: 'Meeting Gantt', key: 'gantt' },
+    { page: 'myentries', label: 'My Entries',  key: 'myentries' },
+    { href: 'contacts.html',  label: 'Contacts',    key: 'contacts' },
+    { href: 'profile.html',   label: 'My Profile',  key: 'profile' }
+  ];
+  if (s.role === 'admin' || s.role === 'state') {
+    navItems.push({ page: 'admin', label: 'Admin Panel', key: 'admin' });
+  }
+
+  var navHtml = navItems.map(function(item) {
+    var icon = _sidebarIcons[item.key] || '';
+    return '<a href="#" onclick="goTo(\'' + item.page + '\');return false;" class="sidebar-nav-item' + (activePage === item.key ? ' active' : '') + '">'
+      + icon + '<span class="sidebar-nav-label">' + item.label + '</span></a>';
+  }).join('');
+
+  var logoutIcon = _sidebarIcons.logout || '';
+  var html = '<div id="sidebarOverlay" class="sidebar-overlay" onclick="closeSidebar()"></div>'
+    + '<aside id="sidebar" class="sidebar">'
+    + '<div class="sidebar-user">'
+    + '<div class="sidebar-avatar-wrap">' + avatarHtml + '</div>'
+    + '<div class="sidebar-name">' + esc(s.full_name || '') + '</div>'
+    + '<div class="sidebar-email">' + esc(s.email || '') + '</div>'
+    + (s.designation ? '<span class="role-badge" id="roleBadge">' + esc(s.designation) + '</span>' : '<span class="role-badge" id="roleBadge">' + esc(s.role || 'Field') + '</span>')
+    + '</div>'
+    + '<nav class="sidebar-nav">' + navHtml + '</nav>'
+    + '<div class="sidebar-footer">'
+    + '<a href="#" onclick="logout()" class="sidebar-nav-item sidebar-logout">' + logoutIcon + '<span class="sidebar-nav-label">Logout</span></a>'
+    + '</div>'
+    + '</aside>';
+
+  document.getElementById('sidebarMount').innerHTML = html;
+
+  var navUser = document.getElementById('navUser');
+  if (navUser) navUser.textContent = s.full_name || s.email || '';
+}
+
+function fmtDate(d) {
+  if (!d) return '';
+  return new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+function esc(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}

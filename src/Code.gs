@@ -1,5 +1,6 @@
 var ALLOWED_DOMAIN = 'educategirls.ngo';
 var WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxEIOaI_Zt48oMxVVOE_x-D58pNVFLKzz2G6xMEVxDVROYAKmNEt2dFELxQRbUY9igt/exec';
+var SITE_URL = 'https://gr.egtau.org';
 
 function doGet(e) {
   var page = (e.parameter && e.parameter.page) ? e.parameter.page : 'index';
@@ -12,8 +13,8 @@ function doGet(e) {
       return buildPage('client/index', '', null);
     }
   }
-  if (page === 'admin' && (!session || session.role !== 'admin')) {
-    page = 'planner';
+  if (page === 'admin' && (!session || (session.role !== 'admin' && session.role !== 'state'))) {
+    page = 'dashboard';
   }
 
   return buildPage('client/' + page, token, session);
@@ -22,6 +23,22 @@ function doGet(e) {
 function buildPage(file, token, session) {
   var tpl = HtmlService.createTemplateFromFile(file);
   tpl.token = token || '';
+  if (session && session.status === 'active' && session.email) {
+    var user = getUserByEmail(session.email);
+    if (user) {
+      session = {
+        email: session.email,
+        role: session.role || user.role,
+        status: session.status,
+        full_name: user.full_name || '',
+        district: user.district || '',
+        designation: user.designation || '',
+        unit: user.unit || '',
+        posting_level: user.posting_level || '',
+        photo_url: user.photo_url || ''
+      };
+    }
+  }
   tpl.session = session ? JSON.stringify(session) : 'null';
   tpl.appUrl = WEB_APP_URL;
   return tpl.evaluate()
@@ -167,7 +184,7 @@ function doPost(e) {
       MailApp.sendEmail({
         to: toEmail,
         subject: 'Invitation to join GR Reporting System',
-        body: 'Hi,\n\n' + inviterName + ' has invited you to join the GR Reporting System used by Educate Girls for logging stakeholder meeting records.\n\nClick the link below to create your account:\n' + WEB_APP_URL + '?page=register\n\nThis portal is for authorized Educate Girls team members only.\n\nEducate Girls'
+        body: 'Hi,\n\n' + inviterName + ' has invited you to join the GR Reporting System used by Educate Girls for logging stakeholder meeting records.\n\nClick the link below to create your account:\n' + SITE_URL + '/register.html\n\nThis portal is for authorized Educate Girls team members only.\n\nEducate Girls'
       });
       return respond({ success: true });
     }
@@ -303,12 +320,6 @@ function doPost(e) {
         return { plan: p, meeting: linked };
       });
       return respond({ success: true, data: timeline, chain_id: chainId });
-    }
-
-    if (action === 'getMyProfile') {
-      if (!session || session.status !== 'active') return respond({ success: false, message: 'Not authorized.' });
-      var user = getUserByEmail(session.email);
-      return respond({ success: true, user: user });
     }
 
     if (action === 'getMyMeetings') {

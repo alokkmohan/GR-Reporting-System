@@ -1,0 +1,270 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <style><?!= include('client/style'); ?></style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My Profile GR Reporting System</title>
+  <style>
+    .profile-card { background:#fff; border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; margin-bottom:16px; }
+
+    /* Photo section */
+    .photo-section { background:linear-gradient(135deg,#922b21 0%,#c0392b 100%); padding:32px 20px 20px; display:flex; flex-direction:column; align-items:center; }
+    .photo-wrap { position:relative; width:96px; height:96px; margin-bottom:12px; }
+    .photo-circle { width:96px; height:96px; border-radius:50%; object-fit:cover; border:3px solid rgba(255,255,255,0.7); display:block; }
+    .photo-initials { width:96px; height:96px; border-radius:50%; background:rgba(255,255,255,0.25); border:3px solid rgba(255,255,255,0.5); display:flex; align-items:center; justify-content:center; font-size:32px; font-weight:800; color:#fff; }
+    .photo-edit-btn { position:absolute; bottom:2px; right:2px; width:28px; height:28px; border-radius:50%; background:#fff; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:14px; box-shadow:0 2px 6px rgba(0,0,0,0.25); }
+    .photo-uploading { position:absolute; inset:0; border-radius:50%; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; }
+    .photo-name { font-size:18px; font-weight:800; color:#fff; margin-bottom:2px; text-align:center; }
+    .photo-email { font-size:12px; color:rgba(255,255,255,0.78); text-align:center; margin-bottom:8px; }
+    .photo-badge { display:inline-block; background:rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.4); border-radius:12px; padding:3px 12px; font-size:12px; font-weight:700; color:#fff; }
+
+    /* Info section */
+    .info-section { padding:0 18px; }
+    .info-row { display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid #f3f4f6; font-size:14px; }
+    .info-row:last-child { border-bottom:none; }
+    .info-label { color:var(--muted); font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.4px; min-width:110px; }
+    .info-value { font-weight:600; color:var(--text); text-align:right; }
+
+    /* Edit form */
+    .edit-section { padding:18px; border-top:1px solid var(--border); }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <button class="hamburger-btn" onclick="toggleSidebar()">&#9776;</button>
+    <span class="logo">My Profile</span>
+    <span class="nav-user" id="navUser"></span>
+  </nav>
+  <div class="app-layout">
+    <div id="sidebarMount"></div>
+    <div class="main-content">
+
+      <div class="profile-card">
+        <!-- Photo + name header -->
+        <div class="photo-section">
+          <div class="photo-wrap" id="photoWrap">
+            <div class="photo-initials" id="photoInitials"></div>
+          </div>
+          <div class="photo-name" id="pName"></div>
+          <div class="photo-email" id="pEmail"></div>
+          <span class="photo-badge" id="pDesig"></span>
+          <input type="file" id="photoFileInput" accept="image/*" style="display:none;" onchange="uploadPhoto(this)">
+        </div>
+
+        <!-- View mode -->
+        <div id="viewMode" class="info-section" style="padding-top:6px; padding-bottom:6px;">
+          <div id="alertProfile"></div>
+          <div class="info-row"><span class="info-label">Full Name</span><span class="info-value" id="v_name">-</span></div>
+          <div class="info-row"><span class="info-label">Email</span><span class="info-value" id="v_email" style="font-size:13px;">-</span></div>
+          <div class="info-row"><span class="info-label">Designation</span><span class="info-value" id="v_designation">-</span></div>
+          <div class="info-row"><span class="info-label">Unit</span><span class="info-value" id="v_unit">-</span></div>
+          <div class="info-row"><span class="info-label">Posting Level</span><span class="info-value" id="v_posting_level">-</span></div>
+          <div class="info-row" id="districtRow"><span class="info-label">District</span><span class="info-value" id="v_district">-</span></div>
+          <div class="info-row"><span class="info-label">Mobile</span><span class="info-value" id="v_phone">-</span></div>
+          <div class="info-row"><span class="info-label">Role</span><span class="info-value" id="v_role">-</span></div>
+          <div style="padding:14px 0 8px;">
+            <button class="btn btn-primary" onclick="showEdit()">Edit Profile</button>
+          </div>
+        </div>
+
+        <!-- Edit mode -->
+        <div id="editMode" style="display:none;" class="edit-section">
+          <div id="alertEdit"></div>
+          <div class="form-group">
+            <label class="form-label">Full Name <span class="required">*</span></label>
+            <input type="text" id="e_name" class="form-control">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Unit</label>
+            <select id="e_unit" class="form-control"><option value="">-- Select Unit --</option></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Designation</label>
+            <select id="e_designation" class="form-control"><option value="">-- Select Designation --</option></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Mobile Number</label>
+            <input type="tel" id="e_phone" class="form-control" placeholder="10-digit mobile number" maxlength="10">
+          </div>
+          <div style="display:flex;gap:10px;margin-top:4px;">
+            <button class="btn btn-primary" id="saveBtn" onclick="saveProfile()">Save Changes</button>
+            <button class="btn btn-outline" onclick="hideEdit()">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script><?!= include('client/common'); ?></script>
+  <script>
+    var session = requireAuth();
+    renderSidebar('profile');
+
+    function renderPhoto(s) {
+      var words = (s.full_name || s.email || 'U').split(' ');
+      var initials = (words[0].charAt(0) + (words[1] ? words[1].charAt(0) : '')).toUpperCase();
+      var wrap = document.getElementById('photoWrap');
+      if (s.photo_url) {
+        wrap.innerHTML = '<img src="' + esc(s.photo_url) + '" class="photo-circle" onerror="this.outerHTML=\'<div class=\\\"photo-initials\\\">'+initials+'</div>\'">'
+          + '<button class="photo-edit-btn" onclick="document.getElementById(\'photoFileInput\').click()" title="Change photo">Edit</button>';
+      } else {
+        wrap.innerHTML = '<div class="photo-initials">' + initials + '</div>'
+          + '<button class="photo-edit-btn" onclick="document.getElementById(\'photoFileInput\').click()" title="Add photo">+</button>';
+      }
+    }
+
+    function fillHeader(s) {
+      document.getElementById('pName').textContent = s.full_name || '';
+      document.getElementById('pEmail').textContent = s.email || '';
+      document.getElementById('pDesig').textContent = s.designation || s.role || 'Field';
+      renderPhoto(s);
+    }
+
+    function fillView(s) {
+      document.getElementById('v_name').textContent = s.full_name || '-';
+      document.getElementById('v_email').textContent = s.email || '-';
+      document.getElementById('v_designation').textContent = s.designation || '-';
+      document.getElementById('v_unit').textContent = s.unit || '-';
+      document.getElementById('v_posting_level').textContent = s.posting_level || '-';
+      document.getElementById('v_district').textContent = s.district || '-';
+      document.getElementById('v_phone').textContent = s.phone || '-';
+      document.getElementById('v_role').textContent = (s.role || 'field').toUpperCase();
+      document.getElementById('districtRow').style.display = s.posting_level === 'District' ? '' : 'none';
+    }
+
+    // Load from API to get latest data
+    fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'getMyProfile', token: grToken() }) })
+      .then(function(r) { return r.json(); }).then(function(res) {
+        if (res.success && res.user) {
+          var s = grSession();
+          Object.assign(s, {
+            full_name: res.user.full_name || s.full_name || '',
+            designation: res.user.designation || s.designation || '',
+            unit: res.user.unit || s.unit || '',
+            posting_level: res.user.posting_level || s.posting_level || '',
+            district: res.user.district || s.district || '',
+            photo_url: res.user.photo_url || s.photo_url || '',
+            phone: res.user.phone || s.phone || '',
+            role: res.user.role || s.role || 'field'
+          });
+          fillHeader(s); fillView(s);
+        }
+      }).catch(function() {});
+
+    fillHeader(session); fillView(session);
+
+    function showEdit() {
+      document.getElementById('viewMode').style.display = 'none';
+      document.getElementById('editMode').style.display = 'block';
+      var s = grSession();
+      document.getElementById('e_name').value = s.full_name || '';
+      document.getElementById('e_phone').value = s.phone || '';
+      fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'getDropdowns' }) })
+        .then(function(r) { return r.json(); }).then(function(res) {
+          if (!res.success) return;
+          function fillSel(id, items, current) {
+            var sel = document.getElementById(id);
+            sel.innerHTML = '<option value="">-- Select --</option>';
+            (items||[]).forEach(function(v) {
+              var o = document.createElement('option'); o.value = v; o.textContent = v;
+              if (v === current) o.selected = true;
+              sel.appendChild(o);
+            });
+          }
+          fillSel('e_unit', res.units, grSession().unit);
+          fillSel('e_designation', res.designations, grSession().designation);
+        });
+    }
+
+    function hideEdit() {
+      document.getElementById('editMode').style.display = 'none';
+      document.getElementById('viewMode').style.display = 'block';
+      document.getElementById('alertEdit').innerHTML = '';
+    }
+
+    function saveProfile() {
+      var name = document.getElementById('e_name').value.trim();
+      if (!name) { document.getElementById('alertEdit').innerHTML = '<div class="alert alert-error">Full name required.</div>'; return; }
+      document.getElementById('saveBtn').disabled = true; document.getElementById('saveBtn').textContent = 'Saving...';
+      fetch(APP_URL, { method:'POST', body: JSON.stringify({
+        action:'updateProfile', token: grToken(),
+        full_name: name,
+        unit: document.getElementById('e_unit').value,
+        designation: document.getElementById('e_designation').value,
+        photo_url: grSession().photo_url || '',
+        phone: document.getElementById('e_phone').value.trim()
+      })})
+      .then(function(r) { return r.json(); }).then(function(res) {
+        document.getElementById('saveBtn').disabled = false; document.getElementById('saveBtn').textContent = 'Save Changes';
+        if (res.success) {
+          var s = grSession();
+          var u = res.user || {};
+          s.full_name = u.full_name || name;
+          s.unit = u.unit || document.getElementById('e_unit').value;
+          s.designation = u.designation || document.getElementById('e_designation').value;
+          s.district = u.district || s.district || '';
+          s.posting_level = u.posting_level || s.posting_level || '';
+          s.photo_url = u.photo_url || s.photo_url || '';
+          s.phone = u.phone || document.getElementById('e_phone').value.trim() || '';
+          fillHeader(s); fillView(s);
+          renderSidebar('profile');
+          hideEdit();
+          document.getElementById('alertProfile').innerHTML = '<div class="alert alert-success">Profile updated.</div>';
+          setTimeout(function() { document.getElementById('alertProfile').innerHTML = ''; }, 3000);
+        } else {
+          document.getElementById('alertEdit').innerHTML = '<div class="alert alert-error">' + (res.message || 'Update failed.') + '</div>';
+        }
+      }).catch(function() {
+        document.getElementById('saveBtn').disabled = false; document.getElementById('saveBtn').textContent = 'Save Changes';
+        document.getElementById('alertEdit').innerHTML = '<div class="alert alert-error">Network error.</div>';
+      });
+    }
+
+    function uploadPhoto(input) {
+      var file = input.files[0];
+      if (!file) return;
+      if (file.size > 10 * 1024 * 1024) { alert('Image too large. Max 10MB.'); return; }
+      var wrap = document.getElementById('photoWrap');
+      wrap.innerHTML += '<div class="photo-uploading"><div class="spinner" style="margin:0;width:24px;height:24px;border-width:2px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;"></div></div>';
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        var img = new Image();
+        img.onload = function() {
+          // Resize to max 300x300 so payload stays small
+          var MAX = 300;
+          var w = img.width, h = img.height;
+          if (w > h) { if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; } }
+          else       { if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; } }
+          var canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          var base64 = canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
+          fetch(APP_URL, { method:'POST', body: JSON.stringify({
+            action:'uploadFile', token: grToken(),
+            fileName: file.name.replace(/\.[^.]+$/, '') + '.jpg',
+            mimeType: 'image/jpeg', fileData: base64
+          })})
+          .then(function(r) { return r.json(); }).then(function(res) {
+            if (res.success) {
+              var s = grSession(); s.photo_url = res.url;
+              fetch(APP_URL, { method:'POST', body: JSON.stringify({
+                action:'updateProfile', token: grToken(),
+                full_name: s.full_name || '',
+                unit: s.unit || '', designation: s.designation || '', photo_url: res.url
+              })});
+              fillHeader(s);
+            } else {
+              alert('Photo upload failed: ' + (res.message || 'Unknown error'));
+              renderPhoto(grSession());
+            }
+          }).catch(function(err) { alert('Upload error: ' + (err.message || err)); renderPhoto(grSession()); });
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  </script>
+</body>
+</html>

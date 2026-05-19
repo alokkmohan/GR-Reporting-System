@@ -1,10 +1,12 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
+  <style><?!= include('client/style'); ?></style>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Meeting Planner GR Reporting System</title>
-  <style><?!= include('client/style'); ?>
+  <title>Manage Meetings GR Reporting System</title>
+  <style>
+  /* Calendar */
   .cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
   .cal-nav{background:none;border:none;font-size:22px;cursor:pointer;color:var(--primary);padding:4px 10px}
   .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
@@ -18,9 +20,13 @@
   .cal-cell.has-conducted::after{background:var(--success)}
   .cal-cell.has-overdue::after{background:var(--danger)}
   .cal-date{font-size:13px;text-align:center}
+
+  /* Tabs */
   .view-tabs{display:flex;gap:6px;margin-bottom:12px}
   .view-tab{flex:1;padding:8px;border:1.5px solid var(--border);border-radius:8px;background:#fff;font-size:13px;cursor:pointer;text-align:center;font-weight:600}
   .view-tab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+
+  /* Card rows for calendar / all views */
   .meeting-row{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#fff;border-radius:8px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,0.08);border-left:4px solid var(--border);gap:8px}
   .meeting-row.status-planned{border-left-color:var(--primary)}
   .meeting-row.status-conducted{border-left-color:var(--success)}
@@ -32,119 +38,293 @@
   .action-btn{white-space:nowrap;padding:8px 14px;font-size:13px;border-radius:6px;border:none;cursor:pointer;font-weight:700}
   .action-btn.primary{background:var(--primary);color:#fff}
   .action-btn.muted{background:#f1f3f4;color:var(--muted);cursor:default}
+
+  /* Upcoming table */
+  .section-card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:14px}
+  .utable{width:100%;border-collapse:collapse;font-size:13px}
+  .utable th{background:#f9fafb;padding:9px 10px;text-align:left;font-weight:700;border-bottom:2px solid var(--border);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;white-space:nowrap}
+  .utable td{padding:10px 10px;border-bottom:1px solid #f3f4f6;vertical-align:middle}
+  .utable tr:last-child td{border-bottom:none}
+  .utable tr:hover td{background:#fafafa}
+  .ut-name{font-weight:700;font-size:13px}
+  .ut-type{font-size:11px;color:var(--muted)}
+  .ut-date{font-size:12px;font-weight:700;white-space:nowrap}
+  .ut-overdue-tag{background:#fef2f2;color:var(--danger);font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px;display:inline-block;margin-top:2px}
+  .ut-purpose{font-size:12px;color:#374151;font-weight:600}
+  .ut-notes{font-size:11px;color:var(--muted);margin-top:2px}
+  .ut-action{white-space:nowrap;padding:6px 12px;font-size:12px;border-radius:6px;border:none;cursor:pointer;font-weight:700;background:var(--primary);color:#fff}
+  .ut-done-tag{font-size:11px;color:var(--muted);font-style:italic}
+
+  /* Event Type cards */
+  .et-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .et-btn{background:#fff;border:2px solid var(--border);border-radius:10px;padding:12px 6px 10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;transition:border-color 0.15s,background 0.15s;width:100%}
+  .et-btn.active{border-color:var(--primary);background:#fef2f2}
+  .et-icon{font-size:20px;line-height:1}
+  .et-label{font-size:11px;font-weight:700;color:var(--text);text-align:center;line-height:1.2}
+  .et-btn.active .et-label{color:var(--primary)}
+
+  /* Duration buttons */
+  .dur-group{display:flex;flex-wrap:wrap;gap:6px}
+  .dur-btn{background:#fff;border:1.5px solid var(--border);border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text);transition:all 0.15s}
+  .dur-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+
+  /* Participant tags */
+  .ptag{display:inline-flex;align-items:center;gap:5px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:20px;padding:4px 10px;font-size:12px;font-weight:600;color:#1e40af}
+  .ptag-x{background:none;border:none;cursor:pointer;color:#93c5fd;font-size:14px;line-height:1;padding:0 0 0 2px}
+
+  /* Plan modal */
   .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:flex;align-items:flex-end;justify-content:center}
   .modal-overlay.hidden{display:none}
-  .modal{background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;padding:24px 20px 32px}
-  .modal-title{font-size:18px;font-weight:700;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}
-  .modal-close{background:none;border:none;font-size:18px;cursor:pointer;color:var(--muted);font-weight:700}
-  .action-sheet{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;display:flex;align-items:flex-end;justify-content:center}
+  .modal{background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;padding:0 0 32px}
+  .modal-head{background:linear-gradient(135deg,#922b21 0%,#c0392b 100%);color:#fff;padding:18px 20px 16px;border-radius:16px 16px 0 0;display:flex;align-items:center;justify-content:space-between}
+  .modal-head-title{font-size:17px;font-weight:800}
+  .modal-head-sub{font-size:12px;opacity:0.82;margin-top:2px}
+  .modal-close{background:rgba(255,255,255,0.2);border:none;font-size:16px;cursor:pointer;color:#fff;font-weight:700;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center}
+  .modal-body{padding:20px 20px 0}
+  .plan-section{background:#f9fafb;border-radius:10px;padding:14px 14px 8px;margin-bottom:14px;border:1px solid var(--border)}
+  .plan-section-title{font-size:11px;font-weight:800;color:var(--primary);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+  .plan-row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .modal-footer{padding:0 20px}
+
+  /* Action sheet - centered dialog */
+  .action-sheet{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px}
   .action-sheet.hidden{display:none}
-  .action-sheet-inner{background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:600px;padding:24px 20px 32px}
+  .action-sheet-inner{background:#fff;border-radius:16px;width:100%;max-width:380px;padding:28px 24px 24px;box-shadow:0 20px 60px rgba(0,0,0,0.25)}
   </style>
 </head>
 <body>
   <nav class="navbar">
-    <span class="logo">Meeting Planner</span>
-    <div style="display:flex;gap:12px;align-items:center;">
-      <span class="nav-user" id="navUser"></span>
-      <a href="#" id="adminLink" style="display:none;" onclick="goTo('admin')">Admin</a>
-      <a href="#" onclick="logout()">Logout</a>
-    </div>
+    <button class="hamburger-btn" onclick="toggleSidebar()">&#9776;</button>
+    <span class="logo">Manage Meetings</span>
+    <span class="nav-user" id="navUser"></span>
   </nav>
+  <div class="app-layout">
+    <div id="sidebarMount"></div>
+    <div class="main-content" style="padding-bottom:80px;">
 
-  <div class="container" style="padding-bottom:80px;">
-    <div class="view-tabs" style="margin-top:12px;">
-      <button class="view-tab active" id="tabMonth" onclick="switchView('month')">Month</button>
-      <button class="view-tab" id="tabYear" onclick="switchView('year')">Year</button>
-      <button class="view-tab" id="tabList" onclick="switchView('list')">All</button>
-    </div>
-
-    <div class="card" id="calendarView" style="padding:14px;">
-      <div class="cal-header">
-        <button class="cal-nav" onclick="changeMonth(-1)">&lt;</button>
-        <span id="calTitle" style="font-weight:700;font-size:16px;"></span>
-        <button class="cal-nav" onclick="changeMonth(1)">&gt;</button>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin:4px 0 12px;">
+        <div class="view-tabs" style="margin:0;flex:1;">
+          <button class="view-tab active" id="tabUpcoming" onclick="switchView('upcoming')">Upcoming</button>
+          <button class="view-tab" id="tabMonth" onclick="switchView('month')">Calendar</button>
+          <button class="view-tab" id="tabList" onclick="switchView('list')">All</button>
+        </div>
+        <a href="#" onclick="goTo('gantt');return false;" class="btn btn-outline btn-sm" style="margin-left:6px;white-space:nowrap;">Gantt</a>
+        <button class="btn btn-primary btn-sm" onclick="openPlanModal()" style="margin-left:6px;white-space:nowrap;">+ Plan</button>
       </div>
-      <div class="cal-grid" id="calGrid"></div>
-    </div>
 
-    <div id="yearView" class="hidden">
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;" id="yearGrid"></div>
-    </div>
+      <!-- Upcoming view -->
+      <div id="upcomingView">
+        <div id="loadingSpinner"><div class="spinner"></div></div>
+        <div id="emptyUpcoming" class="hidden">
+          <div class="card text-center" style="padding:32px;">
+            <div class="card-title">No Upcoming Meetings</div>
+            <p class="text-muted mt-8">No upcoming meetings planned.</p>
+            <button class="btn btn-primary mt-16" onclick="openPlanModal()">+ Plan New Meeting</button>
+          </div>
+        </div>
+        <div class="section-card" id="upcomingTableWrap" style="display:none;">
+          <table class="utable">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Who to Meet</th>
+                <th>Agenda</th>
+                <th style="text-align:center;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="upcomingTbody"></tbody>
+          </table>
+        </div>
+      </div>
 
-    <button class="btn btn-primary" onclick="openPlanModal()" style="margin-bottom:16px;">+ Plan New Meeting</button>
+      <!-- Calendar view -->
+      <div id="calendarView" class="hidden">
+        <div class="card" style="padding:14px;">
+          <div class="cal-header">
+            <button class="cal-nav" onclick="changeMonth(-1)">&lt;</button>
+            <span id="calTitle" style="font-weight:700;font-size:16px;"></span>
+            <button class="cal-nav" onclick="changeMonth(1)">&gt;</button>
+          </div>
+          <div class="cal-grid" id="calGrid"></div>
+        </div>
+        <div class="card-title mb-8 mt-8" id="listTitle">Meetings</div>
+        <div id="meetingsList"></div>
+        <div id="emptyMeetings" class="hidden">
+          <div class="card text-center" style="padding:24px;">
+            <p class="text-muted">No meetings this month.</p>
+          </div>
+        </div>
+      </div>
 
-    <div class="card-title mb-8" id="listTitle">Meetings</div>
-    <div id="loadingSpinner"><div class="spinner"></div></div>
-    <div id="meetingsList"></div>
-    <div id="emptyMeetings" class="hidden">
-      <div class="card text-center" style="padding:32px;">
-        <p class="text-muted mt-8">No meetings planned yet. Click "+ Plan New Meeting" to start.</p>
+      <!-- All view -->
+      <div id="allView" class="hidden">
+        <div class="card-title mb-8">All Meetings</div>
+        <div id="allMeetingsList"></div>
+        <div id="emptyAll" class="hidden">
+          <div class="card text-center" style="padding:24px;"><p class="text-muted">No meetings found.</p></div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Plan Modal -->
   <div class="modal-overlay hidden" id="planModal">
     <div class="modal">
-      <div class="modal-title">Plan a Meeting <button class="modal-close" onclick="closePlanModal()">X</button></div>
-      <div id="planAlertBox"></div>
-      <div class="form-group">
-        <label class="form-label">Date <span class="required">*</span></label>
-        <input type="date" id="plan_date" class="form-control">
+      <div class="modal-head">
+        <div>
+          <div class="modal-head-title" id="modalTitle">Plan a Meeting</div>
+          <div class="modal-head-sub" id="modalSub">Fill in meeting details</div>
+        </div>
+        <button class="modal-close" onclick="closePlanModal()">&times;</button>
       </div>
-      <div class="form-group">
-        <label class="form-label">Time</label>
-        <input type="time" id="plan_time" class="form-control">
+      <div class="modal-body">
+        <div id="planAlertBox"></div>
+
+        <!-- Section 0: Event Type -->
+        <div class="plan-section">
+          <div class="plan-section-title">Event Type</div>
+          <div class="et-grid">
+            <button type="button" class="et-btn" id="et_one_on_one" onclick="setEventType('one_on_one')"><span class="et-icon">👤</span><span class="et-label">One-on-One</span></button>
+            <button type="button" class="et-btn" id="et_group" onclick="setEventType('group')"><span class="et-icon">👥</span><span class="et-label">Group Meeting</span></button>
+            <button type="button" class="et-btn" id="et_joint_visit" onclick="setEventType('joint_visit')"><span class="et-icon">🤝</span><span class="et-label">Joint Visit</span></button>
+            <button type="button" class="et-btn" id="et_dept_review" onclick="setEventType('dept_review')"><span class="et-icon">📋</span><span class="et-label">Dept. Review</span></button>
+            <button type="button" class="et-btn" id="et_field_visit" onclick="setEventType('field_visit')"><span class="et-icon">🌾</span><span class="et-label">Field Visit</span></button>
+          </div>
+        </div>
+
+        <!-- Section 1: When & Where -->
+        <div class="plan-section">
+          <div class="plan-section-title">When &amp; Where</div>
+          <div class="plan-row-2">
+            <div class="form-group" style="margin-bottom:10px;"><label class="form-label">Date <span class="required">*</span></label><input type="date" id="plan_date" class="form-control"></div>
+            <div class="form-group" style="margin-bottom:10px;"><label class="form-label">Time (optional)</label><input type="time" id="plan_time" class="form-control"></div>
+          </div>
+          <div class="form-group" style="margin-bottom:10px;">
+            <label class="form-label">Duration</label>
+            <div class="dur-group">
+              <button type="button" class="dur-btn" id="dur_30min" onclick="setDuration('30 min')">30 min</button>
+              <button type="button" class="dur-btn" id="dur_1hr" onclick="setDuration('1 hr')">1 hr</button>
+              <button type="button" class="dur-btn" id="dur_2hr" onclick="setDuration('2 hr')">2 hr</button>
+              <button type="button" class="dur-btn" id="dur_halfday" onclick="setDuration('Half Day')">Half Day</button>
+              <button type="button" class="dur-btn" id="dur_fullday" onclick="setDuration('Full Day')">Full Day</button>
+            </div>
+          </div>
+          <div class="plan-row-2">
+            <div class="form-group" style="margin-bottom:10px;">
+              <label class="form-label">Level <span class="required">*</span></label>
+              <select id="plan_level" class="form-control">
+                <option value="">-- Select --</option>
+                <option>State</option><option>District</option><option>Block</option><option>Cluster</option><option>School</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:10px;"><label class="form-label">Block / Cluster</label><input type="text" id="plan_block" class="form-control" placeholder="Block or cluster (optional)"></div>
+          </div>
+          <div class="form-group" style="margin-bottom:10px;">
+            <label class="form-label">Meeting Mode <span class="required">*</span></label>
+            <div class="toggle-group">
+              <button type="button" class="toggle-btn" id="modeInPerson" onclick="setMeetingMode('in_person')">In Person</button>
+              <button type="button" class="toggle-btn" id="modeOnline" onclick="setMeetingMode('online')">Online (Jitsi)</button>
+            </div>
+          </div>
+          <div id="jitsiSection" style="display:none;">
+            <div class="form-group" style="margin-bottom:4px;">
+              <label class="form-label">Meeting Link</label>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <input type="text" id="plan_meet_link" class="form-control" placeholder="Generate or paste a link" style="flex:1;">
+                <button type="button" onclick="generateJitsiLink()" style="white-space:nowrap;background:var(--primary);color:#fff;border:none;border-radius:8px;padding:11px 14px;font-size:13px;font-weight:700;cursor:pointer;">Generate</button>
+              </div>
+              <div id="meetLinkCopy" style="display:none;margin-top:6px;font-size:12px;color:var(--success);">Link ready - share it with participants</div>
+            </div>
+          </div>
+          <div class="form-group" id="locationGroup" style="margin-bottom:4px;">
+            <label class="form-label">Location / Address</label>
+            <input type="text" id="plan_location" class="form-control" placeholder="Office address, room number, etc.">
+          </div>
+        </div>
+
+        <!-- Section 2: Who to Meet -->
+        <div class="plan-section">
+          <div class="plan-section-title">Who to Meet</div>
+          <div class="form-group" style="margin-bottom:10px;">
+            <label class="form-label">Stakeholder Type <span class="required">*</span></label>
+            <select id="plan_stakeholder_type" class="form-control">
+              <option value="">-- Select Type --</option>
+              <option>ACS</option><option>DGSE</option><option>UIC</option><option>SPD</option><option>ASPD</option><option>JD</option>
+              <option>BSA</option><option>CDO</option><option>District Collector</option><option>DIET Principal</option>
+              <option>ABSA</option><option>ARP</option><option>DC- Gender</option><option>DC-Training</option>
+              <option>DC- MIS</option><option>DC- Community</option><option>DC-IED</option>
+              <option>Head Teacher</option><option>Teacher</option>
+              <option>Development Partner Cell</option><option>Other Department</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:4px;"><label class="form-label">Name of Official <span class="required">*</span></label><input type="text" id="plan_stakeholder_name" class="form-control" placeholder="Full name of official"></div>
+        </div>
+
+        <!-- Section 3: Purpose & Agenda -->
+        <div class="plan-section">
+          <div class="plan-section-title">Purpose &amp; Agenda</div>
+          <div class="form-group" style="margin-bottom:10px;">
+            <label class="form-label">Meeting Purpose <span class="required">*</span></label>
+            <select id="plan_purpose" class="form-control">
+              <option value="">-- Select Purpose --</option>
+              <option>Introductory Meeting</option><option>Enrollment</option><option>Retention</option>
+              <option>Learning</option><option>Invitation</option><option>Review Meeting</option>
+              <option>MPR Submission</option><option>DTF</option><option>School Liasioning</option>
+              <option>Courtesy Meeting</option><option>Other</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Section 3b: Participants -->
+        <div class="plan-section">
+          <div class="plan-section-title">Participants (Team)</div>
+          <div id="participantTags" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;min-height:10px;"></div>
+          <div class="form-group" style="margin-bottom:6px;">
+            <div style="display:flex;gap:8px;">
+              <input type="email" id="participant_input" class="form-control" placeholder="colleague@educategirls.ngo" style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();addParticipant();}" oninput="document.getElementById('participantLookupResult').style.display='none'">
+              <button type="button" id="participantAddBtn" onclick="addParticipant()" style="white-space:nowrap;background:#1a2340;color:#fff;border:none;border-radius:8px;padding:11px 14px;font-size:13px;font-weight:700;cursor:pointer;">Add</button>
+            </div>
+          </div>
+          <div id="participantLookupResult" style="display:none;"></div>
+        </div>
+
+        <!-- Section 4: Agenda Items -->
+        <div class="plan-section">
+          <div class="plan-section-title">Agenda Items</div>
+          <div id="agendaList"></div>
+          <button type="button" onclick="addAgenda()" style="background:none;border:1.5px dashed var(--border);border-radius:8px;padding:8px;width:100%;text-align:center;font-size:12px;font-weight:700;color:var(--primary);cursor:pointer;margin-top:4px;">+ Add Topic</button>
+        </div>
+
+        <!-- Section 5: Reference Document -->
+        <div class="plan-section" style="margin-bottom:16px;">
+          <div class="plan-section-title">Reference Document (optional)</div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <button type="button" class="btn btn-outline btn-sm" id="uploadFileBtn" onclick="document.getElementById('planFileInput').click()" style="white-space:nowrap;">Upload File</button>
+            <span id="uploadStatus" style="font-size:12px;color:var(--muted);">PDF, Word, Image (max 5MB)</span>
+          </div>
+          <input type="file" id="planFileInput" accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png" style="display:none;" onchange="handleFileUpload(this)">
+          <div id="uploadProgress" class="hidden" style="font-size:12px;color:var(--primary);margin-bottom:6px;">Uploading to Drive...</div>
+          <input type="url" id="plan_doc_link" class="form-control" placeholder="Or paste a Google Drive link">
+        </div>
       </div>
-      <div class="form-group">
-        <label class="form-label">Stakeholder Type <span class="required">*</span></label>
-        <select id="plan_stakeholder_type" class="form-control">
-          <option value="">-- Select --</option>
-          <option>ACS</option><option>DGSE</option><option>UIC</option><option>SPD</option>
-          <option>ASPD</option><option>JD</option><option>BSA</option><option>CDO</option>
-          <option>District Collector</option><option>DIET Principal</option><option>ABSA</option>
-          <option>ARP</option><option>DC- Gender</option><option>DC-Training</option>
-          <option>DC- MIS</option><option>DC- Community</option><option>DC-IED</option>
-          <option>Head Teacher</option><option>Teacher</option>
-          <option>Development Partner Cell</option><option>Other Department</option>
-        </select>
+      <div class="modal-footer">
+        <button class="btn btn-primary" id="savePlanBtn" onclick="savePlan()" style="width:100%;">Save Meeting Plan</button>
       </div>
-      <div class="form-group">
-        <label class="form-label">Stakeholder Name <span class="required">*</span></label>
-        <input type="text" id="plan_stakeholder_name" class="form-control" placeholder="Name of person to meet">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Meeting Purpose <span class="required">*</span></label>
-        <select id="plan_purpose" class="form-control">
-          <option value="">-- Select --</option>
-          <option>Introductory Meeting</option><option>Enrollment</option><option>Retention</option>
-          <option>Learning</option><option>Invitation</option><option>Review Meeting</option>
-          <option>MPR Submission</option><option>DTF</option><option>School Liasioning</option>
-          <option>Courtesy Meeting</option><option>Other</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Level of Meeting</label>
-        <select id="plan_level" class="form-control">
-          <option value="">-- Select --</option>
-          <option>State</option><option>District</option><option>Block</option>
-          <option>Cluster</option><option>School</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Block / Cluster</label>
-        <input type="text" id="plan_block" class="form-control" placeholder="Optional">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Notes</label>
-        <textarea id="plan_notes" class="form-control" placeholder="Preparation notes..."></textarea>
-      </div>
-      <button class="btn btn-primary" id="savePlanBtn" onclick="savePlan()">Save Meeting Plan</button>
     </div>
   </div>
 
-  <!-- Action Sheet -->
+  <!-- Success toast -->
+  <div id="successToast" style="display:none;position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#059669;color:#fff;padding:12px 22px;border-radius:10px;font-size:14px;font-weight:700;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,0.2);white-space:nowrap;"></div>
+
+  <!-- Delete confirm dialog -->
+  <div class="action-sheet hidden" id="deleteDialog">
+    <div class="action-sheet-inner">
+      <div style="font-size:16px;font-weight:700;margin-bottom:6px;">Delete Meeting Plan?</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:20px;" id="deleteDialogMeta"></div>
+      <button class="btn btn-danger" style="margin-bottom:10px;" onclick="confirmDelete()">Yes, Delete</button>
+      <button class="btn btn-outline" onclick="document.getElementById('deleteDialog').classList.add('hidden')">Cancel</button>
+    </div>
+  </div>
+
   <div class="action-sheet hidden" id="actionSheet">
     <div class="action-sheet-inner">
       <div style="font-size:16px;font-weight:700;margin-bottom:6px;" id="actionSheetTitle"></div>
@@ -155,36 +335,257 @@
     </div>
   </div>
 
+  <script><?!= include('client/common'); ?></script>
   <script>
-    var APP_URL = '<?= appUrl ?>';
-    var token = new URLSearchParams(window.location.search).get('token') || '<?= token ?>';
-    var session = null;
-    try { session = JSON.parse('<?= session ?>'); } catch(e) {}
-    if (!session || session.status !== 'active') window.location.href = APP_URL;
+    var session = requireAuth();
+    renderSidebar('planner');
 
-    document.getElementById('navUser').textContent = session.email || '';
-    if (session.role === 'admin') document.getElementById('adminLink').style.display = 'block';
+    var editPlanId = null;
+    var deletePlanId = null;
+
+    function showToast(msg, color) {
+      var t = document.getElementById('successToast');
+      t.textContent = msg;
+      t.style.background = color || '#059669';
+      t.style.display = 'block';
+      setTimeout(function() { t.style.display = 'none'; }, 3000);
+    }
+
+    function formatTime(v) {
+      if (!v) return '';
+      var s = String(v);
+      // Google Sheets returns time as 1899-12-30T... datetime
+      if (s.length > 5) {
+        var d = new Date(s);
+        if (!isNaN(d.getTime())) {
+          return String(d.getUTCHours()).padStart(2,'0') + ':' + String(d.getUTCMinutes()).padStart(2,'0');
+        }
+      }
+      return s.substring(0, 5);
+    }
+
+    // Event type
+    var eventType = '';
+    var eventTypeIds = { one_on_one:'et_one_on_one', group:'et_group', joint_visit:'et_joint_visit', dept_review:'et_dept_review', field_visit:'et_field_visit' };
+    function setEventType(t) {
+      eventType = t;
+      Object.keys(eventTypeIds).forEach(function(k) {
+        document.getElementById(eventTypeIds[k]).className = 'et-btn' + (k === t ? ' active' : '');
+      });
+    }
+
+    // Duration
+    var meetingDuration = '';
+    var durationIds = { '30 min':'dur_30min', '1 hr':'dur_1hr', '2 hr':'dur_2hr', 'Half Day':'dur_halfday', 'Full Day':'dur_fullday' };
+    function setDuration(d) {
+      meetingDuration = d;
+      Object.keys(durationIds).forEach(function(k) {
+        document.getElementById(durationIds[k]).className = 'dur-btn' + (k === d ? ' active' : '');
+      });
+    }
+
+    // Meeting mode
+    var meetingMode = 'in_person';
+    function setMeetingMode(mode) {
+      meetingMode = mode;
+      document.getElementById('modeInPerson').className = 'toggle-btn' + (mode === 'in_person' ? ' selected-yes' : '');
+      document.getElementById('modeOnline').className = 'toggle-btn' + (mode === 'online' ? ' selected-yes' : '');
+      document.getElementById('jitsiSection').style.display = mode === 'online' ? '' : 'none';
+    }
+
+    // Participants
+    var participants = [];
+    function renderParticipantTags() {
+      var html = participants.map(function(p, i) {
+        return '<span class="ptag">' + esc(p.name || p.email)
+          + '<button type="button" class="ptag-x" onclick="removeParticipant(' + i + ')" title="Remove">&times;</button></span>';
+      }).join('');
+      document.getElementById('participantTags').innerHTML = html;
+    }
+    function removeParticipant(i) { participants.splice(i, 1); renderParticipantTags(); }
+
+    function addParticipant() {
+      var email = document.getElementById('participant_input').value.trim().toLowerCase();
+      if (!email) return;
+      if (!email.endsWith('@educategirls.ngo')) {
+        document.getElementById('participantLookupResult').style.display = '';
+        document.getElementById('participantLookupResult').innerHTML = '<div class="alert alert-error" style="margin:0;">Only @educategirls.ngo emails allowed.</div>';
+        return;
+      }
+      if (participants.find(function(p) { return p.email === email; })) {
+        document.getElementById('participant_input').value = '';
+        return;
+      }
+      document.getElementById('participantAddBtn').textContent = '...';
+      fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'lookupUser', token: grToken(), email: email }) })
+        .then(function(r) { return r.json(); }).then(function(res) {
+          document.getElementById('participantAddBtn').textContent = 'Add';
+          var box = document.getElementById('participantLookupResult');
+          if (res.success && res.found) {
+            var u = res.user;
+            participants.push({ email: email, name: u.full_name || email });
+            renderParticipantTags();
+            document.getElementById('participant_input').value = '';
+            box.style.display = 'none';
+          } else {
+            box.style.display = '';
+            box.innerHTML = '<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;font-size:13px;">'
+              + '<div style="color:#92400e;font-weight:600;">' + esc(email) + ' is not on the app yet.</div>'
+              + '<button type="button" id="inviteBtn" onclick="sendParticipantInvite(\'' + email + '\')" style="margin-top:8px;background:#d97706;color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;">Send Invite</button>'
+              + '</div>';
+          }
+        }).catch(function() {
+          document.getElementById('participantAddBtn').textContent = 'Add';
+          document.getElementById('participantLookupResult').style.display = '';
+          document.getElementById('participantLookupResult').innerHTML = '<div class="alert alert-error" style="margin:0;">Network error.</div>';
+        });
+    }
+
+    function sendParticipantInvite(email) {
+      document.getElementById('inviteBtn').disabled = true;
+      document.getElementById('inviteBtn').textContent = 'Sending...';
+      fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'sendInvite', token: grToken(), email: email }) })
+        .then(function(r) { return r.json(); }).then(function(res) {
+          if (res.success) {
+            document.getElementById('participantLookupResult').innerHTML = '<div style="background:#ecfdf5;border:1px solid #6ee7b7;border-radius:8px;padding:10px 12px;font-size:13px;color:#065f46;font-weight:600;">Invite sent to ' + esc(email) + '</div>';
+          } else {
+            document.getElementById('inviteBtn').disabled = false;
+            document.getElementById('inviteBtn').textContent = 'Send Invite';
+            alert(res.message || 'Could not send invite.');
+          }
+        }).catch(function() {
+          document.getElementById('inviteBtn').disabled = false;
+          document.getElementById('inviteBtn').textContent = 'Send Invite';
+        });
+    }
+
+    function generateJitsiLink() {
+      var name = (document.getElementById('plan_stakeholder_name').value || 'meeting').replace(/[^a-zA-Z0-9]/g,'').substring(0,10);
+      var date = (document.getElementById('plan_date').value || '').replace(/-/g,'');
+      var rand = Math.random().toString(36).substring(2,6);
+      var link = 'https://meet.jit.si/GR-' + name + '-' + date + '-' + rand;
+      document.getElementById('plan_meet_link').value = link;
+      document.getElementById('meetLinkCopy').style.display = '';
+    }
+
+    // Agenda items
+    var agendaItems = [];
+    function addAgenda() { agendaItems.push(''); renderAgenda(); }
+    function removeAgenda(idx) { agendaItems.splice(idx, 1); renderAgenda(); }
+    function renderAgenda() {
+      var html = '';
+      agendaItems.forEach(function(v, i) {
+        html += '<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">'
+          + '<span style="font-size:12px;font-weight:700;color:var(--muted);min-width:16px;">' + (i+1) + '.</span>'
+          + '<input type="text" class="form-control" id="ag_' + i + '" placeholder="Topic to discuss..." style="flex:1;" value="">'
+          + '<button type="button" onclick="removeAgenda(' + i + ')" style="background:none;border:none;color:#d1d5db;cursor:pointer;font-size:16px;">Del</button>'
+          + '</div>';
+      });
+      if (!agendaItems.length) html = '<div style="font-size:12px;color:var(--muted);margin-bottom:6px;">No agenda items yet.</div>';
+      document.getElementById('agendaList').innerHTML = html;
+      agendaItems.forEach(function(v, i) {
+        var el = document.getElementById('ag_' + i);
+        if (el) el.value = v;
+      });
+    }
+    function collectAgenda() {
+      return agendaItems.map(function(v, i) {
+        var el = document.getElementById('ag_' + i);
+        return el ? el.value.trim() : v;
+      }).filter(function(v) { return v; });
+    }
 
     var allMeetings = [];
     var currentDate = new Date();
-    var viewMode = 'month';
+    var viewMode = 'upcoming';
     var activePlanId = '';
 
+    var redirectPlanId = sessionStorage.getItem('redirectPlanId');
+    if (redirectPlanId) { sessionStorage.removeItem('redirectPlanId'); }
+
     function loadMeetings() {
-      fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'getPlannedMeetings', token: token }) })
-        .then(function(r) { return r.json(); }).then(function(res) {
+      fetch(APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getPlannedMeetings', token: grToken() }) })
+        .then(function (r) { return r.json(); }).then(function (res) {
           document.getElementById('loadingSpinner').classList.add('hidden');
           if (!res.success) return;
           allMeetings = res.data || [];
-          var today = new Date(); today.setHours(0,0,0,0);
-          allMeetings.forEach(function(m) {
+          var today = new Date(); today.setHours(0, 0, 0, 0);
+          allMeetings.forEach(function (m) {
             if (m.status === 'planned' && m.meeting_date && new Date(m.meeting_date) < today) m._overdue = true;
           });
-          renderCalendar();
-          renderList(null);
+          renderUpcoming();
+          if (redirectPlanId) { openActionSheet(redirectPlanId); }
         });
     }
     loadMeetings();
+
+    function renderUpcoming() {
+      var today = new Date(); today.setHours(0, 0, 0, 0);
+      var upcoming = allMeetings.filter(function(m) {
+        if (m.status === 'conducted' || m.status === 'not_conducted') return false;
+        if (!m.meeting_date) return false;
+        var d = new Date(m.meeting_date); d.setHours(0,0,0,0);
+        return d >= today;
+      });
+      upcoming.sort(function(a, b) { return new Date(a.meeting_date) - new Date(b.meeting_date); });
+
+      if (upcoming.length === 0) {
+        document.getElementById('upcomingTableWrap').style.display = 'none';
+        document.getElementById('emptyUpcoming').classList.remove('hidden');
+        return;
+      }
+      document.getElementById('emptyUpcoming').classList.add('hidden');
+      document.getElementById('upcomingTableWrap').style.display = '';
+      var html = '';
+      upcoming.forEach(function(m) {
+        var d = m.meeting_date ? new Date(m.meeting_date) : null;
+        if (d) d.setHours(0,0,0,0);
+        var isOverdue = d && d < today;
+        var modeBadge = m.meeting_mode === 'online'
+          ? '<span style="background:#eff6ff;color:#1e3a8a;border:1px solid #bfdbfe;border-radius:8px;font-size:10px;font-weight:700;padding:2px 7px;margin-left:4px;">ONLINE</span>'
+          : '<span style="background:#f1f5f9;color:#374151;border:1px solid #e2e8f0;border-radius:8px;font-size:10px;font-weight:700;padding:2px 7px;margin-left:4px;">IN PERSON</span>';
+        var joinBtn = (m.meeting_mode === 'online' && m.meet_link)
+          ? '<a href="' + esc(m.meet_link) + '" target="_blank" style="display:block;margin-top:6px;background:#1e3a8a;color:#fff;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;text-decoration:none;text-align:center;">Join Meet</a>'
+          : '';
+        var t = formatTime(m.meeting_time);
+        html += '<tr>'
+          + '<td><div class="ut-date">' + fmtDate(m.meeting_date) + '</div>'
+          + (t ? '<div class="ut-type">' + t + '</div>' : '')
+          + (isOverdue ? '<div class="ut-overdue-tag">Overdue</div>' : '') + '</td>'
+          + '<td><div class="ut-name">' + esc(m.stakeholder_name || '') + modeBadge + '</div>'
+          + '<div class="ut-type">' + esc(m.stakeholder_type || '') + (m.level_of_meeting ? ' &middot; ' + esc(m.level_of_meeting) : '') + '</div>'
+          + joinBtn + '</td>'
+          + '<td><div class="ut-purpose">' + esc(m.meeting_purpose || '') + '</div>'
+          + (m.agenda_items ? '<div class="ut-notes">' + formatAgendaPreview(m.agenda_items) + '</div>' : '') + '</td>'
+          + '<td style="text-align:center;white-space:nowrap;">'
+          + '<button class="ut-action" style="margin-bottom:4px;" onclick="openActionSheet(\'' + m.plan_id + '\')">Log</button>'
+          + '<br><button onclick="openEditModal(\'' + m.plan_id + '\')" style="background:#1e293b;color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;margin-bottom:4px;">Edit</button>'
+          + '<br><button onclick="openDeleteDialog(\'' + m.plan_id + '\')" style="background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;">Delete</button>'
+          + '</td>'
+          + '</tr>';
+      });
+      document.getElementById('upcomingTbody').innerHTML = html;
+    }
+
+    function buildMeetingRows(meetings) {
+      var statusLabel = { planned: 'Planned', conducted: 'Done', not_conducted: 'Not Done', overdue: 'Overdue' };
+      var statusBadge = { planned: 'badge-pending', conducted: 'badge-active', not_conducted: 'badge-suspended', overdue: 'badge-suspended' };
+      var html = '';
+      meetings.forEach(function (m) {
+        var st = m._overdue ? 'overdue' : (m.status || 'planned');
+        html += '<div class="meeting-row status-' + st + '">'
+          + '<div class="meeting-info">'
+          + '<div class="meeting-title">' + esc(m.stakeholder_name || '') + '</div>'
+          + '<div class="meeting-meta">' + fmtDate(m.meeting_date) + (m.meeting_time ? ' &nbsp;&middot;&nbsp; ' + m.meeting_time : '') + '</div>'
+          + '<div class="meeting-meta">' + esc(m.meeting_purpose || '') + (m.level_of_meeting ? ' &nbsp;&middot;&nbsp; ' + m.level_of_meeting : '') + '</div>'
+          + '<div class="meeting-meta" style="margin-top:4px;"><span class="badge ' + (statusBadge[st] || 'badge-pending') + '">' + (statusLabel[st] || st) + '</span></div>'
+          + '</div>';
+        if (st === 'planned' || st === 'overdue') html += '<button class="action-btn primary" onclick="openActionSheet(\'' + m.plan_id + '\')">Action</button>';
+        else html += '<span class="action-btn muted">Done</span>';
+        html += '</div>';
+      });
+      return html;
+    }
 
     function changeMonth(dir) { currentDate.setMonth(currentDate.getMonth() + dir); renderCalendar(); }
 
@@ -192,148 +593,254 @@
       var y = currentDate.getFullYear(), mo = currentDate.getMonth();
       var mnames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
       document.getElementById('calTitle').textContent = mnames[mo] + ' ' + y;
-      var grid = document.getElementById('calGrid');
-      grid.innerHTML = '';
-      ['S','M','T','W','T','F','S'].forEach(function(d) {
-        var el = document.createElement('div'); el.className = 'cal-day-name'; el.textContent = d; grid.appendChild(el);
-      });
-      var first = new Date(y, mo, 1), last = new Date(y, mo+1, 0);
-      var today = new Date(); today.setHours(0,0,0,0);
+      var grid = document.getElementById('calGrid'); grid.innerHTML = '';
+      ['S','M','T','W','T','F','S'].forEach(function (d) { var el = document.createElement('div'); el.className = 'cal-day-name'; el.textContent = d; grid.appendChild(el); });
+      var first = new Date(y, mo, 1), last = new Date(y, mo + 1, 0);
+      var today = new Date(); today.setHours(0, 0, 0, 0);
       var dotMap = {};
-      allMeetings.forEach(function(m) {
+      allMeetings.forEach(function (m) {
         if (!m.meeting_date) return;
-        var d = m.meeting_date.toString().substring(0,10);
+        var d = m.meeting_date.toString().substring(0, 10);
         dotMap[d] = m._overdue ? 'overdue' : (m.status || 'planned');
       });
       for (var i = 0; i < first.getDay(); i++) { var el = document.createElement('div'); el.className = 'cal-cell other-month'; grid.appendChild(el); }
       for (var d = 1; d <= last.getDate(); d++) {
         var dt = new Date(y, mo, d);
         var el = document.createElement('div'); el.className = 'cal-cell';
-        var ds = y + '-' + String(mo+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+        var ds = y + '-' + String(mo + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
         if (dt.getTime() === today.getTime()) el.classList.add('today');
-        if (dotMap[ds]) {
-          el.classList.add('has-meeting');
-          if (dotMap[ds] === 'conducted') el.classList.add('has-conducted');
-          if (dotMap[ds] === 'overdue') el.classList.add('has-overdue');
-        }
+        if (dotMap[ds]) { el.classList.add('has-meeting'); if (dotMap[ds] === 'conducted') el.classList.add('has-conducted'); if (dotMap[ds] === 'overdue') el.classList.add('has-overdue'); }
         el.innerHTML = '<div class="cal-date">' + d + '</div>';
-        el.addEventListener('click', (function(s) { return function() { renderList(s); }; })(ds));
+        el.addEventListener('click', (function (s) { return function () { renderCalendarDayList(s); }; })(ds));
         grid.appendChild(el);
       }
+      renderCalendarDayList(null);
     }
 
-    function renderYearView() {
-      var y = currentDate.getFullYear();
-      var mnames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      var counts = new Array(12).fill(0);
-      allMeetings.forEach(function(m) {
-        if (!m.meeting_date) return;
-        var dt = new Date(m.meeting_date);
-        if (dt.getFullYear() === y) counts[dt.getMonth()]++;
-      });
-      var html = '<div style="text-align:center;font-weight:700;font-size:16px;margin-bottom:12px;grid-column:1/-1;">' + y + '</div>';
-      mnames.forEach(function(mn, i) {
-        html += '<div class="card" style="text-align:center;padding:12px 8px;cursor:pointer;" onclick="jumpToMonth(' + i + ')">';
-        html += '<div style="font-weight:600;">' + mn + '</div>';
-        html += '<div style="font-size:22px;font-weight:700;color:var(--primary);">' + counts[i] + '</div>';
-        html += '<div style="font-size:11px;color:var(--muted);">meetings</div></div>';
-      });
-      document.getElementById('yearGrid').innerHTML = html;
+    function renderCalendarDayList(dateFilter) {
+      var meetings = allMeetings.slice();
+      if (dateFilter) {
+        meetings = meetings.filter(function (m) { return m.meeting_date && m.meeting_date.toString().substring(0, 10) === dateFilter; });
+        document.getElementById('listTitle').textContent = 'Meetings on ' + dateFilter + ' (' + meetings.length + ')';
+      } else {
+        var y = currentDate.getFullYear(), mo = currentDate.getMonth();
+        meetings = meetings.filter(function (m) { if (!m.meeting_date) return false; var dt = new Date(m.meeting_date); return dt.getFullYear() === y && dt.getMonth() === mo; });
+        document.getElementById('listTitle').textContent = 'This Month (' + meetings.length + ')';
+      }
+      meetings.sort(function (a, b) { return new Date(a.meeting_date) - new Date(b.meeting_date); });
+      if (meetings.length === 0) { document.getElementById('meetingsList').innerHTML = ''; document.getElementById('emptyMeetings').classList.remove('hidden'); return; }
+      document.getElementById('emptyMeetings').classList.add('hidden');
+      document.getElementById('meetingsList').innerHTML = buildMeetingRows(meetings);
     }
 
-    function jumpToMonth(m) { currentDate.setMonth(m); switchView('month'); }
+    function renderAll() {
+      var meetings = allMeetings.slice();
+      meetings.sort(function (a, b) { return new Date(a.meeting_date) - new Date(b.meeting_date); });
+      if (meetings.length === 0) { document.getElementById('allMeetingsList').innerHTML = ''; document.getElementById('emptyAll').classList.remove('hidden'); return; }
+      document.getElementById('emptyAll').classList.add('hidden');
+      document.getElementById('allMeetingsList').innerHTML = buildMeetingRows(meetings);
+    }
 
     function switchView(v) {
       viewMode = v;
-      ['Month','Year','List'].forEach(function(t) {
-        document.getElementById('tab' + t).className = 'view-tab' + (t.toLowerCase() === v ? ' active' : '');
+      var tabs = { upcoming: 'tabUpcoming', month: 'tabMonth', list: 'tabList' };
+      Object.keys(tabs).forEach(function(k) {
+        document.getElementById(tabs[k]).className = 'view-tab' + (k === v ? ' active' : '');
       });
+      document.getElementById('upcomingView').classList.toggle('hidden', v !== 'upcoming');
       document.getElementById('calendarView').classList.toggle('hidden', v !== 'month');
-      document.getElementById('yearView').classList.toggle('hidden', v !== 'year');
-      if (v === 'year') renderYearView();
-      if (v !== 'month') renderList(null);
+      document.getElementById('allView').classList.toggle('hidden', v !== 'list');
+      if (v === 'month') renderCalendar();
+      if (v === 'list') renderAll();
     }
 
-    function renderList(dateFilter) {
-      var meetings = allMeetings.slice();
-      if (dateFilter) {
-        meetings = meetings.filter(function(m) { return m.meeting_date && m.meeting_date.toString().substring(0,10) === dateFilter; });
-        document.getElementById('listTitle').textContent = 'Meetings on ' + dateFilter + ' (' + meetings.length + ')';
-      } else if (viewMode === 'month') {
-        var y = currentDate.getFullYear(), mo = currentDate.getMonth();
-        meetings = meetings.filter(function(m) { if (!m.meeting_date) return false; var dt = new Date(m.meeting_date); return dt.getFullYear() === y && dt.getMonth() === mo; });
-        document.getElementById('listTitle').textContent = 'This Month (' + meetings.length + ')';
-      } else {
-        document.getElementById('listTitle').textContent = 'All Meetings (' + meetings.length + ')';
+    function handleFileUpload(input) {
+      var file = input.files[0];
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) {
+        document.getElementById('uploadStatus').textContent = 'File too large (max 5MB). Please upload to Drive manually and paste link.';
+        document.getElementById('uploadStatus').style.color = 'var(--danger)';
+        return;
       }
-      meetings.sort(function(a,b) { return new Date(a.meeting_date) - new Date(b.meeting_date); });
-      if (meetings.length === 0) { document.getElementById('meetingsList').innerHTML = ''; document.getElementById('emptyMeetings').classList.remove('hidden'); return; }
-      document.getElementById('emptyMeetings').classList.add('hidden');
-      var statusLabel = { planned:'Planned', conducted:'Done', not_conducted:'Not Done', overdue:'Overdue' };
-      var statusBadge = { planned:'badge-pending', conducted:'badge-active', not_conducted:'badge-suspended', overdue:'badge-suspended' };
-      var html = '';
-      meetings.forEach(function(m) {
-        var st = m._overdue ? 'overdue' : (m.status || 'planned');
-        html += '<div class="meeting-row status-' + st + '">';
-        html += '<div class="meeting-info">';
-        html += '<div class="meeting-title">' + esc(m.stakeholder_name || '') + '</div>';
-        html += '<div class="meeting-meta">' + fmtDate(m.meeting_date);
-        if (m.meeting_time) html += ' ' + m.meeting_time;
-        html += ' &nbsp;&middot;&nbsp; ' + esc(m.meeting_purpose || '');
-        if (m.level_of_meeting) html += ' &nbsp;&middot;&nbsp; ' + m.level_of_meeting;
-        html += '</div>';
-        html += '<div class="meeting-meta" style="margin-top:4px;"><span class="badge ' + (statusBadge[st] || 'badge-pending') + '">' + (statusLabel[st] || st) + '</span></div>';
-        html += '</div>';
-        if (st === 'planned' || st === 'overdue') {
-          html += '<button class="action-btn primary" onclick="openActionSheet(\'' + m.plan_id + '\')">Action</button>';
-        } else {
-          html += '<button class="action-btn muted">Done</button>';
-        }
-        html += '</div>';
-      });
-      document.getElementById('meetingsList').innerHTML = html;
+      document.getElementById('uploadFileBtn').disabled = true;
+      document.getElementById('uploadProgress').classList.remove('hidden');
+      document.getElementById('uploadStatus').textContent = file.name;
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        var base64 = e.target.result.split(',')[1];
+        fetch(APP_URL, { method: 'POST', body: JSON.stringify({
+          action: 'uploadFile', token: grToken(),
+          fileName: file.name, mimeType: file.type, fileData: base64
+        })})
+        .then(function(r) { return r.json(); }).then(function(res) {
+          document.getElementById('uploadFileBtn').disabled = false;
+          document.getElementById('uploadProgress').classList.add('hidden');
+          if (res.success) {
+            document.getElementById('plan_doc_link').value = res.url;
+            document.getElementById('uploadStatus').textContent = 'Done ' + file.name + ' - uploaded';
+            document.getElementById('uploadStatus').style.color = 'var(--success)';
+          } else {
+            document.getElementById('uploadStatus').textContent = 'Upload failed. Paste Drive link manually.';
+            document.getElementById('uploadStatus').style.color = 'var(--danger)';
+          }
+        }).catch(function() {
+          document.getElementById('uploadFileBtn').disabled = false;
+          document.getElementById('uploadProgress').classList.add('hidden');
+          document.getElementById('uploadStatus').textContent = 'Upload failed. Paste Drive link manually.';
+          document.getElementById('uploadStatus').style.color = 'var(--danger)';
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function formatAgendaPreview(raw) {
+      try {
+        var items = JSON.parse(raw || '[]');
+        if (Array.isArray(items) && items.length) return items.slice(0,2).join(', ') + (items.length > 2 ? '...' : '');
+      } catch(e) {}
+      return typeof raw === 'string' ? raw.substring(0, 60) : '';
+    }
+
+    function resetModal() {
+      editPlanId = null;
+      document.getElementById('modalTitle').textContent = 'Plan a Meeting';
+      document.getElementById('modalSub').textContent = 'Fill in meeting details';
+      document.getElementById('savePlanBtn').textContent = 'Save Meeting Plan';
+      document.getElementById('planAlertBox').innerHTML = '';
+      document.getElementById('uploadStatus').textContent = 'PDF, Word, Image (max 5MB)';
+      document.getElementById('uploadStatus').style.color = '';
+      document.getElementById('planFileInput').value = '';
+      document.getElementById('plan_time').value = '';
+      document.getElementById('plan_meet_link').value = '';
+      document.getElementById('meetLinkCopy').style.display = 'none';
+      document.getElementById('plan_location').value = '';
+      document.getElementById('participant_input').value = '';
+      document.getElementById('participantLookupResult').style.display = 'none';
+      document.getElementById('plan_doc_link').value = '';
+      ['plan_stakeholder_name','plan_block'].forEach(function(id){ document.getElementById(id).value=''; });
+      ['plan_stakeholder_type','plan_purpose','plan_level'].forEach(function(id){ document.getElementById(id).value=''; });
+      setMeetingMode('in_person');
+      eventType = ''; Object.keys(eventTypeIds).forEach(function(k){ document.getElementById(eventTypeIds[k]).className='et-btn'; });
+      meetingDuration = ''; Object.keys(durationIds).forEach(function(k){ document.getElementById(durationIds[k]).className='dur-btn'; });
+      participants = []; renderParticipantTags();
+      agendaItems = [];
+      renderAgenda();
     }
 
     function openPlanModal() {
+      resetModal();
       document.getElementById('plan_date').value = new Date().toISOString().split('T')[0];
-      document.getElementById('planAlertBox').innerHTML = '';
       document.getElementById('planModal').classList.remove('hidden');
     }
-    function closePlanModal() { document.getElementById('planModal').classList.add('hidden'); }
 
-    function savePlan() {
-      var date = document.getElementById('plan_date').value;
-      var stype = document.getElementById('plan_stakeholder_type').value;
-      var sname = document.getElementById('plan_stakeholder_name').value.trim();
-      var purpose = document.getElementById('plan_purpose').value;
-      if (!date || !stype || !sname || !purpose) { document.getElementById('planAlertBox').innerHTML = '<div class="alert alert-error">Please fill all required fields.</div>'; return; }
-      document.getElementById('savePlanBtn').disabled = true;
-      document.getElementById('savePlanBtn').textContent = 'Saving...';
-      fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'planMeeting', token: token, data: {
-        meeting_date: date, meeting_time: document.getElementById('plan_time').value,
-        stakeholder_type: stype, stakeholder_name: sname, meeting_purpose: purpose,
+    function openEditModal(planId) {
+      var m = allMeetings.find(function(x){ return x.plan_id === planId; });
+      if (!m) return;
+      resetModal();
+      editPlanId = planId;
+      document.getElementById('modalTitle').textContent = 'Edit Meeting';
+      document.getElementById('modalSub').textContent = 'Update the details below';
+      document.getElementById('savePlanBtn').textContent = 'Update Meeting';
+      document.getElementById('plan_date').value = (m.meeting_date || '').toString().substring(0,10);
+      document.getElementById('plan_time').value = formatTime(m.meeting_time);
+      document.getElementById('plan_stakeholder_type').value = m.stakeholder_type || '';
+      document.getElementById('plan_stakeholder_name').value = m.stakeholder_name || '';
+      document.getElementById('plan_purpose').value = m.meeting_purpose || '';
+      document.getElementById('plan_level').value = m.level_of_meeting || '';
+      document.getElementById('plan_block').value = m.block_cluster || '';
+      document.getElementById('plan_doc_link').value = m.document_link || '';
+      document.getElementById('plan_location').value = m.location || '';
+      document.getElementById('plan_colleague_email').value = m.colleague_email || '';
+      var mode = m.meeting_mode || 'in_person';
+      setMeetingMode(mode);
+      if (mode === 'online') document.getElementById('plan_meet_link').value = m.meet_link || '';
+      if (m.event_type) setEventType(m.event_type);
+      if (m.duration) setDuration(m.duration);
+      try { participants = JSON.parse(m.participants || '[]'); } catch(e) {
+        participants = m.colleague_email ? [{ email: m.colleague_email, name: m.colleague_email }] : [];
+      }
+      renderParticipantTags();
+      try { agendaItems = JSON.parse(m.agenda_items || '[]'); } catch(e) { agendaItems = []; }
+      renderAgenda();
+      document.getElementById('planModal').classList.remove('hidden');
+    }
+
+    function closePlanModal() {
+      document.getElementById('planModal').classList.add('hidden');
+      editPlanId = null;
+    }
+
+    function openDeleteDialog(planId) {
+      var m = allMeetings.find(function(x){ return x.plan_id === planId; });
+      if (!m) return;
+      deletePlanId = planId;
+      document.getElementById('deleteDialogMeta').textContent = esc(m.stakeholder_name || '') + ' - ' + fmtDate(m.meeting_date);
+      document.getElementById('deleteDialog').classList.remove('hidden');
+    }
+
+    function confirmDelete() {
+      if (!deletePlanId) return;
+      document.getElementById('deleteDialog').classList.add('hidden');
+      fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'deletePlan', token: grToken(), plan_id: deletePlanId }) })
+        .then(function(r){ return r.json(); }).then(function(res){
+          deletePlanId = null;
+          if (res.success) { showToast('Meeting deleted.', '#dc2626'); loadMeetings(); }
+          else alert(res.message || 'Could not delete.');
+        }).catch(function(){ deletePlanId = null; alert('Network error.'); });
+    }
+
+    function collectPlanData() {
+      return {
+        event_type: eventType,
+        meeting_date: document.getElementById('plan_date').value,
+        meeting_time: document.getElementById('plan_time').value,
+        duration: meetingDuration,
+        stakeholder_type: document.getElementById('plan_stakeholder_type').value,
+        stakeholder_name: document.getElementById('plan_stakeholder_name').value.trim(),
+        meeting_purpose: document.getElementById('plan_purpose').value,
         level_of_meeting: document.getElementById('plan_level').value,
         block_cluster: document.getElementById('plan_block').value,
-        notes: document.getElementById('plan_notes').value
-      }})})
-      .then(function(r) { return r.json(); }).then(function(res) {
-        document.getElementById('savePlanBtn').disabled = false;
-        document.getElementById('savePlanBtn').textContent = 'Save Meeting Plan';
-        if (res.success) {
-          closePlanModal();
-          ['plan_time','plan_stakeholder_name','plan_block','plan_notes'].forEach(function(id) { document.getElementById(id).value = ''; });
-          ['plan_stakeholder_type','plan_purpose','plan_level'].forEach(function(id) { document.getElementById(id).value = ''; });
-          loadMeetings();
-        } else { document.getElementById('planAlertBox').innerHTML = '<div class="alert alert-error">' + (res.message || 'Error') + '</div>'; }
-      }).catch(function() {
-        document.getElementById('savePlanBtn').disabled = false;
-        document.getElementById('savePlanBtn').textContent = 'Save Meeting Plan';
-        document.getElementById('planAlertBox').innerHTML = '<div class="alert alert-error">Network error.</div>';
-      });
+        document_link: document.getElementById('plan_doc_link').value.trim(),
+        agenda_items: JSON.stringify(collectAgenda()),
+        meeting_mode: meetingMode,
+        meet_link: meetingMode === 'online' ? document.getElementById('plan_meet_link').value.trim() : '',
+        location: document.getElementById('plan_location').value.trim(),
+        participants: JSON.stringify(participants),
+        colleague_email: participants.length ? participants[0].email : ''
+      };
+    }
+
+    function savePlan() {
+      var data = collectPlanData();
+      if (!data.meeting_date || !data.stakeholder_type || !data.stakeholder_name || !data.meeting_purpose) {
+        document.getElementById('planAlertBox').innerHTML = '<div class="alert alert-error">Please fill all required fields.</div>'; return;
+      }
+      var btn = document.getElementById('savePlanBtn');
+      btn.disabled = true; btn.textContent = editPlanId ? 'Updating...' : 'Saving...';
+
+      var payload = editPlanId
+        ? { action: 'updatePlan', token: grToken(), plan_id: editPlanId, data: data }
+        : { action: 'planMeeting', token: grToken(), data: data };
+
+      fetch(APP_URL, { method:'POST', body: JSON.stringify(payload) })
+        .then(function(r){ return r.json(); }).then(function(res){
+          btn.disabled = false; btn.textContent = editPlanId ? 'Update Meeting' : 'Save Meeting Plan';
+          if (res.success) {
+            var msg = editPlanId ? 'Meeting updated successfully.' : 'Meeting planned successfully.';
+            closePlanModal();
+            loadMeetings();
+            showToast(msg);
+          } else {
+            document.getElementById('planAlertBox').innerHTML = '<div class="alert alert-error">' + (res.message || 'Error') + '</div>';
+          }
+        }).catch(function(){
+          btn.disabled = false; btn.textContent = editPlanId ? 'Update Meeting' : 'Save Meeting Plan';
+          document.getElementById('planAlertBox').innerHTML = '<div class="alert alert-error">Network error.</div>';
+        });
     }
 
     function openActionSheet(planId) {
-      var m = allMeetings.find(function(x) { return x.plan_id === planId; });
+      var m = allMeetings.find(function (x) { return x.plan_id === planId; });
       if (!m) return;
       activePlanId = planId;
       sessionStorage.setItem('activePlan', JSON.stringify(m));
@@ -344,14 +851,8 @@
     function closeActionSheet() { document.getElementById('actionSheet').classList.add('hidden'); activePlanId = ''; }
     function confirmAction(conducted) {
       closeActionSheet();
-      var page = conducted ? 'formA' : 'formB';
-      window.location.href = APP_URL + '?page=' + page + '&token=' + token + '&plan_id=' + activePlanId;
+      window.location.href = (conducted ? 'formA.html' : 'formB.html') + '?plan_id=' + activePlanId;
     }
-
-    function fmtDate(d) { if (!d) return ''; return new Date(d).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }); }
-    function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-    function goTo(page) { window.location.href = APP_URL + '?page=' + page + '&token=' + token; }
-    function logout() { fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'logout', token: token }) }).finally(function() { window.location.href = APP_URL; }); }
   </script>
 </body>
 </html>

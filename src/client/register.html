@@ -1,14 +1,14 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
+  <style><?!= include('client/style'); ?></style>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Create Account GR Reporting System</title>
-  <style><?!= include('client/style'); ?></style>
-</head>
+  </head>
 <body>
   <nav class="navbar">
-    <a href="#" onclick="goToLogin()">Back</a>
+    <a href="#" onclick="window.location.href=APP_URL;return false;">Back</a>
     <span class="logo">Create Account</span>
     <span></span>
   </nav>
@@ -48,6 +48,10 @@
       <div class="form-group">
         <label class="form-label">Full Name <span class="required">*</span></label>
         <input type="text" id="full_name" class="form-control" placeholder="Your full name">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mobile Number (optional)</label>
+        <input type="tel" id="phone" class="form-control" placeholder="10-digit mobile number" maxlength="10" pattern="[0-9]{10}">
       </div>
       <div class="form-group">
         <label class="form-label">Posting Level <span class="required">*</span></label>
@@ -103,7 +107,7 @@
 
     <div id="stepSuccess" class="card hidden" style="margin-top:16px">
       <div class="success-screen">
-        <div class="success-icon">&#10003;</div>
+        <div class="success-icon">OK</div>
         <div class="card-title">Account Created!</div>
         <div class="card-subtitle" style="margin-top:8px">Your account has been created successfully. Redirecting you to the planner...</div>
       </div>
@@ -137,7 +141,7 @@
       });
 
     var urlParams = new URLSearchParams(window.location.search);
-    var preToken = urlParams.get('token') || '<?= token ?>';
+    var preToken = urlParams.get('token') || '';
     var preEmail = urlParams.get('email') || '';
     if (preEmail) {
       currentEmail = decodeURIComponent(preEmail);
@@ -176,7 +180,11 @@
           setLoading(false);
           if (res.success) {
             sessionToken = res.token;
-            if (res.status === 'active') { window.location.href = APP_URL + '?page=planner&token=' + res.token; return; }
+            if (res.status === 'active') {
+              var sess = res.user ? { email: res.user.email, role: res.user.role, status: 'active', full_name: res.user.full_name || '', district: res.user.district || '', designation: res.user.designation || '', unit: res.user.unit || '' } : { email: currentEmail, role: res.role || 'field', status: 'active' };
+              window.location.href = APP_URL + '?page=dashboard&token=' + res.token;
+              return;
+            }
             if (res.status === 'pending') { window.location.href = APP_URL + '?page=pending&token=' + res.token; return; }
             document.getElementById('stepOTP').classList.add('hidden');
             document.getElementById('stepProfile').classList.remove('hidden');
@@ -194,13 +202,14 @@
       if (!full_name || !posting_level || !unit || !designation) { showAlert('alertBox3', 'Please fill all required fields.', 'error'); return; }
       if (posting_level === 'District' && !district) { showAlert('alertBox3', 'Please select your district.', 'error'); return; }
       setLoading(true);
-      fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'register', token: sessionToken, email: currentEmail, full_name: full_name, posting_level: posting_level, district: district, unit: unit, designation: designation }) })
+      var phone = document.getElementById('phone').value.trim();
+      fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'register', token: sessionToken, email: currentEmail, full_name: full_name, posting_level: posting_level, district: district, unit: unit, designation: designation, phone: phone }) })
         .then(function(r) { return r.json(); }).then(function(res) {
           setLoading(false);
           if (res.success) {
             document.getElementById('stepProfile').classList.add('hidden');
             document.getElementById('stepSuccess').classList.remove('hidden');
-            setTimeout(function() { window.location.href = APP_URL + '?page=planner&token=' + res.token; }, 2500);
+            setTimeout(function() { window.location.href = APP_URL + '?page=dashboard&token=' + res.token; }, 2500);
           } else showAlert('alertBox3', res.message || 'Registration failed.', 'error');
         }).catch(function() { setLoading(false); showAlert('alertBox3', 'Network error.', 'error'); });
     }
@@ -212,7 +221,6 @@
     }
 
     function backToEmail() { document.getElementById('stepOTP').classList.add('hidden'); document.getElementById('stepEmail').classList.remove('hidden'); }
-    function goToLogin() { window.location.href = APP_URL; }
   </script>
 </body>
 </html>

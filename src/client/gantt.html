@@ -1,0 +1,454 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <style><?!= include('client/style'); ?></style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Meeting Gantt - GR Reporting System</title>
+  <style>
+    .gantt-page-header { background: linear-gradient(135deg,#1a2a4a 0%,#2c3e6b 100%); color:#fff; border-radius: var(--radius); padding:16px; margin-bottom:14px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+    .gantt-page-title { font-size:18px; font-weight:800; }
+    .gantt-date-range { font-size:12px; opacity:0.8; margin-top:3px; }
+
+    /* -- Filter Bar -- */
+    .gantt-filters { background:#fff; border-radius: var(--radius); box-shadow: var(--shadow); padding:12px 14px; margin-bottom:14px; }
+    .filter-row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+    .filter-search-wrap { flex:1; min-width:160px; position:relative; }
+    .filter-search-wrap::before { content:''; position:absolute; left:10px; top:50%; transform:translateY(-50%); font-size:13px; pointer-events:none; }
+    .filter-input { width:100%; padding:9px 10px 9px 30px; border:1.5px solid var(--border); border-radius:8px; font-size:13px; box-sizing:border-box; outline:none; }
+    .filter-input:focus { border-color: var(--primary); }
+    .filter-select { padding:9px 10px; border:1.5px solid var(--border); border-radius:8px; font-size:13px; background:#fff; outline:none; cursor:pointer; min-width:130px; }
+    .filter-select:focus { border-color: var(--primary); }
+    .status-pills { display:flex; gap:4px; flex-shrink:0; }
+    .status-pill { padding:7px 14px; border-radius:20px; border:1.5px solid var(--border); background:#f9fafb; font-size:12px; font-weight:700; color:#374151; cursor:pointer; transition:all .15s; white-space:nowrap; }
+    .status-pill:hover { border-color:var(--primary); color:var(--primary); }
+    .status-pill.active { background:var(--primary); border-color:var(--primary); color:#fff; }
+    .status-pill.active-overdue { background:#e74c3c; border-color:#e74c3c; color:#fff; }
+    .filter-meta { margin-top:8px; font-size:12px; color:var(--muted); display:flex; align-items:center; gap:8px; }
+    .filter-count { font-weight:700; color:var(--primary); }
+    .filter-clear { color:var(--primary); cursor:pointer; text-decoration:underline; font-size:12px; }
+
+    /* -- Legend -- */
+    .gantt-legend { display:flex; flex-wrap:wrap; gap:8px 16px; margin-bottom:12px; }
+    .gantt-legend-item { display:flex; align-items:center; gap:6px; font-size:12px; font-weight:700; color:#374151; }
+    .gantt-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+    .gantt-dot.conducted  { background:#27ae60; }
+    .gantt-dot.not-done   { background:#e67e22; }
+    .gantt-dot.upcoming   { background:#fff; border:2.5px solid #3498db; }
+    .gantt-dot.overdue    { background:#e74c3c; }
+
+    /* -- Gantt Grid -- */
+    .gantt-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; background:#fff; border-radius: var(--radius); box-shadow: var(--shadow); }
+    .gantt-inner { min-width:560px; }
+    .gantt-header-row { display:flex; border-bottom:2px solid var(--border); position:sticky; top:0; z-index:2; }
+    .gantt-label-col { width:140px; min-width:140px; flex-shrink:0; background:#f9fafb; border-right:1px solid var(--border); padding:8px 10px; font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.4px; }
+    .gantt-weeks-row { flex:1; display:flex; }
+    .gantt-week-col { flex:1; min-width:42px; text-align:center; padding:6px 2px; font-size:10px; font-weight:700; color:var(--muted); border-right:1px solid #f3f4f6; background:#f9fafb; }
+    .gantt-week-col.is-today-week { background:#eff6ff; color:#1e3a5f; }
+    .gantt-week-col.is-month-start { background:#f0f4ff; color:#1e3a5f; border-left:2px solid #3498db; }
+
+    .gantt-row { display:flex; border-bottom:1px solid #f3f4f6; min-height:52px; align-items:center; }
+    .gantt-row:hover { background:#fafafa; }
+    .gantt-row.chain-active { border-left:3px solid #3498db; }
+    .gantt-row.chain-completed { border-left:3px solid #27ae60; }
+    .gantt-row.chain-overdue { border-left:3px solid #e74c3c; }
+    .gantt-row-label { width:140px; min-width:140px; flex-shrink:0; padding:8px 10px; border-right:1px solid var(--border); }
+    .gantt-row-name { font-size:12px; font-weight:700; color:#1a1a2e; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .gantt-row-purpose { font-size:10px; color:var(--muted); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .gantt-row-badge { display:inline-block; margin-top:4px; padding:2px 7px; border-radius:10px; font-size:9px; font-weight:800; letter-spacing:0.3px; }
+    .badge-active { background:#eff6ff; color:#1e3a5f; }
+    .badge-completed { background:#f0fdf4; color:#166534; }
+    .badge-overdue { background:#fef2f2; color:#991b1b; }
+    .gantt-row-track { flex:1; position:relative; height:52px; }
+
+    .gantt-month-header { background:#f0f4ff; border-bottom:1px solid #c7d7f5; display:flex; }
+    .gantt-month-label-cell { width:140px; min-width:140px; flex-shrink:0; padding:4px 10px; font-size:10px; font-weight:700; color:var(--muted); border-right:1px solid var(--border); }
+    .gantt-month-cells { flex:1; display:flex; }
+    .gantt-month-cell { flex:1; min-width:42px; text-align:center; padding:3px 2px; font-size:9px; font-weight:700; color:#1e3a5f; border-right:1px solid #e2e8f0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+    .gantt-empty { text-align:center; padding:40px 16px; color:var(--muted); font-size:13px; }
+    .gantt-empty-icon { font-size:32px; margin-bottom:10px; }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <button class="hamburger-btn" onclick="toggleSidebar()">&#9776;</button>
+    <span class="logo">Meeting Gantt</span>
+    <span class="nav-user" id="navUser"></span>
+  </nav>
+  <div class="app-layout">
+    <div id="sidebarMount"></div>
+    <div class="main-content">
+
+      <!-- Page Header -->
+      <div class="gantt-page-header">
+        <div>
+          <div class="gantt-page-title">Meeting Gantt</div>
+          <div class="gantt-date-range" id="ganttDateRange">Loading...</div>
+        </div>
+        <a href="#" onclick="goTo('planner');return false;" class="btn btn-outline" style="background:rgba(255,255,255,0.15);color:#fff;border-color:rgba(255,255,255,0.4);font-size:13px;">Planner</a>
+      </div>
+
+      <!-- Filter Bar -->
+      <div class="gantt-filters">
+        <div class="filter-row">
+          <div class="filter-search-wrap">
+            <input type="text" id="ganttSearch" class="filter-input" placeholder="Search stakeholder..." oninput="applyFilters()">
+          </div>
+          <select id="ganttMonth" class="filter-select" onchange="applyFilters()">
+            <option value="">All Months</option>
+          </select>
+          <div class="status-pills">
+            <button class="status-pill active" data-s="all" onclick="setStatusFilter(this,'all')">All</button>
+            <button class="status-pill" data-s="conducted" onclick="setStatusFilter(this,'conducted')">Conducted</button>
+            <button class="status-pill" data-s="not_conducted" onclick="setStatusFilter(this,'not_conducted')">Not Done</button>
+          </div>
+        </div>
+        <div class="filter-meta" id="filterMeta" style="display:none;">
+          <span>Showing <span class="filter-count" id="filterCount">0</span> chains</span>
+          <span class="filter-clear" onclick="clearFilters()">Clear filters</span>
+        </div>
+      </div>
+
+      <!-- Legend -->
+      <div class="gantt-legend">
+        <div class="gantt-legend-item"><div class="gantt-dot conducted"></div>Conducted</div>
+        <div class="gantt-legend-item"><div class="gantt-dot not-done"></div>Not Done</div>
+      </div>
+
+      <div id="ganttSpinner" style="text-align:center;padding:30px;">
+        <div class="spinner" style="margin:0 auto;"></div>
+        <p class="text-muted mt-8">Loading Gantt...</p>
+      </div>
+      <div id="ganttWrap" class="gantt-wrap" style="display:none;">
+        <div class="gantt-inner" id="ganttInner"></div>
+      </div>
+      <div id="ganttEmpty" class="gantt-empty hidden">
+        <div class="gantt-empty-icon"></div>
+        <div>No meetings found for the selected filters.</div>
+        <a href="#" onclick="goTo('planner');return false;" style="color:var(--primary);font-size:13px;">Plan meetings in Planner -></a>
+      </div>
+
+    </div>
+  </div>
+  <script><?!= include('client/common'); ?></script>
+  <script>
+    var session = requireAuth();
+    renderSidebar('gantt');
+
+    var today = new Date(); today.setHours(0,0,0,0);
+    var allData = [];
+    var statusFilter = 'all';
+
+    // -- Helpers --
+    function addDays(d, n) { var r = new Date(d); r.setDate(r.getDate() + n); return r; }
+    function isoDate(d) { return d.toISOString().split('T')[0]; }
+    function shortDate(d) { return d.toLocaleDateString('en-IN', { day:'numeric', month:'short' }); }
+    function monthKey(dateStr) {
+      if (!dateStr) return null;
+      var d = new Date(dateStr); if (isNaN(d)) return null;
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    }
+    function monthLabel(key) {
+      var p = key.split('-');
+      var names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      return names[parseInt(p[1]) - 1] + ' ' + p[0];
+    }
+    function snapToMonday(d) {
+      var r = new Date(d);
+      var dow = r.getDay();
+      r.setDate(r.getDate() - ((dow + 6) % 7));
+      return r;
+    }
+
+    // -- Chain status --
+    function chainStatus(chain) {
+      var hasPlanned = chain.meetings.some(function(m) { return m.status === 'planned'; });
+      if (!hasPlanned) return 'completed';
+      var hasOverdue = chain.meetings.some(function(m) {
+        if (m.status !== 'planned') return false;
+        var d = m.meeting_date ? new Date(m.meeting_date) : null;
+        if (!d) return false; d.setHours(0,0,0,0);
+        return d < today;
+      });
+      return hasOverdue ? 'overdue' : 'active';
+    }
+
+    // -- Populate month dropdown --
+    function populateMonths(meetings) {
+      var monthSet = {};
+      meetings.forEach(function(m) {
+        var mk = monthKey(m.meeting_date);
+        if (mk) monthSet[mk] = true;
+      });
+      var months = Object.keys(monthSet).sort();
+      var sel = document.getElementById('ganttMonth');
+      months.forEach(function(mk) {
+        var opt = document.createElement('option');
+        opt.value = mk; opt.textContent = monthLabel(mk);
+        sel.appendChild(opt);
+      });
+    }
+
+    // -- Apply filters --
+    function applyFilters() {
+      var search = document.getElementById('ganttSearch').value.trim().toLowerCase();
+      var month  = document.getElementById('ganttMonth').value;
+
+      // Build chains
+      var chains = {};
+      allData.forEach(function(m) {
+        var cid = m.chain_id || m.plan_id;
+        if (!chains[cid]) chains[cid] = [];
+        chains[cid].push(m);
+      });
+      var chainList = Object.keys(chains).map(function(cid) {
+        var arr = chains[cid].slice().sort(function(a,b){ return new Date(a.meeting_date||0)-new Date(b.meeting_date||0); });
+        return { cid:cid, meetings:arr, earliest:new Date(arr[0].meeting_date||today) };
+      });
+
+      // Filter: search
+      if (search) {
+        chainList = chainList.filter(function(c) {
+          return c.meetings.some(function(m) {
+            return (m.stakeholder_name||'').toLowerCase().indexOf(search) >= 0
+                || (m.meeting_purpose||'').toLowerCase().indexOf(search) >= 0;
+          });
+        });
+      }
+
+      // Filter: month -> also change date range to show that month
+      var rStart, rEnd;
+      if (month) {
+        var p = month.split('-');
+        var yr = parseInt(p[0]), mo = parseInt(p[1]) - 1;
+        var mFirst = new Date(yr, mo, 1);
+        var mLast  = new Date(yr, mo + 1, 0);
+        chainList = chainList.filter(function(c) {
+          return c.meetings.some(function(m) { return monthKey(m.meeting_date) === month; });
+        });
+        // Range: Monday before month start, Sunday 1 week after month end
+        rStart = snapToMonday(mFirst);
+        rEnd   = new Date(mLast); rEnd.setDate(rEnd.getDate() + (7 - rEnd.getDay()) % 7 + 7);
+      } else {
+        rStart = snapToMonday(addDays(today, -45));
+        rEnd   = addDays(today, 60);
+      }
+
+      // Filter: status
+      if (statusFilter !== 'all') {
+        chainList = chainList.filter(function(c) {
+          return c.meetings.some(function(m) { return m.status === statusFilter; });
+        });
+      }
+
+      chainList.sort(function(a,b){ return a.earliest - b.earliest; });
+
+      // Update filter meta
+      var hasFilter = search || month || statusFilter !== 'all';
+      var meta = document.getElementById('filterMeta');
+      if (hasFilter) {
+        document.getElementById('filterCount').textContent = chainList.length;
+        meta.style.display = 'flex';
+      } else {
+        meta.style.display = 'none';
+      }
+
+      document.getElementById('ganttDateRange').textContent = shortDate(rStart) + ' - ' + shortDate(rEnd);
+      renderGantt(chainList, rStart, rEnd);
+    }
+
+    function setStatusFilter(btn, val) {
+      statusFilter = val;
+      document.querySelectorAll('.status-pill').forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      applyFilters();
+    }
+
+    function clearFilters() {
+      document.getElementById('ganttSearch').value = '';
+      document.getElementById('ganttMonth').value = '';
+      statusFilter = 'all';
+      document.querySelectorAll('.status-pill').forEach(function(b){ b.classList.remove('active'); });
+      document.querySelector('[data-s="all"]').classList.add('active');
+      applyFilters();
+    }
+
+    // -- Render Gantt --
+    function renderGantt(chainList, rangeStart, rangeEnd) {
+      var wrap  = document.getElementById('ganttWrap');
+      var inner = document.getElementById('ganttInner');
+      var empty = document.getElementById('ganttEmpty');
+
+      if (!chainList.length) {
+        wrap.style.display = 'none';
+        empty.classList.remove('hidden');
+        return;
+      }
+      empty.classList.add('hidden');
+      wrap.style.display = '';
+
+      // Build weeks array
+      var weeks = [];
+      var cur = new Date(rangeStart);
+      while (cur <= rangeEnd) { weeks.push(new Date(cur)); cur.setDate(cur.getDate()+7); }
+      var totalWeeks = weeks.length;
+
+      function weekIndexForDate(d) {
+        for (var i = 0; i < weeks.length; i++) {
+          if (d >= weeks[i] && d <= addDays(weeks[i], 6)) return i;
+        }
+        return d < weeks[0] ? -1 : weeks.length;
+      }
+
+      function dotStyle(m) {
+        var mDate = m.meeting_date ? new Date(m.meeting_date) : null;
+        if (mDate) mDate.setHours(0,0,0,0);
+        if (m.status === 'conducted')    return { fill:'#27ae60', stroke:'none' };
+        if (m.status === 'not_conducted') return { fill:'#e67e22', stroke:'none' };
+        if (mDate && mDate < today)       return { fill:'#e74c3c', stroke:'none' };
+        return { fill:'#fff', stroke:'#3498db' };
+      }
+
+      // -- Month sub-header --
+      var monthCells = {};
+      weeks.forEach(function(wk, wi) {
+        var mk = monthKey(isoDate(wk));
+        if (!monthCells[mk]) monthCells[mk] = { start: wi, count: 0 };
+        monthCells[mk].count++;
+      });
+      var monthHeaderCells = '';
+      Object.keys(monthCells).sort().forEach(function(mk) {
+        var span = monthCells[mk].count;
+        monthHeaderCells += '<div class="gantt-month-cell" style="flex:' + span + ';min-width:' + (span*42) + 'px;">' + monthLabel(mk) + '</div>';
+      });
+      var monthHeaderHtml = '<div class="gantt-month-header">'
+        + '<div class="gantt-month-label-cell">Month</div>'
+        + '<div class="gantt-month-cells">' + monthHeaderCells + '</div>'
+        + '</div>';
+
+      // -- Week header --
+      var headerWeeks = '';
+      weeks.forEach(function(wk) {
+        var isNow  = wk <= today && addDays(wk, 6) >= today;
+        var mkThis = monthKey(isoDate(wk));
+        var mkPrev = weeks.indexOf(wk) > 0 ? monthKey(isoDate(weeks[weeks.indexOf(wk)-1])) : null;
+        var isMStart = mkThis !== mkPrev;
+        headerWeeks += '<div class="gantt-week-col'
+          + (isNow ? ' is-today-week' : '')
+          + (isMStart ? ' is-month-start' : '')
+          + '">' + shortDate(wk) + '</div>';
+      });
+      var headerHtml = '<div class="gantt-header-row">'
+        + '<div class="gantt-label-col">Stakeholder</div>'
+        + '<div class="gantt-weeks-row">' + headerWeeks + '</div>'
+        + '</div>';
+
+      // -- Rows --
+      var bodyHtml = '';
+      chainList.forEach(function(chain) {
+        var st = chainStatus(chain);
+        var stClass = 'chain-' + st;
+        var badgeClass = st === 'completed' ? 'badge-completed' : st === 'overdue' ? 'badge-overdue' : 'badge-active';
+        var hasConducted = chain.meetings.some(function(m){ return m.status === 'conducted'; });
+        var hasNotDone   = chain.meetings.some(function(m){ return m.status === 'not_conducted'; });
+        var badgeText = hasConducted && hasNotDone ? 'Mixed' : hasConducted ? 'Conducted' : 'Not Done';
+
+        var label = chain.meetings[0];
+        var rowName    = (label.stakeholder_name || '-').substring(0, 22);
+        var rowPurpose = (label.meeting_purpose  || '').substring(0, 24);
+
+        var svgH = 52, cy = svgH / 2;
+
+        var dotsInRange = [];
+        chain.meetings.forEach(function(m) {
+          var d = m.meeting_date ? new Date(m.meeting_date) : null;
+          if (!d) return; d.setHours(0,0,0,0);
+          var wi = weekIndexForDate(d);
+          if (wi < 0 || wi >= weeks.length) return;
+          var x = (wi + 0.5) * (100 / totalWeeks);
+          dotsInRange.push({ x:x, m:m });
+        });
+        dotsInRange.sort(function(a,b){ return a.x - b.x; });
+
+        var svg = '<svg width="100%" height="' + svgH + '" viewBox="0 0 100 ' + svgH + '" preserveAspectRatio="none" style="position:absolute;top:0;left:0;">';
+        if (dotsInRange.length > 1) {
+          var pts = dotsInRange.map(function(d){ return d.x + ',' + cy; }).join(' ');
+          svg += '<polyline points="' + pts + '" fill="none" stroke="#cbd5e1" stroke-width="1.5" vector-effect="non-scaling-stroke"/>';
+        }
+        var todayWi = weekIndexForDate(today);
+        if (todayWi >= 0 && todayWi < weeks.length) {
+          var todayPct = (today - rangeStart) / (rangeEnd - rangeStart) * 100;
+          svg += '<line x1="' + todayPct + '" y1="2" x2="' + todayPct + '" y2="' + (svgH-2) + '" stroke="#3498db" stroke-width="1" stroke-dasharray="3 2" vector-effect="non-scaling-stroke" opacity="0.5"/>';
+        }
+        svg += '</svg>';
+
+        var dotsHtml = '';
+        dotsInRange.forEach(function(dp) {
+          var ds = dotStyle(dp.m);
+          var bStyle = ds.stroke !== 'none' ? 'border:2.5px solid ' + ds.stroke + ';' : '';
+          var tip = esc(dp.m.stakeholder_name||'') + ' - ' + fmtDate(dp.m.meeting_date);
+          dotsHtml += '<div title="' + tip + '" style="position:absolute;left:calc(' + dp.x + '% - 7px);top:50%;transform:translateY(-50%);width:14px;height:14px;border-radius:50%;background:' + ds.fill + ';' + bStyle + 'box-shadow:0 1px 4px rgba(0,0,0,0.18);cursor:default;z-index:1;"></div>';
+        });
+
+        var dividers = '';
+        weeks.forEach(function(wk, wi) {
+          var isNow2 = wk <= today && addDays(wk, 6) >= today;
+          dividers += '<div style="flex:1;min-width:42px;border-right:1px solid #f3f4f6;height:100%;' + (isNow2 ? 'background:#f0f7ff;' : '') + '"></div>';
+        });
+
+        bodyHtml += '<div class="gantt-row ' + stClass + '">'
+          + '<div class="gantt-row-label">'
+          + '<div class="gantt-row-name">' + esc(rowName) + '</div>'
+          + '<div class="gantt-row-purpose">' + esc(rowPurpose) + '</div>'
+          + '<span class="gantt-row-badge ' + badgeClass + '">' + badgeText + '</span>'
+          + '</div>'
+          + '<div class="gantt-row-track">'
+          + '<div style="display:flex;height:100%;position:absolute;top:0;left:0;right:0;">' + dividers + '</div>'
+          + svg + dotsHtml
+          + '</div>'
+          + '</div>';
+      });
+
+      inner.innerHTML = monthHeaderHtml + headerHtml + '<div class="gantt-body">' + bodyHtml + '</div>';
+    }
+
+    // -- Load data --
+    fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'getMyMeetings', token: grToken() }) })
+      .then(function(r){ return r.json(); }).then(function(res) {
+        document.getElementById('ganttSpinner').style.display = 'none';
+        if (!res.success || !res.data || !res.data.length) {
+          document.getElementById('ganttEmpty').classList.remove('hidden');
+          document.getElementById('ganttEmpty').querySelector('div').textContent = 'No meetings found.';
+          return;
+        }
+        // Normalize Meetings sheet fields to match Gantt expectations
+        allData = res.data
+          .filter(function(m) { return m.meeting_conducted === 'YES' || m.meeting_conducted === 'NO'; })
+          .filter(function(m) { return m.date; })
+          .map(function(m) {
+            return {
+              meeting_date: m.date,
+              stakeholder_name: m.stakeholder_name || '',
+              stakeholder_type: m.stakeholder_type || '',
+              meeting_purpose: m.meeting_purpose || '',
+              status: m.meeting_conducted === 'YES' ? 'conducted' : 'not_conducted',
+              chain_id: (m.stakeholder_name || '').trim().toLowerCase() || m.submission_id,
+              plan_id: m.submission_id
+            };
+          });
+        if (!allData.length) {
+          document.getElementById('ganttEmpty').classList.remove('hidden');
+          document.getElementById('ganttEmpty').querySelector('div').textContent = 'No conducted meetings found.';
+          return;
+        }
+        populateMonths(allData);
+        applyFilters();
+      }).catch(function() {
+        document.getElementById('ganttSpinner').style.display = 'none';
+        document.getElementById('ganttEmpty').classList.remove('hidden');
+        document.getElementById('ganttEmpty').innerHTML = '<div class="gantt-empty-icon">!</div><div>Network error. Please refresh.</div>';
+      });
+  </script>
+</body>
+</html>

@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <style><?!= include('client/style'); ?></style>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>GR Reporting System Educate Girls</title>
-  <style><?!= include('client/style'); ?>
+  <style>
+  body { padding-top: 0; }
   .login-left {
-    background-image: url('<?!= include("client/eglogo") ?>');
+    background-image: url('eg-logo.webp');
     background-size: cover;
     background-position: center;
   }
@@ -21,12 +23,10 @@
   </div>
 
   <div class="login-body">
-
-    <!-- Left panel: image with red overlay + branding -->
     <div class="login-left">
       <div class="login-left-overlay"></div>
       <div class="login-left-content">
-        <div class="eg-logo-wrap"><img src="<?!= include('client/eglogo') ?>" alt="Educate Girls"></div>
+        <div class="eg-logo-wrap"><img src="eg-logo.webp" alt="Educate Girls"></div>
         <h1>GR Reporting System</h1>
         <p>Stakeholder Meeting Records<br>State and District Teams</p>
         <div class="dept-badge">Educate Girls</div>
@@ -53,7 +53,6 @@
       </div>
     </div>
 
-    <!-- Right panel: login form -->
     <div class="login-right">
       <div class="login-box">
         <h2>Sign In</h2>
@@ -69,7 +68,7 @@
           </div>
           <button class="btn btn-primary" id="sendOtpBtn" onclick="requestOTP()">Send OTP</button>
           <div class="divider"></div>
-          <p class="text-center text-muted">New user? <a href="#" onclick="goToSignup()" style="color:var(--primary); font-weight:600;">Create Account</a></p>
+          <p class="text-center text-muted">New user? <a href="#" onclick="window.location.href=APP_URL+'?page=register';return false;" style="color:var(--primary); font-weight:600;">Create Account</a></p>
         </div>
 
         <div id="stepOTP" class="hidden">
@@ -102,7 +101,6 @@
   function showAlert(msg, type) { document.getElementById('alertBox').innerHTML = '<div class="alert alert-' + type + '">' + msg + '</div>'; }
   function clearAlert() { document.getElementById('alertBox').innerHTML = ''; }
   function setLoading(on) { document.getElementById('loadingSpinner').classList.toggle('hidden', !on); }
-  function goToSignup() { window.location.href = APP_URL + '?page=register'; }
 
   function requestOTP() {
     clearAlert();
@@ -134,9 +132,14 @@
         setLoading(false);
         if (res.success) {
           clearInterval(resendTimer);
-          if (res.status === 'unregistered') window.location.href = APP_URL + '?page=register&token=' + res.token + '&email=' + encodeURIComponent(currentEmail);
-          else if (res.status === 'pending') window.location.href = APP_URL + '?page=pending&token=' + res.token;
-          else window.location.href = APP_URL + '?page=planner&token=' + res.token;
+          if (res.status === 'active') {
+            var sess = res.user ? { email: res.user.email, role: res.user.role, status: 'active', full_name: res.user.full_name || '', district: res.user.district || '', designation: res.user.designation || '', unit: res.user.unit || '' } : { email: currentEmail, role: res.role || 'field', status: 'active' };
+            window.location.href = APP_URL + '?page=dashboard&token=' + res.token;
+          } else if (res.status === 'unregistered') {
+            window.location.href = APP_URL + '?page=register&token=' + res.token + '&email=' + encodeURIComponent(currentEmail);
+          } else if (res.status === 'pending') {
+            window.location.href = APP_URL + '?page=pending&token=' + res.token;
+          }
         } else { document.getElementById('verifyOtpBtn').disabled = false; showAlert(res.message || 'Incorrect OTP.', 'error'); }
       }).catch(function() { setLoading(false); document.getElementById('verifyOtpBtn').disabled = false; showAlert('Network error.', 'error'); });
   }
