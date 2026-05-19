@@ -143,9 +143,6 @@
 
     if (!viewerToken) {
       session = requireAuth();
-      if (session && session.role !== 'state' && session.role !== 'admin') {
-        window.location.href = 'dashboard.html';
-      }
       renderSidebar('state');
       document.getElementById('myLinkBar').style.display = 'flex';
     } else {

@@ -267,26 +267,29 @@ function doPost(e) {
     }
 
     if (action === 'getStateData') {
-      var stateUser = (session && session.status === 'active') ? session : null;
-      if (!stateUser && params.viewer_token) {
+      // Viewer token path
+      if (params.viewer_token) {
         var vtUser = getUserByViewerToken(params.viewer_token);
-        if (vtUser && (vtUser.role === 'state' || vtUser.role === 'admin')) {
-          stateUser = vtUser;
-        }
+        if (!vtUser) return respond({ success: false, message: 'Invalid or expired viewer link.' });
+        var allMtgs = getAllMeetings();
+        return respond({ success: true, data: allMtgs, viewer_name: vtUser.full_name || vtUser.email || '' });
       }
-      if (!stateUser) return respond({ success: false, message: 'Access denied. Invalid or expired viewer link.' });
-      if (stateUser.role !== 'state' && stateUser.role !== 'admin') return respond({ success: false, message: 'State or admin access required.' });
+      // Session path — re-read role fresh from Users sheet (not session cache)
+      if (!session || session.status !== 'active') return respond({ success: false, message: 'Not logged in.' });
+      var freshUser = getUserByEmail(session.email);
+      if (!freshUser) return respond({ success: false, message: 'User not found.' });
+      if (freshUser.role !== 'state' && freshUser.role !== 'admin') return respond({ success: false, message: 'State or admin access required.' });
       var allMtgs = getAllMeetings();
-      return respond({ success: true, data: allMtgs, viewer_name: stateUser.full_name || stateUser.email || '' });
+      return respond({ success: true, data: allMtgs, viewer_name: freshUser.full_name || freshUser.email || '' });
     }
 
     if (action === 'generateViewerToken') {
       if (!session || session.status !== 'active') return respond({ success: false, message: 'Not authorized.' });
-      // Allow state/admin to generate their own token, or admin to generate for others
-      var targetEmail = (params.email && session.role === 'admin') ? params.email : session.email;
-      if (session.role !== 'state' && session.role !== 'admin') return respond({ success: false, message: 'State or admin access required.' });
-      var targetUser = getUserByEmail(targetEmail);
-      if (!targetUser) return respond({ success: false, message: 'User not found.' });
+      // Re-read role fresh from Users sheet
+      var freshUser = getUserByEmail(session.email);
+      if (!freshUser) return respond({ success: false, message: 'User not found.' });
+      var targetEmail = (params.email && freshUser.role === 'admin') ? params.email : session.email;
+      if (freshUser.role !== 'state' && freshUser.role !== 'admin') return respond({ success: false, message: 'State or admin access required.' });
       var vt = getOrCreateViewerToken(targetEmail);
       var viewerUrl = SITE_URL + '/state.html?vt=' + vt;
       return respond({ success: true, token: vt, url: viewerUrl });
