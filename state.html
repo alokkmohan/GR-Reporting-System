@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>State Overview — GR Reporting</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .filter-bar { display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; margin-bottom:16px; background:#fff; border-radius:var(--radius); box-shadow:var(--shadow); padding:14px 16px; }
+    .filter-group { display:flex; flex-direction:column; gap:4px; }
+    .filter-label { font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.4px; }
+    .filter-sel { padding:7px 10px; border:1.5px solid var(--border); border-radius:8px; font-size:13px; background:#fff; min-width:130px; }
+    .filter-sel:focus { outline:none; border-color:var(--primary); }
+    .stat-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:10px; margin-bottom:16px; }
+    .stat-card { background:#fff; border-radius:var(--radius); box-shadow:var(--shadow); padding:14px 16px; }
+    .stat-num { font-size:28px; font-weight:900; color:var(--primary); line-height:1; }
+    .stat-label { font-size:10px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:0.4px; margin-top:4px; }
+    .section-card { background:#fff; border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; margin-bottom:14px; }
+    .mtable { width:100%; border-collapse:collapse; font-size:13px; }
+    .mtable th { background:#f9fafb; padding:9px 12px; text-align:left; font-weight:700; border-bottom:2px solid var(--border); font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.4px; white-space:nowrap; }
+    .mtable td { padding:10px 12px; border-bottom:1px solid #f3f4f6; vertical-align:middle; }
+    .mtable tr:last-child td { border-bottom:none; }
+    .mtable tr.data-row:hover td { background:#fafafa; cursor:pointer; }
+    .row-conducted td:first-child { border-left:3px solid var(--success); }
+    .row-not-done td:first-child { border-left:3px solid var(--warning); }
+    .st-conducted { background:#ecfdf5; color:#065f46; font-size:11px; font-weight:700; padding:3px 9px; border-radius:10px; white-space:nowrap; display:inline-block; }
+    .st-not-done { background:#fef3c7; color:#92400e; font-size:11px; font-weight:700; padding:3px 9px; border-radius:10px; white-space:nowrap; display:inline-block; }
+    .sname { font-weight:700; font-size:13px; }
+    .stype { font-size:11px; color:var(--muted); }
+    .date-col { font-size:12px; font-weight:700; white-space:nowrap; }
+    .view-btn { padding:5px 10px; border:1.5px solid var(--primary); border-radius:6px; font-size:11px; font-weight:700; color:var(--primary); background:#fff; cursor:pointer; white-space:nowrap; }
+    .view-btn:hover { background:var(--primary); color:#fff; }
+    .empty-row td { text-align:center; padding:32px; color:var(--muted); font-size:13px; }
+    .detail-panel { background:#f9fafb; border-top:1px solid var(--border); padding:14px 16px; }
+    .detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px 16px; margin-bottom:12px; }
+    .detail-item label { font-size:10px; font-weight:700; text-transform:uppercase; color:var(--muted); letter-spacing:0.3px; display:block; margin-bottom:2px; }
+    .detail-item span { font-size:13px; color:#374151; line-height:1.4; }
+    .detail-full { grid-column:1/-1; }
+    .mom-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; background:var(--primary); color:#fff; border:none; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; text-decoration:none; margin-top:4px; }
+    .mom-btn:hover { background:#7b1f1a; }
+    .count-bar { font-size:12px; font-weight:700; color:var(--muted); margin-bottom:10px; }
+    .viewer-banner { background:linear-gradient(135deg,#1e3a5f 0%,#2563eb 100%); color:#fff; padding:12px 20px; border-radius:var(--radius); margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+    .viewer-banner-name { font-size:16px; font-weight:800; }
+    .viewer-banner-sub { font-size:12px; opacity:0.8; margin-top:2px; }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <button class="hamburger-btn" id="hamburgerBtn" onclick="toggleSidebar()">&#9776;</button>
+    <span class="logo">State Overview</span>
+    <span class="nav-user" id="navUser"></span>
+  </nav>
+  <div class="app-layout">
+    <div id="sidebarMount"></div>
+    <div class="main-content">
+
+      <div id="viewerBanner" style="display:none;" class="viewer-banner">
+        <div>
+          <div class="viewer-banner-name" id="viewerName">State Overview</div>
+          <div class="viewer-banner-sub">Read-only view &middot; GR Reporting System</div>
+        </div>
+        <span style="font-size:11px;background:rgba(255,255,255,0.2);padding:3px 10px;border-radius:10px;font-weight:700;">VIEWER MODE</span>
+      </div>
+
+      <div id="loadingSpinner"><div class="spinner"></div></div>
+      <div id="alertBox"></div>
+
+      <div id="mainContent" style="display:none;">
+        <!-- Stats -->
+        <div class="stat-row" id="statRow"></div>
+
+        <!-- Filters -->
+        <div class="filter-bar">
+          <div class="filter-group">
+            <span class="filter-label">District</span>
+            <select id="fDistrict" class="filter-sel" onchange="applyFilters()"><option value="">All Districts</option></select>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">Unit / Team</span>
+            <select id="fUnit" class="filter-sel" onchange="applyFilters()"><option value="">All Units</option></select>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">Month</span>
+            <select id="fMonth" class="filter-sel" onchange="applyFilters()">
+              <option value="">All Months</option>
+              <option value="1">January</option><option value="2">February</option>
+              <option value="3">March</option><option value="4">April</option>
+              <option value="5">May</option><option value="6">June</option>
+              <option value="7">July</option><option value="8">August</option>
+              <option value="9">September</option><option value="10">October</option>
+              <option value="11">November</option><option value="12">December</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">Year</span>
+            <select id="fYear" class="filter-sel" onchange="applyFilters()"><option value="">All Years</option></select>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">Status</span>
+            <select id="fStatus" class="filter-sel" onchange="applyFilters()">
+              <option value="">All</option>
+              <option value="YES">Conducted</option>
+              <option value="NO">Not Done</option>
+            </select>
+          </div>
+          <button class="btn btn-outline" style="padding:7px 14px;font-size:12px;align-self:flex-end;" onclick="clearFilters()">Clear</button>
+        </div>
+
+        <div class="count-bar" id="countBar"></div>
+
+        <div class="section-card">
+          <table class="mtable">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>District</th>
+                <th>Staff</th>
+                <th>Stakeholder</th>
+                <th>Purpose</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="meetingsTbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="common.js"></script>
+  <script>
+    var viewerToken = new URLSearchParams(window.location.search).get('vt') || '';
+    var session = null;
+    var allData = [];
+    var openRowId = null;
+
+    if (!viewerToken) {
+      session = requireAuth();
+      if (session && session.role !== 'state' && session.role !== 'admin') {
+        window.location.href = 'dashboard.html';
+      }
+      renderSidebar('state');
+    } else {
+      // Viewer token mode — no OTP, no sidebar
+      document.getElementById('hamburgerBtn').style.display = 'none';
+      document.getElementById('viewerBanner').style.display = '';
+    }
+
+    var payload = viewerToken
+      ? { action: 'getStateData', viewer_token: viewerToken }
+      : { action: 'getStateData', token: grToken() };
+
+    fetch(APP_URL, { method:'POST', body: JSON.stringify(payload) })
+      .then(function(r) { return r.json(); }).then(function(res) {
+        document.getElementById('loadingSpinner').classList.add('hidden');
+        if (!res.success) {
+          document.getElementById('alertBox').innerHTML = '<div class="alert alert-error">' + esc(res.message || 'Access denied.') + '</div>';
+          return;
+        }
+        if (res.viewer_name) document.getElementById('viewerName').textContent = res.viewer_name;
+        allData = (res.data || []).sort(function(a,b) { return new Date(b.date||0) - new Date(a.date||0); });
+        buildFilterOptions();
+        applyFilters();
+        document.getElementById('mainContent').style.display = '';
+      }).catch(function() {
+        document.getElementById('loadingSpinner').classList.add('hidden');
+        document.getElementById('alertBox').innerHTML = '<div class="alert alert-error">Network error.</div>';
+      });
+
+    function buildFilterOptions() {
+      var districts = [], units = [], years = [];
+      allData.forEach(function(m) {
+        if (m.district && districts.indexOf(m.district) === -1) districts.push(m.district);
+        if (m.unit && units.indexOf(m.unit) === -1) units.push(m.unit);
+        var y = m.date ? new Date(m.date).getFullYear() : null;
+        if (y && years.indexOf(y) === -1) years.push(y);
+      });
+      districts.sort(); units.sort(); years.sort(function(a,b){return b-a;});
+      var dSel = document.getElementById('fDistrict');
+      districts.forEach(function(d) { dSel.innerHTML += '<option value="'+esc(d)+'">'+esc(d)+'</option>'; });
+      var uSel = document.getElementById('fUnit');
+      units.forEach(function(u) { uSel.innerHTML += '<option value="'+esc(u)+'">'+esc(u)+'</option>'; });
+      var ySel = document.getElementById('fYear');
+      years.forEach(function(y) { ySel.innerHTML += '<option value="'+y+'">'+y+'</option>'; });
+    }
+
+    function getFiltered() {
+      var d = document.getElementById('fDistrict').value;
+      var u = document.getElementById('fUnit').value;
+      var mo = document.getElementById('fMonth').value;
+      var yr = document.getElementById('fYear').value;
+      var st = document.getElementById('fStatus').value;
+      return allData.filter(function(m) {
+        if (d && m.district !== d) return false;
+        if (u && m.unit !== u) return false;
+        if (st && m.meeting_conducted !== st) return false;
+        if (mo || yr) {
+          var dt = m.date ? new Date(m.date) : null;
+          if (!dt) return false;
+          if (mo && String(dt.getMonth()+1) !== mo) return false;
+          if (yr && String(dt.getFullYear()) !== yr) return false;
+        }
+        return true;
+      });
+    }
+
+    function applyFilters() {
+      openRowId = null;
+      var filtered = getFiltered();
+      renderStats(filtered);
+      renderTable(filtered);
+    }
+
+    function clearFilters() {
+      ['fDistrict','fUnit','fMonth','fYear','fStatus'].forEach(function(id){ document.getElementById(id).value=''; });
+      applyFilters();
+    }
+
+    function renderStats(data) {
+      var conducted = data.filter(function(m){return m.meeting_conducted==='YES';}).length;
+      var notDone   = data.filter(function(m){return m.meeting_conducted==='NO';}).length;
+      var dists = [];
+      data.forEach(function(m){ if(m.district && dists.indexOf(m.district)===-1) dists.push(m.district); });
+      document.getElementById('statRow').innerHTML =
+        mkStat(data.length,'Total') +
+        mkStat(conducted,'Conducted','#065f46') +
+        mkStat(notDone,'Not Done','#92400e') +
+        mkStat(dists.length,'Districts');
+    }
+    function mkStat(n,label,color) {
+      return '<div class="stat-card"><div class="stat-num"'+(color?' style="color:'+color+'"':'')+'>'+n+'</div><div class="stat-label">'+label+'</div></div>';
+    }
+
+    function renderTable(data) {
+      document.getElementById('countBar').textContent = data.length + ' record' + (data.length!==1?'s':'');
+      if (!data.length) {
+        document.getElementById('meetingsTbody').innerHTML = '<tr class="empty-row"><td colspan="7">No meetings found for selected filters.</td></tr>';
+        return;
+      }
+      var html = '';
+      data.forEach(function(e, idx) {
+        var conducted = e.meeting_conducted === 'YES';
+        var rid = 'sr_' + idx;
+        html += '<tr class="data-row '+(conducted?'row-conducted':'row-not-done')+'" onclick="toggleDetail(\''+rid+'\')">'
+          + '<td><div class="date-col">'+fmtDate(e.date)+'</div></td>'
+          + '<td><span style="font-size:12px;font-weight:700;">'+esc(e.district||'-')+'</span></td>'
+          + '<td><span style="font-size:12px;">'+esc(e.staff_name||e.user_email||'-')+'</span></td>'
+          + '<td><div class="sname">'+esc(e.stakeholder_name||'-')+'</div><div class="stype">'+esc(e.stakeholder_type||'')+'</div></td>'
+          + '<td style="font-size:12px;color:#4b5563;">'+esc((e.meeting_purpose||'').substring(0,55)+(e.meeting_purpose&&e.meeting_purpose.length>55?'…':''))+'</td>'
+          + '<td>'+(conducted?'<span class="st-conducted">Conducted</span>':'<span class="st-not-done">Not Done</span>')+'</td>'
+          + '<td><button class="view-btn">View</button></td>'
+          + '</tr>';
+
+        html += '<tr id="'+rid+'" style="display:none;"><td colspan="7"><div class="detail-panel">';
+        html += '<div class="detail-grid">';
+        if (e.date) html += di('Date', fmtDate(e.date));
+        if (e.unit) html += di('Unit / Team', e.unit);
+        if (e.level_of_meeting) html += di('Level of Meeting', e.level_of_meeting);
+        if (e.conducted_by) html += di('Conducted By', e.conducted_by);
+        if (e.department_organisation) html += di('Department / Org', e.department_organisation);
+        if (e.reporting_month) di('Reporting Month', e.reporting_month);
+        if (conducted) {
+          if (e.key_discussion_points) html += '<div class="detail-item detail-full">'+dl('Key Discussion Points')+'<span>'+esc(e.key_discussion_points)+'</span></div>';
+          if (e.outcome) html += '<div class="detail-item detail-full">'+dl('Outcome / Result')+'<span>'+esc(e.outcome)+'</span></div>';
+          if (e.next_action) html += '<div class="detail-item detail-full">'+dl('Next Action')+'<span>'+esc(e.next_action)+(e.responsible_person?' &mdash; <em>Responsible: '+esc(e.responsible_person)+'</em>':'')+'</span></div>';
+          if (e.followup_date) html += di('Follow-up Date', fmtDate(e.followup_date));
+          if (e.remark) html += di('Relationship Status', e.remark);
+        } else {
+          if (e.reason_not_conducted) html += '<div class="detail-item detail-full">'+dl('Reason Not Conducted')+'<span>'+esc(e.reason_not_conducted)+'</span></div>';
+          if (e.followup_date) html += di('Rescheduled To', fmtDate(e.followup_date));
+        }
+        html += '</div>';
+        if (conducted && e.mom_doc_link) {
+          html += '<a href="'+esc(e.mom_doc_link)+'" target="_blank" class="mom-btn">'
+            + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>'
+            + 'View MoM Doc</a>';
+        }
+        html += '</div></td></tr>';
+      });
+      document.getElementById('meetingsTbody').innerHTML = html;
+    }
+
+    function di(label, val) { return '<div class="detail-item">'+dl(label)+'<span>'+esc(String(val||'-'))+'</span></div>'; }
+    function dl(label) { return '<label>'+label+'</label>'; }
+
+    function toggleDetail(rid) {
+      var row = document.getElementById(rid);
+      if (!row) return;
+      var visible = row.style.display !== 'none';
+      if (openRowId && openRowId !== rid) { var p = document.getElementById(openRowId); if(p) p.style.display='none'; }
+      row.style.display = visible ? 'none' : '';
+      openRowId = visible ? null : rid;
+    }
+  </script>
+</body>
+</html>

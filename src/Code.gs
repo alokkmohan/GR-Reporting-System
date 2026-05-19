@@ -7,7 +7,12 @@ function doGet(e) {
   var token = (e.parameter && e.parameter.token) ? e.parameter.token : '';
   var session = token ? verifySession(token) : null;
 
+  var vt = (e.parameter && e.parameter.vt) ? e.parameter.vt : '';
   var publicPages = ['index', 'register', 'pending'];
+  // State page is accessible via viewer token without a session
+  if (page === 'state' && vt) {
+    return buildPage('client/state', '', null);
+  }
   if (publicPages.indexOf(page) === -1) {
     if (!session || session.status !== 'active') {
       return buildPage('client/index', '', null);
@@ -259,6 +264,31 @@ function doPost(e) {
       if (plan.user_email !== session.email && session.role !== 'admin') return respond({ success: false, message: 'Not authorized.' });
       updatePlannedMeeting(params.plan_id, params.data);
       return respond({ success: true });
+    }
+
+    if (action === 'getStateData') {
+      var stateUser = (session && session.status === 'active') ? session : null;
+      if (!stateUser && params.viewer_token) {
+        var vtUser = getUserByViewerToken(params.viewer_token);
+        if (vtUser && (vtUser.role === 'state' || vtUser.role === 'admin')) {
+          stateUser = vtUser;
+        }
+      }
+      if (!stateUser) return respond({ success: false, message: 'Access denied. Invalid or expired viewer link.' });
+      if (stateUser.role !== 'state' && stateUser.role !== 'admin') return respond({ success: false, message: 'State or admin access required.' });
+      var allMtgs = getAllMeetings();
+      return respond({ success: true, data: allMtgs, viewer_name: stateUser.full_name || stateUser.email || '' });
+    }
+
+    if (action === 'generateViewerToken') {
+      if (!session || session.status !== 'active') return respond({ success: false, message: 'Not authorized.' });
+      if (session.role !== 'admin') return respond({ success: false, message: 'Admin only.' });
+      var targetUser = getUserByEmail(params.email);
+      if (!targetUser) return respond({ success: false, message: 'User not found.' });
+      if (targetUser.role !== 'state' && targetUser.role !== 'admin') return respond({ success: false, message: 'Viewer links are only for state/admin users.' });
+      var vt = getOrCreateViewerToken(params.email);
+      var viewerUrl = SITE_URL + '/state.html?vt=' + vt;
+      return respond({ success: true, token: vt, url: viewerUrl });
     }
 
     if (action === 'createMeetingDoc') {

@@ -285,6 +285,38 @@ function logLogin(email, fullName) {
 
 // ---------- FOLLOWUPS ----------
 
+// ---------- VIEWER TOKENS ----------
+
+function getOrCreateViewerToken(email) {
+  var sheet = getSheet('Users');
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0];
+  if (headers.indexOf('viewer_token') === -1) {
+    sheet.getRange(1, headers.length + 1).setValue('viewer_token');
+    headers.push('viewer_token');
+  }
+  var emailCol = headers.indexOf('email');
+  var vtCol = headers.indexOf('viewer_token');
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][emailCol] === email) {
+      var existing = data[i][vtCol];
+      if (existing) return existing;
+      var newToken = generateUUID();
+      sheet.getRange(i + 1, vtCol + 1).setValue(newToken);
+      return newToken;
+    }
+  }
+  return null;
+}
+
+function getUserByViewerToken(vt) {
+  if (!vt) return null;
+  var rows = sheetToObjects(getSheet('Users'));
+  return rows.find(function(r) { return r.viewer_token === vt && r.status === 'active'; }) || null;
+}
+
+// ---------- FOLLOWUPS ----------
+
 function addFollowup(submissionId, formData) {
   var sheet = getSheet('Followups');
   sheet.appendRow([

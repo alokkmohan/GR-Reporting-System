@@ -108,9 +108,10 @@
             });
             html += '</select></td>';
             html += '<td><span class="badge badge-' + u.status + '">' + u.status + '</span></td>';
-            html += '<td>';
-            if (u.status !== 'active') html += '<button class="btn btn-success btn-sm" onclick="approveUser(\'' + u.email + '\')">Approve</button> ';
+            html += '<td style="display:flex;gap:6px;flex-wrap:wrap;">';
+            if (u.status !== 'active') html += '<button class="btn btn-success btn-sm" onclick="approveUser(\'' + u.email + '\')">Approve</button>';
             if (u.status !== 'suspended') html += '<button class="btn btn-danger btn-sm" onclick="suspendUser(\'' + u.email + '\')">Suspend</button>';
+            if (u.role === 'state' || u.role === 'admin') html += '<button class="btn btn-outline btn-sm" onclick="getViewerLink(\'' + u.email + '\', this)" title="Generate passwordless dashboard link">Viewer Link</button>';
             html += '</td></tr>';
           });
           html += '</tbody></table></div>';
@@ -147,6 +148,38 @@
       fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'updateRole', token: token, email: email, role: role }) })
         .then(function(r) { return r.json(); })
         .then(function() { showAlert('Role updated to ' + role + '.', 'success'); });
+    }
+
+    function getViewerLink(email, btn) {
+      btn.disabled = true; btn.textContent = 'Generating...';
+      fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'generateViewerToken', token: token, email: email }) })
+        .then(function(r) { return r.json(); }).then(function(res) {
+          btn.disabled = false; btn.textContent = 'Viewer Link';
+          if (res.success) {
+            // Show copyable link in a simple dialog
+            var url = res.url;
+            var box = document.createElement('div');
+            box.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+            box.innerHTML = '<div style="background:#fff;border-radius:12px;padding:24px;max-width:500px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.2);">'
+              + '<div style="font-size:15px;font-weight:800;margin-bottom:6px;">Viewer Dashboard Link</div>'
+              + '<div style="font-size:12px;color:#6b7280;margin-bottom:14px;">Share this link with <strong>' + email + '</strong>. No login or OTP needed — just bookmark and open.</div>'
+              + '<div style="background:#f3f4f6;border-radius:8px;padding:10px 12px;font-size:12px;word-break:break-all;margin-bottom:14px;border:1px solid #e5e7eb;">' + url + '</div>'
+              + '<div style="display:flex;gap:8px;">'
+              + '<button id="copyLinkBtn" style="flex:1;padding:10px;background:#922b21;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;">Copy Link</button>'
+              + '<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="padding:10px 16px;background:#f3f4f6;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;">Close</button>'
+              + '</div></div>';
+            document.body.appendChild(box);
+            document.getElementById('copyLinkBtn').addEventListener('click', function() {
+              navigator.clipboard.writeText(url).then(function() {
+                document.getElementById('copyLinkBtn').textContent = 'Copied!';
+                setTimeout(function() { document.getElementById('copyLinkBtn').textContent = 'Copy Link'; }, 2000);
+              });
+            });
+            box.addEventListener('click', function(ev) { if(ev.target===box) box.remove(); });
+          } else {
+            showAlert(res.message || 'Failed to generate link.', 'error');
+          }
+        });
     }
   </script>
 </body>

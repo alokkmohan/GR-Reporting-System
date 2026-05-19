@@ -6,7 +6,7 @@ const dest = path.join(root, 'src', 'client');
 
 const pages = [
   'index', 'register', 'pending', 'dashboard', 'planner', 'formA', 'formB',
-  'myentries', 'admin', 'contacts', 'profile', 'gantt', 'timeline'
+  'myentries', 'admin', 'contacts', 'profile', 'gantt', 'timeline', 'state'
 ];
 
 function convert(html, name) {
