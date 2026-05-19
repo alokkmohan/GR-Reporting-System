@@ -17,12 +17,13 @@ function grSession() { return _session; }
 function grToken() { return token; }
 
 function requireAuth() {
-  if (!_session || _session.status !== 'active') { window.location.href = APP_URL; return null; }
+  var s = _session;
+  if (!s || s.status !== 'active') { window.location.href = APP_URL; return null; }
   // Always refresh profile from server so name/photo/designation stay current
   fetch(APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getMyProfile', token: grToken() }) })
     .then(function(r) { return r.json(); }).then(function(res) {
       if (!res.success || !res.user) return;
-      var sess = _session; if (!sess) return;
+      var sess = grSession(); if (!sess) return;
       var u = res.user;
       if (u.full_name)    sess.full_name    = u.full_name;
       if (u.designation)  sess.designation  = u.designation;
@@ -30,8 +31,7 @@ function requireAuth() {
       if (u.district)     sess.district     = u.district;
       if (u.posting_level) sess.posting_level = u.posting_level;
       if (u.photo_url)    sess.photo_url    = u.photo_url;
-      
-      // Update sidebar DOM without full re-render
+            // Update sidebar DOM without full re-render
       var words = (sess.full_name || sess.email || 'U').split(' ');
       var initials = (words[0].charAt(0) + (words[1] ? words[1].charAt(0) : '')).toUpperCase();
       var nameEl = document.querySelector('.sidebar-name');
@@ -63,7 +63,7 @@ function requireAuth() {
         }
       }
     }).catch(function() {});
-  return _session;
+  return s;
 }
 
 function logout() {
@@ -75,7 +75,7 @@ function logout() {
   document.body.appendChild(overlay);
   fetch(APP_URL, { method: 'POST', body: JSON.stringify({ action: 'logout', token: grToken() }) })
     .finally(function() {
-      window.location.href = APP_URL;
+            window.location.href = APP_URL;
     });
 }
 
@@ -138,11 +138,11 @@ function renderSidebar(activePage) {
 
   var navItems = [
     { page: 'dashboard', label: 'Home', key: 'dashboard' },
-    { page: 'planner', label: 'Manage Meetings', key: 'planner' },
-    { page: 'gantt', label: 'Meeting Gantt', key: 'gantt' },
-    { page: 'myentries', label: 'My Entries', key: 'myentries' },
-    { page: 'contacts', label: 'Contacts', key: 'contacts' },
-    { page: 'profile', label: 'My Profile', key: 'profile' }
+    { href: 'planner.html',   label: 'Manage Meetings', key: 'planner' },
+    { href: 'gantt.html',     label: 'Meeting Gantt', key: 'gantt' },
+    { page: 'myentries', label: 'My Entries',  key: 'myentries' },
+    { href: 'contacts.html',  label: 'Contacts',    key: 'contacts' },
+    { href: 'profile.html',   label: 'My Profile',  key: 'profile' }
   ];
   if (s.role === 'admin' || s.role === 'state') {
     navItems.push({ page: 'admin', label: 'Admin Panel', key: 'admin' });
