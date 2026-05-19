@@ -62,6 +62,11 @@
         <span style="font-size:11px;background:rgba(255,255,255,0.2);padding:3px 10px;border-radius:10px;font-weight:700;">VIEWER MODE</span>
       </div>
 
+      <div id="myLinkBar" style="display:none;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:12px 16px;margin-bottom:14px;display:none;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <span style="font-size:13px;color:var(--muted);font-weight:600;">Share this dashboard (no login needed)</span>
+        <button class="btn btn-primary btn-sm" onclick="getMyViewerLink(this)">Get Shareable Link</button>
+      </div>
+
       <div id="loadingSpinner"><div class="spinner"></div></div>
       <div id="alertBox"></div>
 
@@ -142,6 +147,7 @@
         goTo('dashboard');
       }
       renderSidebar('state');
+      document.getElementById('myLinkBar').style.display = 'flex';
     } else {
       // Viewer token mode — no OTP, no sidebar
       document.getElementById('hamburgerBtn').style.display = 'none';
@@ -292,6 +298,34 @@
       if (openRowId && openRowId !== rid) { var p = document.getElementById(openRowId); if(p) p.style.display='none'; }
       row.style.display = visible ? 'none' : '';
       openRowId = visible ? null : rid;
+    }
+
+    function getMyViewerLink(btn) {
+      btn.disabled = true; btn.textContent = 'Generating...';
+      fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'generateViewerToken', token: grToken() }) })
+        .then(function(r){return r.json();}).then(function(res) {
+          btn.disabled = false; btn.textContent = 'Get Shareable Link';
+          if (!res.success) { alert(res.message||'Failed'); return; }
+          var url = res.url;
+          var box = document.createElement('div');
+          box.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+          box.innerHTML = '<div style="background:#fff;border-radius:12px;padding:24px;max-width:480px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.2);">'
+            + '<div style="font-size:15px;font-weight:800;margin-bottom:6px;">Your Shareable Dashboard Link</div>'
+            + '<div style="font-size:12px;color:#6b7280;margin-bottom:14px;">Anyone with this link can view all meetings — no login needed. Share with Nitin Sir, Aditya, etc.</div>'
+            + '<div style="background:#f3f4f6;border-radius:8px;padding:10px 12px;font-size:12px;word-break:break-all;margin-bottom:14px;border:1px solid #e5e7eb;">'+url+'</div>'
+            + '<div style="display:flex;gap:8px;">'
+            + '<button id="cpBtn" style="flex:1;padding:10px;background:#922b21;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;">Copy Link</button>'
+            + '<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="padding:10px 16px;background:#f3f4f6;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;">Close</button>'
+            + '</div></div>';
+          document.body.appendChild(box);
+          document.getElementById('cpBtn').onclick = function() {
+            navigator.clipboard.writeText(url).then(function() {
+              document.getElementById('cpBtn').textContent = 'Copied!';
+              setTimeout(function(){ document.getElementById('cpBtn').textContent = 'Copy Link'; }, 2000);
+            });
+          };
+          box.addEventListener('click', function(ev){ if(ev.target===box) box.remove(); });
+        }).catch(function(){ btn.disabled=false; btn.textContent='Get Shareable Link'; alert('Network error.'); });
     }
   </script>
 </body>

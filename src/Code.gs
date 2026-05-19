@@ -282,11 +282,12 @@ function doPost(e) {
 
     if (action === 'generateViewerToken') {
       if (!session || session.status !== 'active') return respond({ success: false, message: 'Not authorized.' });
-      if (session.role !== 'admin') return respond({ success: false, message: 'Admin only.' });
-      var targetUser = getUserByEmail(params.email);
+      // Allow state/admin to generate their own token, or admin to generate for others
+      var targetEmail = (params.email && session.role === 'admin') ? params.email : session.email;
+      if (session.role !== 'state' && session.role !== 'admin') return respond({ success: false, message: 'State or admin access required.' });
+      var targetUser = getUserByEmail(targetEmail);
       if (!targetUser) return respond({ success: false, message: 'User not found.' });
-      if (targetUser.role !== 'state' && targetUser.role !== 'admin') return respond({ success: false, message: 'Viewer links are only for state/admin users.' });
-      var vt = getOrCreateViewerToken(params.email);
+      var vt = getOrCreateViewerToken(targetEmail);
       var viewerUrl = SITE_URL + '/state.html?vt=' + vt;
       return respond({ success: true, token: vt, url: viewerUrl });
     }
