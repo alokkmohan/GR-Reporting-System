@@ -158,7 +158,13 @@
       document.getElementById('roleBanner').innerHTML = '<div class="role-banner district"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> District View: ' + esc(session.district || '') + '</div>';
     } else if (role === 'state' || role === 'admin') {
       document.getElementById('roleBanner').style.display = '';
-      document.getElementById('roleBanner').innerHTML = '<div class="role-banner state"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg> ' + (role === 'admin' ? 'Admin' : 'State') + ' View: All Districts</div>';
+      document.getElementById('roleBanner').innerHTML = '<div class="role-banner state" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"><span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg> ' + (role === 'admin' ? 'Admin' : 'State') + ' View: All Districts</span><div style="display:flex;gap:8px;"><a href="state.html" style="font-size:12px;font-weight:700;color:inherit;text-decoration:underline;opacity:0.9;">State Overview &rarr;</a><button onclick="getViewerLink(this)" style="font-size:11px;font-weight:700;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);color:#fff;padding:3px 10px;border-radius:10px;cursor:pointer;">Get Viewer Link</button></div></div>';
+    }
+    // Also show for all roles — backend will verify actual role
+    if (role !== 'state' && role !== 'admin') {
+      // Try anyway — backend reads fresh from sheet
+      document.getElementById('roleBanner').style.display = '';
+      document.getElementById('roleBanner').innerHTML = '<div class="role-banner state" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"><span>State Overview Access</span><div style="display:flex;gap:8px;"><a href="state.html" style="font-size:12px;font-weight:700;color:inherit;text-decoration:underline;opacity:0.9;">Open &rarr;</a><button onclick="getViewerLink(this)" style="font-size:11px;font-weight:700;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);color:#fff;padding:3px 10px;border-radius:10px;cursor:pointer;">Get Viewer Link</button></div></div>';
     }
 
     var today = new Date(); today.setHours(0,0,0,0);
@@ -344,6 +350,34 @@
     fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'getMyMeetings', token: grToken() }) })
       .then(function(r) { return r.json(); }).then(function(res) { meetData = res.success ? (res.data||[]) : []; renderDashboard(); })
       .catch(function() { meetData = []; renderDashboard(); });
+
+    function getViewerLink(btn) {
+      btn.disabled = true; btn.textContent = 'Generating...';
+      fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'generateViewerToken', token: grToken() }) })
+        .then(function(r){return r.json();}).then(function(res){
+          btn.disabled = false; btn.textContent = 'Get Viewer Link';
+          if (!res.success) { alert(res.message || 'Failed. Make sure your role is state or admin in the sheet.'); return; }
+          var url = res.url;
+          var box = document.createElement('div');
+          box.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+          box.innerHTML = '<div style="background:#fff;border-radius:12px;padding:24px;max-width:480px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.2);">'
+            + '<div style="font-size:15px;font-weight:800;margin-bottom:6px;">Shareable Dashboard Link</div>'
+            + '<div style="font-size:12px;color:#6b7280;margin-bottom:14px;">Nitin Sir / Aditya ko yeh link bhejo — koi login nahi chahiye, seedha dashboard khulega.</div>'
+            + '<div style="background:#f3f4f6;border-radius:8px;padding:10px 12px;font-size:12px;word-break:break-all;margin-bottom:14px;border:1px solid #e5e7eb;">'+url+'</div>'
+            + '<div style="display:flex;gap:8px;">'
+            + '<button id="cpBtn2" style="flex:1;padding:10px;background:#922b21;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;">Copy Link</button>'
+            + '<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="padding:10px 16px;background:#f3f4f6;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;">Close</button>'
+            + '</div></div>';
+          document.body.appendChild(box);
+          document.getElementById('cpBtn2').onclick = function() {
+            navigator.clipboard.writeText(url).then(function(){
+              document.getElementById('cpBtn2').textContent = 'Copied!';
+              setTimeout(function(){ document.getElementById('cpBtn2').textContent = 'Copy Link'; }, 2000);
+            });
+          };
+          box.addEventListener('click', function(ev){ if(ev.target===box) box.remove(); });
+        }).catch(function(){ btn.disabled=false; btn.textContent='Get Viewer Link'; alert('Network error.'); });
+    }
   </script>
 </body>
 </html>
