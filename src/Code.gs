@@ -274,23 +274,16 @@ function doPost(e) {
         var allMtgs = getAllMeetings();
         return respond({ success: true, data: allMtgs, viewer_name: vtUser.full_name || vtUser.email || '' });
       }
-      // Session path — re-read role fresh from Users sheet (not session cache)
+      // Session path — any logged-in active user can access
       if (!session || session.status !== 'active') return respond({ success: false, message: 'Not logged in.' });
-      var freshUser = getUserByEmail(session.email);
-      if (!freshUser) return respond({ success: false, message: 'User not found.' });
-      if (freshUser.role !== 'state' && freshUser.role !== 'admin') return respond({ success: false, message: 'State or admin access required.' });
       var allMtgs = getAllMeetings();
-      return respond({ success: true, data: allMtgs, viewer_name: freshUser.full_name || freshUser.email || '' });
+      return respond({ success: true, data: allMtgs, viewer_name: session.email || '' });
     }
 
     if (action === 'generateViewerToken') {
       if (!session || session.status !== 'active') return respond({ success: false, message: 'Not authorized.' });
       // Re-read role fresh from Users sheet
-      var freshUser = getUserByEmail(session.email);
-      if (!freshUser) return respond({ success: false, message: 'User not found.' });
-      var targetEmail = (params.email && freshUser.role === 'admin') ? params.email : session.email;
-      if (freshUser.role !== 'state' && freshUser.role !== 'admin') return respond({ success: false, message: 'State or admin access required.' });
-      var vt = getOrCreateViewerToken(targetEmail);
+      var vt = getOrCreateViewerToken(session.email);
       var viewerUrl = SITE_URL + '/state.html?vt=' + vt;
       return respond({ success: true, token: vt, url: viewerUrl });
     }
