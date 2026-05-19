@@ -266,7 +266,7 @@ function doPost(e) {
       var meeting = getMeetingById(params.submission_id);
       if (!meeting) return respond({ success: false, message: 'Meeting not found.' });
       try {
-        var title = 'Minutes: ' + (meeting.stakeholder_name || 'Meeting') + ' - ' + (meeting.date || '');
+        var title = 'MoM | ' + (meeting.district || '') + ' | ' + (meeting.stakeholder_name || 'Meeting') + ' | ' + (meeting.date || '');
         var doc = DocumentApp.create(title);
         var body = doc.getBody();
         var h1Style = {}; h1Style[DocumentApp.Attribute.HEADING] = DocumentApp.ParagraphHeading.HEADING1;

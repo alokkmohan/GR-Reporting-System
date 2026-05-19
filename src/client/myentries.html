@@ -188,9 +188,18 @@
           if (e.followup_notes || e.notes) html += '<div class="detail-item" style="grid-column:1/-1;"><label>Notes</label><span>' + esc(e.followup_notes || e.notes || '') + '</span></div>';
           html += '</div>';
         }
+        var btnRow = '';
         if (e.plan_id) {
-          html += '<button class="btn btn-outline btn-sm" style="margin-top:10px;" onclick="window.location.href=\'timeline.html?plan_id=' + esc(e.plan_id) + '\'">View Timeline</button>';
+          btnRow += '<button class="btn btn-outline btn-sm" style="margin-top:10px;margin-right:8px;" onclick="window.location.href=\'timeline.html?plan_id=' + esc(e.plan_id) + '\'">View Timeline</button>';
         }
+        if (conducted) {
+          if (e.mom_doc_link) {
+            btnRow += '<a href="' + esc(e.mom_doc_link) + '" target="_blank" class="btn btn-outline btn-sm" style="margin-top:10px;">View MoM Doc</a>';
+          } else {
+            btnRow += '<button class="btn btn-outline btn-sm" id="momBtn_' + rid + '" style="margin-top:10px;" onclick="createMomDoc(\'' + esc(e.submission_id) + '\',\'' + rid + '\')">Create MoM Doc</button>';
+          }
+        }
+        if (btnRow) html += '<div style="display:flex;flex-wrap:wrap;gap:6px;">' + btnRow + '</div>';
         html += '</div></td></tr>';
       });
       document.getElementById('entriesTbody').innerHTML = html;
@@ -206,6 +215,30 @@
       }
       row.style.display = visible ? 'none' : '';
       openRowId = visible ? null : rid;
+    }
+
+    function createMomDoc(submissionId, rid) {
+      var btn = document.getElementById('momBtn_' + rid);
+      if (!btn) return;
+      btn.disabled = true; btn.textContent = 'Creating...';
+      fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'createMeetingDoc', token: grToken(), submission_id: submissionId }) })
+        .then(function(r) { return r.json(); }).then(function(res) {
+          if (res.success) {
+            // Replace button with link
+            var a = document.createElement('a');
+            a.href = res.url; a.target = '_blank';
+            a.className = btn.className; a.textContent = 'View MoM Doc';
+            a.style.cssText = btn.style.cssText;
+            btn.parentNode.replaceChild(a, btn);
+            // Update local data so if re-rendered it shows link
+            allData.forEach(function(m) { if (m.submission_id === submissionId) m.mom_doc_link = res.url; });
+          } else {
+            btn.textContent = 'Create MoM Doc'; btn.disabled = false;
+            alert(res.message || 'Failed to create doc. Please try again.');
+          }
+        }).catch(function() {
+          btn.textContent = 'Create MoM Doc'; btn.disabled = false;
+        });
     }
   </script>
 </body>

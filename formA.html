@@ -76,6 +76,7 @@
         <p class="text-muted mt-8" id="successMsg">Record saved successfully.</p>
         <div class="success-id" id="submissionIdBox"></div>
         <button class="btn btn-primary mt-16" id="timelineBtn" style="display:none;" onclick="viewTimeline()">View Timeline</button>
+        <button class="btn btn-primary mt-8" id="momDocBtn" style="display:none;" disabled>Creating MoM Doc...</button>
         <button class="btn btn-outline mt-8" onclick="window.location.href='planner.html'">Back to Planner</button>
       </div>
     </div>
@@ -554,6 +555,27 @@
             }
             document.getElementById('successMsg').textContent = msg;
             window.scrollTo(0,0);
+            // Auto-create MoM doc for conducted meetings
+            if (fd.meeting_conducted === 'YES') {
+              var momBtn = document.getElementById('momDocBtn');
+              momBtn.style.display = '';
+              fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'createMeetingDoc', token: token, submission_id: savedSubmissionId }) })
+                .then(function(r) { return r.json(); }).then(function(docRes) {
+                  if (docRes.success) {
+                    momBtn.textContent = 'View MoM Doc';
+                    momBtn.disabled = false;
+                    momBtn.onclick = function() { window.open(docRes.url, '_blank'); };
+                  } else {
+                    momBtn.textContent = 'MoM Doc Failed — Retry';
+                    momBtn.disabled = false;
+                    momBtn.onclick = function() { retryMomDoc(momBtn); };
+                  }
+                }).catch(function() {
+                  momBtn.textContent = 'MoM Doc Failed — Retry';
+                  momBtn.disabled = false;
+                  momBtn.onclick = function() { retryMomDoc(momBtn); };
+                });
+            }
           } else {
             showAlert(res.message || 'Submission failed.');
             document.getElementById('submitBtn').disabled = false; document.getElementById('submitBtn').textContent = 'Submit';
@@ -561,6 +583,23 @@
         }).catch(function() {
           showAlert('Network error. Please retry.');
           document.getElementById('submitBtn').disabled = false; document.getElementById('submitBtn').textContent = 'Submit';
+        });
+    }
+
+    function retryMomDoc(btn) {
+      btn.disabled = true; btn.textContent = 'Creating MoM Doc...';
+      fetch(APP_URL, { method:'POST', body: JSON.stringify({ action:'createMeetingDoc', token: grToken(), submission_id: savedSubmissionId }) })
+        .then(function(r) { return r.json(); }).then(function(res) {
+          if (res.success) {
+            btn.textContent = 'View MoM Doc'; btn.disabled = false;
+            btn.onclick = function() { window.open(res.url, '_blank'); };
+          } else {
+            btn.textContent = 'MoM Doc Failed — Retry'; btn.disabled = false;
+            btn.onclick = function() { retryMomDoc(btn); };
+          }
+        }).catch(function() {
+          btn.textContent = 'MoM Doc Failed — Retry'; btn.disabled = false;
+          btn.onclick = function() { retryMomDoc(btn); };
         });
     }
   </script>

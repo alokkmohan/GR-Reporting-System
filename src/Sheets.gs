@@ -143,7 +143,7 @@ function submitMeeting(formData) {
     'meeting_purpose','key_discussion_points','outcome','next_action','responsible_person',
     'followup_date','followup_status','photo_link','remark','priority_level','escalation_required',
     'attendee_type','actual_attendee_name','meeting_status','action_items','plan_id','co_entry',
-    'reason_not_conducted','followup_notes','meeting_images'
+    'reason_not_conducted','followup_notes','meeting_images','mom_doc_link'
   ];
   allCols.forEach(function(col) {
     if (headers.indexOf(col) === -1) {
