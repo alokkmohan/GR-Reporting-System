@@ -527,7 +527,12 @@
         var d = new Date(m.meeting_date); d.setHours(0,0,0,0);
         return d >= today;
       });
-      upcoming.sort(function(a, b) { return new Date(a.meeting_date) - new Date(b.meeting_date); });
+      upcoming.sort(function(a, b) {
+        var da = new Date(a.meeting_date), db = new Date(b.meeting_date);
+        if (isNaN(da)) return 1;
+        if (isNaN(db)) return -1;
+        return db - da;
+      });
 
       if (upcoming.length === 0) {
         document.getElementById('upcomingTableWrap').style.display = 'none';
