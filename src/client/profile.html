@@ -102,17 +102,46 @@
     var session = requireAuth();
     renderSidebar('profile');
 
-    function renderPhoto(s) {
+    function getInitials(s) {
       var words = (s.full_name || s.email || 'U').split(' ');
-      var initials = (words[0].charAt(0) + (words[1] ? words[1].charAt(0) : '')).toUpperCase();
+      return (words[0].charAt(0) + (words[1] ? words[1].charAt(0) : '')).toUpperCase();
+    }
+
+    function getInitials(s) {
+      var words = (s.full_name || s.email || 'U').split(' ');
+      return (words[0].charAt(0) + (words[1] ? words[1].charAt(0) : '')).toUpperCase();
+    }
+
+    function renderPhoto(s) {
       var wrap = document.getElementById('photoWrap');
+      var initials = getInitials(s);
+      wrap.innerHTML = '';
       if (s.photo_url) {
-        wrap.innerHTML = '<img src="' + esc(s.photo_url) + '" class="photo-circle" onerror="this.outerHTML=\'<div class=\\\"photo-initials\\\">'+initials+'</div>\'">'
-          + '<button class="photo-edit-btn" onclick="document.getElementById(\'photoFileInput\').click()" title="Change photo">Edit</button>';
+        var img = document.createElement('img');
+        img.className = 'photo-circle';
+        img.alt = s.full_name || 'Profile photo';
+        img.src = s.photo_url;
+        img.onerror = function() {
+          img.remove();
+          var fb = document.createElement('div');
+          fb.className = 'photo-initials';
+          fb.textContent = initials;
+          wrap.insertBefore(fb, wrap.firstChild);
+        };
+        wrap.appendChild(img);
       } else {
-        wrap.innerHTML = '<div class="photo-initials">' + initials + '</div>'
-          + '<button class="photo-edit-btn" onclick="document.getElementById(\'photoFileInput\').click()" title="Add photo">+</button>';
+        var ph = document.createElement('div');
+        ph.className = 'photo-initials';
+        ph.textContent = initials;
+        wrap.appendChild(ph);
       }
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'photo-edit-btn';
+      btn.title = s.photo_url ? 'Change photo' : 'Add photo';
+      btn.textContent = s.photo_url ? 'Edit' : '+';
+      btn.onclick = function() { document.getElementById('photoFileInput').click(); };
+      wrap.appendChild(btn);
     }
 
     function fillHeader(s) {
@@ -225,14 +254,17 @@
     function uploadPhoto(input) {
       var file = input.files[0];
       if (!file) return;
+      input.value = '';
       if (file.size > 10 * 1024 * 1024) { alert('Image too large. Max 10MB.'); return; }
       var wrap = document.getElementById('photoWrap');
-      wrap.innerHTML += '<div class="photo-uploading"><div class="spinner" style="margin:0;width:24px;height:24px;border-width:2px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;"></div></div>';
+      var overlay = document.createElement('div');
+      overlay.className = 'photo-uploading';
+      overlay.innerHTML = '<div class="spinner" style="margin:0;width:28px;height:28px;border-width:2px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;"></div>';
+      wrap.appendChild(overlay);
       var reader = new FileReader();
       reader.onload = function(e) {
         var img = new Image();
         img.onload = function() {
-          // Resize to max 300x300 so payload stays small
           var MAX = 300;
           var w = img.width, h = img.height;
           if (w > h) { if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; } }
@@ -247,19 +279,26 @@
             mimeType: 'image/jpeg', fileData: base64
           })})
           .then(function(r) { return r.json(); }).then(function(res) {
+            overlay.remove();
             if (res.success) {
               var s = grSession(); s.photo_url = res.url;
+              localStorage.setItem('grSession', JSON.stringify(s));
               fetch(APP_URL, { method:'POST', body: JSON.stringify({
                 action:'updateProfile', token: grToken(),
                 full_name: s.full_name || '',
                 unit: s.unit || '', designation: s.designation || '', photo_url: res.url
               })});
               fillHeader(s);
+              renderSidebar('profile');
             } else {
               alert('Photo upload failed: ' + (res.message || 'Unknown error'));
               renderPhoto(grSession());
             }
-          }).catch(function(err) { alert('Upload error: ' + (err.message || err)); renderPhoto(grSession()); });
+          }).catch(function(err) {
+            overlay.remove();
+            alert('Upload error: ' + (err.message || err));
+            renderPhoto(grSession());
+          });
         };
         img.src = e.target.result;
       };

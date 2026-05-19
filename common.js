@@ -30,9 +30,25 @@ function requireAuth() {
       if (badgeEl) badgeEl.textContent = sess.designation || (sess.role || 'FIELD').toUpperCase();
       var avatarWrap = document.querySelector('.sidebar-avatar-wrap');
       if (avatarWrap) {
-        avatarWrap.innerHTML = sess.photo_url
-          ? '<img src="' + sess.photo_url + '" style="width:52px;height:52px;border-radius:50%;object-fit:cover;display:block;" onerror="this.outerHTML=\'<div class=\\\"sidebar-initials\\\">' + initials + '</div>\'">'
-          : '<div class="sidebar-initials">' + initials + '</div>';
+        avatarWrap.innerHTML = '';
+        if (sess.photo_url) {
+          var avImg = document.createElement('img');
+          avImg.src = sess.photo_url;
+          avImg.style.cssText = 'width:52px;height:52px;border-radius:50%;object-fit:cover;display:block;';
+          avImg.onerror = function() {
+            avImg.remove();
+            var avFb = document.createElement('div');
+            avFb.className = 'sidebar-initials';
+            avFb.textContent = initials;
+            avatarWrap.appendChild(avFb);
+          };
+          avatarWrap.appendChild(avImg);
+        } else {
+          var avFb2 = document.createElement('div');
+          avFb2.className = 'sidebar-initials';
+          avFb2.textContent = initials;
+          avatarWrap.appendChild(avFb2);
+        }
       }
     }).catch(function() {});
   return s;
@@ -73,16 +89,42 @@ var _sidebarIcons = {
   logout:    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>'
 };
 
+
+function fillSidebarAvatar(s) {
+  var el = document.getElementById('sbAvatar');
+  if (!el) return;
+  var words = (s.full_name || s.email || 'U').split(' ');
+  var initials = (words[0].charAt(0) + (words[1] ? words[1].charAt(0) : '')).toUpperCase();
+  el.innerHTML = '';
+  var wrap = document.createElement('div');
+  wrap.className = 'sidebar-avatar-wrap';
+  if (s.photo_url) {
+    var img = document.createElement('img');
+    img.src = s.photo_url;
+    img.style.cssText = 'width:52px;height:52px;border-radius:50%;object-fit:cover;display:block;';
+    img.onerror = function() {
+      img.remove();
+      var fb = document.createElement('div');
+      fb.className = 'sidebar-initials';
+      fb.textContent = initials;
+      wrap.appendChild(fb);
+    };
+    wrap.appendChild(img);
+  } else {
+    var fb = document.createElement('div');
+    fb.className = 'sidebar-initials';
+    fb.textContent = initials;
+    wrap.appendChild(fb);
+  }
+  el.appendChild(wrap);
+}
+
 function renderSidebar(activePage) {
   var s = grSession();
   if (!s) return;
 
   var words = (s.full_name || s.email || 'U').split(' ');
   var initials = (words[0].charAt(0) + (words[1] ? words[1].charAt(0) : '')).toUpperCase();
-
-  var avatarHtml = s.photo_url
-    ? '<img src="' + s.photo_url + '" style="width:52px;height:52px;border-radius:50%;object-fit:cover;display:block;" onerror="this.outerHTML=\'<div class=\\\"sidebar-initials\\\">' + initials + '</div>\'">'
-    : '<div class="sidebar-initials">' + initials + '</div>';
 
   var navItems = [
     { href: 'dashboard.html', label: 'Home', key: 'dashboard' },
@@ -105,8 +147,7 @@ function renderSidebar(activePage) {
   var logoutIcon = _sidebarIcons.logout || '';
   var html = '<div id="sidebarOverlay" class="sidebar-overlay" onclick="closeSidebar()"></div>'
     + '<aside id="sidebar" class="sidebar">'
-    + '<div class="sidebar-user">'
-    + '<div class="sidebar-avatar-wrap">' + avatarHtml + '</div>'
+    + '<div class="sidebar-user"><div id="sbAvatar"></div>'
     + '<div class="sidebar-name">' + esc(s.full_name || '') + '</div>'
     + '<div class="sidebar-email">' + esc(s.email || '') + '</div>'
     + (s.designation ? '<span class="role-badge" id="roleBadge">' + esc(s.designation) + '</span>' : '<span class="role-badge" id="roleBadge">' + esc(s.role || 'Field') + '</span>')
@@ -118,6 +159,7 @@ function renderSidebar(activePage) {
     + '</aside>';
 
   document.getElementById('sidebarMount').innerHTML = html;
+  fillSidebarAvatar(s);
 
   var navUser = document.getElementById('navUser');
   if (navUser) navUser.textContent = s.full_name || s.email || '';
