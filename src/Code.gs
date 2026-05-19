@@ -301,12 +301,19 @@ function doPost(e) {
         body.appendParagraph('MINUTES OF MEETING').setAttributes(h1Style);
         body.appendParagraph('');
         body.appendParagraph('Date: ' + (meeting.date || ''));
+        body.appendParagraph('District: ' + (meeting.district || ''));
         body.appendParagraph('Stakeholder: ' + (meeting.stakeholder_name || ''));
         body.appendParagraph('Department: ' + (meeting.department_organisation || ''));
         body.appendParagraph('Purpose: ' + (meeting.meeting_purpose || ''));
         body.appendParagraph('Level: ' + (meeting.level_of_meeting || ''));
-        body.appendParagraph('Conducted By: ' + (meeting.conducted_by || ''));
-        body.appendParagraph('District: ' + (meeting.district || ''));
+        body.appendParagraph('Conducted By: ' + (meeting.conducted_by || '') + (meeting.staff_name ? ' (' + meeting.staff_name + ')' : ''));
+        if (meeting.other_participants) body.appendParagraph('Other Participants: ' + meeting.other_participants);
+        if (meeting.co_entry) {
+          try {
+            var coList = JSON.parse(meeting.co_entry);
+            if (coList.length) body.appendParagraph('Team Members: ' + coList.map(function(c){ return c.name || c.email || c; }).join(', '));
+          } catch(ex) {}
+        }
         body.appendParagraph('');
         body.appendParagraph('KEY DISCUSSION POINTS').setAttributes(h2Style);
         body.appendParagraph(meeting.key_discussion_points || '(Not recorded)');
@@ -317,6 +324,31 @@ function doPost(e) {
         body.appendParagraph('NEXT ACTION').setAttributes(h2Style);
         body.appendParagraph((meeting.next_action || '(Not recorded)') + (meeting.responsible_person ? '\nResponsible: ' + meeting.responsible_person : ''));
         body.appendParagraph('');
+        // Meeting photos section
+        var photoFolderUrl = '';
+        if (meeting.meeting_images) {
+          try {
+            var imgUrls = JSON.parse(meeting.meeting_images);
+            if (imgUrls.length) {
+              // Create a Drive folder for this meeting's photos
+              var folderName = 'Photos | ' + (meeting.district || '') + ' | ' + (meeting.stakeholder_name || '') + ' | ' + (meeting.date || '');
+              var folder = DriveApp.createFolder(folderName);
+              folder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+              photoFolderUrl = folder.getUrl();
+              // Copy images into the folder
+              imgUrls.forEach(function(url) {
+                try {
+                  var fileId = url.match(/[-\w]{25,}/);
+                  if (fileId) DriveApp.getFileById(fileId[0]).makeCopy(folder);
+                } catch(ex2) {}
+              });
+              body.appendParagraph('MEETING PHOTOS').setAttributes(h2Style);
+              body.appendParagraph('Photo folder: ' + photoFolderUrl);
+              imgUrls.forEach(function(url, i) { body.appendParagraph('Photo ' + (i+1) + ': ' + url); });
+              body.appendParagraph('');
+            }
+          } catch(ex) {}
+        }
         body.appendParagraph('SENIOR COMMENTS AND FEEDBACK').setAttributes(h2Style);
         body.appendParagraph('(Seniors: please add your comments and feedback below this line)');
         body.appendParagraph('');
@@ -327,7 +359,7 @@ function doPost(e) {
         var docUrl = 'https://docs.google.com/document/d/' + doc.getId() + '/edit';
         updateMeetingDocLink(params.submission_id, docUrl);
         doc.saveAndClose();
-        return respond({ success: true, url: docUrl });
+        return respond({ success: true, url: docUrl, photo_folder: photoFolderUrl });
       } catch(e) {
         return respond({ success: false, message: 'Failed to create document: ' + e.toString() });
       }

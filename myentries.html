@@ -160,10 +160,13 @@
           if (e.staff_name) html += '<div class="detail-item"><label>Conducted By</label><span>' + esc(e.staff_name) + (e.conducted_by ? ' (' + esc(e.conducted_by) + ')' : '') + '</span></div>';
           if (e.level_of_meeting) html += '<div class="detail-item"><label>Level</label><span>' + esc(e.level_of_meeting) + '</span></div>';
           if (e.attendee_type === 'alternate' && e.actual_attendee_name) html += '<div class="detail-item" style="grid-column:1/-1;"><label>Who Attended</label><span>' + esc(e.actual_attendee_name) + ' (on behalf)</span></div>';
+          if (e.other_participants) html += '<div class="detail-item" style="grid-column:1/-1;"><label>Other Participants</label><span>' + esc(e.other_participants) + '</span></div>';
+          if (e.co_entry) { try { var coL = JSON.parse(e.co_entry); if (coL.length) html += '<div class="detail-item" style="grid-column:1/-1;"><label>Team Members</label><span>' + coL.map(function(c){return esc(c.name||c.email||c);}).join(', ') + '</span></div>'; } catch(ex){} }
           if (e.key_discussion_points) html += '<div class="detail-item" style="grid-column:1/-1;"><label>Key Discussion Points</label><span>' + esc(e.key_discussion_points) + '</span></div>';
           if (e.outcome) html += '<div class="detail-item" style="grid-column:1/-1;"><label>Outcome</label><span>' + esc(e.outcome) + '</span></div>';
           if (e.remark) html += '<div class="detail-item"><label>Relationship</label><span>' + esc(e.remark) + '</span></div>';
           if (e.meeting_status) html += '<div class="detail-item"><label>Meeting Status</label><span>' + (e.meeting_status === 'completed' ? 'Completed' : 'Follow-up Required') + '</span></div>';
+          if (e.meeting_images) { try { var imgs = JSON.parse(e.meeting_images); if (imgs.length) { html += '<div class="detail-item" style="grid-column:1/-1;"><label>Meeting Photos</label><span>' + imgs.map(function(u,i){return '<a href="'+esc(u)+'" target="_blank" style="margin-right:8px;color:var(--primary);font-weight:700;">Photo '+(i+1)+'</a>';}).join('') + '</span></div>'; } } catch(ex){} }
           html += '</div>';
           if (aiItems.length) {
             html += '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;color:var(--muted);margin-bottom:6px;">Action Items</div>';

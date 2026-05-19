@@ -265,11 +265,28 @@
         if (e.department_organisation) html += di('Department / Org', e.department_organisation);
         if (e.reporting_month) di('Reporting Month', e.reporting_month);
         if (conducted) {
+          if (e.other_participants) html += '<div class="detail-item detail-full">'+dl('Other Participants')+'<span>'+esc(e.other_participants)+'</span></div>';
+          if (e.co_entry) {
+            try {
+              var coList = JSON.parse(e.co_entry);
+              if (coList.length) html += '<div class="detail-item detail-full">'+dl('Team Members Who Attended')+'<span>'+coList.map(function(c){return esc(c.name||c.email||c);}).join(', ')+'</span></div>';
+            } catch(ex) { if (e.co_entry) html += '<div class="detail-item detail-full">'+dl('Team Members')+'<span>'+esc(e.co_entry)+'</span></div>'; }
+          }
           if (e.key_discussion_points) html += '<div class="detail-item detail-full">'+dl('Key Discussion Points')+'<span>'+esc(e.key_discussion_points)+'</span></div>';
           if (e.outcome) html += '<div class="detail-item detail-full">'+dl('Outcome / Result')+'<span>'+esc(e.outcome)+'</span></div>';
           if (e.next_action) html += '<div class="detail-item detail-full">'+dl('Next Action')+'<span>'+esc(e.next_action)+(e.responsible_person?' &mdash; <em>Responsible: '+esc(e.responsible_person)+'</em>':'')+'</span></div>';
           if (e.followup_date) html += di('Follow-up Date', fmtDate(e.followup_date));
           if (e.remark) html += di('Relationship Status', e.remark);
+          if (e.meeting_images) {
+            try {
+              var imgs = JSON.parse(e.meeting_images);
+              if (imgs.length) {
+                html += '<div class="detail-item detail-full">'+dl('Meeting Photos')+'<span>';
+                imgs.forEach(function(url, i) { html += '<a href="'+esc(url)+'" target="_blank" style="margin-right:10px;color:var(--primary);font-weight:700;">Photo '+(i+1)+'</a>'; });
+                html += '</span></div>';
+              }
+            } catch(ex) {}
+          }
         } else {
           if (e.reason_not_conducted) html += '<div class="detail-item detail-full">'+dl('Reason Not Conducted')+'<span>'+esc(e.reason_not_conducted)+'</span></div>';
           if (e.followup_date) html += di('Rescheduled To', fmtDate(e.followup_date));
