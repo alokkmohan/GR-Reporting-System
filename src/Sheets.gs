@@ -143,7 +143,7 @@ function submitMeeting(formData) {
     'meeting_purpose','key_discussion_points','outcome','next_action','responsible_person',
     'followup_date','followup_status','photo_link','remark','priority_level','escalation_required',
     'attendee_type','actual_attendee_name','meeting_status','action_items','plan_id','co_entry',
-    'reason_not_conducted','followup_notes'
+    'reason_not_conducted','followup_notes','meeting_images'
   ];
   allCols.forEach(function(col) {
     if (headers.indexOf(col) === -1) {
@@ -186,7 +186,8 @@ function submitMeeting(formData) {
     formData.plan_id || '',
     formData.co_entry || '',
     formData.reason_not_conducted || '',
-    formData.followup_notes || ''
+    formData.followup_notes || '',
+    formData.meeting_images || ''
   ]);
 
   if (formData.meeting_conducted === 'YES' && formData.followup_date) {
